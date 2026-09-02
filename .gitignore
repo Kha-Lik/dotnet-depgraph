@@ -1,0 +1,49 @@
+**/bin/
+**/obj/
+!fixtures/Representative/Malformed/obj/
+!fixtures/Representative/Malformed/obj/project.assets.json
+
+# Generated packages, feeds, and publish output
+fixtures/local-feed/
+fixtures/.packages/
+artifacts/
+**/publish/
+*.nupkg
+*.snupkg
+
+# Test, coverage, benchmark, and diagnostic output
+TestResults/
+**/TestResults/
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+BenchmarkDotNet.Artifacts/
+*.trx
+*.binlog
+*.log
+
+# IDE and editor state
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# Local agent/tool state
+.agents/
+.codex/
+
+# OS and temporary files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~

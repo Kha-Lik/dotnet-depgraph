@@ -1,0 +1,2518 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>.NET Dependency Graph</title><link rel="stylesheet" href="viewer.css"></head><body><div id="warning" hidden></div><header><strong>.NET Dependency Graph</strong><input id="search" placeholder="Search nodes…" aria-label="Search"><button id="fit">Fit</button><button id="reset">Reset</button><button id="layout">Rerun layout</button><button id="png">PNG</button><button id="json">Displayed JSON</button></header><aside id="filters"><label>View <select id="view"><option value="contract">Contracted</option><option value="strict">Strict</option><option value="raw">Raw</option></select></label><label><input id="collapse" type="checkbox"> Collapse local packages</label><label>Neighborhood <select id="hops"><option value="0">All</option><option>1</option><option>2</option><option>3</option></select></label><label>Kind <select id="kind"><option value="">All</option></select></label><label>Edge <select id="edgeKind"><option value="">All</option></select></label><label>Component <select id="component"><option value="">All</option></select></label><label>Community <select id="community"><option value="">All</option></select></label><label>TFM <select id="tfm"><option value="">All</option></select></label><label>RID <select id="rid"><option value="">All</option></select></label><label><input id="skew" type="checkbox"> Version skew only</label><section><b>Direction</b><p>Arrows point from a consumer to its dependency.</p><p><span class="line project"></span> project · <span class="line package"></span> package · <span class="line contracted"></span> contracted · <span class="line producer"></span> producer</p></section><section id="components"><b>Components</b></section></aside><main id="cy"></main><aside id="details"><h2>Selection</h2><p>Select a node to inspect its metadata and immediate relationships.</p></aside><script id="graph-data" type="application/json">{
+  "raw": {
+    "schemaVersion": "1.0",
+    "root": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative",
+    "nodes": [
+      {
+        "id": "package:app",
+        "label": "App",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "package:company.feature",
+        "label": "Company.Feature",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [
+          "1.0.0"
+        ],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0",
+          "net10.0-windows7.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 1,
+        "inDegree": 1,
+        "outDegree": 1,
+        "directDependencies": 1,
+        "transitiveDependencies": 2,
+        "directDependents": 1,
+        "transitiveDependents": 1,
+        "centrality": 1.7004,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "package:company.serialization",
+        "label": "Company.Serialization",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [
+          "1.0.0"
+        ],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0",
+          "net10.0-windows7.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 1,
+        "inDegree": 1,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 1,
+        "transitiveDependents": 3,
+        "centrality": 1.4594,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "package:company.shared.core",
+        "label": "Company.Shared.Core",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [
+          "1.0.0"
+        ],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 1,
+        "inDegree": 1,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 1,
+        "transitiveDependents": 1,
+        "centrality": 1.1699,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "package:company.storage",
+        "label": "Company.Storage",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [
+          "1.0.0"
+        ],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0",
+          "net10.0-windows7.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 1,
+        "inDegree": 1,
+        "outDegree": 1,
+        "directDependencies": 1,
+        "transitiveDependencies": 1,
+        "directDependents": 1,
+        "transitiveDependents": 2,
+        "centrality": 1.8074,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "package:toola",
+        "label": "ToolA",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [],
+        "runtimeIdentifiers": [],
+        "component": 1,
+        "community": 2,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "package:toolb",
+        "label": "ToolB",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [],
+        "runtimeIdentifiers": [],
+        "component": 2,
+        "community": 3,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:AmbiguousA/AmbiguousA.csproj",
+        "label": "AmbiguousA",
+        "kind": "project",
+        "path": "AmbiguousA/AmbiguousA.csproj",
+        "classification": "packable-library",
+        "classificationEvidence": [
+          "IsPackable=true"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 4,
+        "community": 4,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:AmbiguousB/AmbiguousB.csproj",
+        "label": "AmbiguousB",
+        "kind": "project",
+        "path": "AmbiguousB/AmbiguousB.csproj",
+        "classification": "packable-library",
+        "classificationEvidence": [
+          "IsPackable=true"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 5,
+        "community": 5,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:DuplicateA/Foo.csproj",
+        "label": "Foo",
+        "kind": "project",
+        "path": "DuplicateA/Foo.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 1,
+        "inDegree": 1,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 1,
+        "transitiveDependents": 1,
+        "centrality": 1.1699,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:DuplicateB/Foo.csproj",
+        "label": "Foo",
+        "kind": "project",
+        "path": "DuplicateB/Foo.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 6,
+        "community": 6,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Isolated/Isolated.csproj",
+        "label": "Isolated",
+        "kind": "project",
+        "path": "Isolated/Isolated.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 7,
+        "community": 7,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Main/App.csproj",
+        "label": "App",
+        "kind": "project",
+        "path": "Main/App.csproj",
+        "classification": "executable",
+        "classificationEvidence": [
+          "OutputType=Exe"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0",
+          "net10.0-windows"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 1,
+        "inDegree": 0,
+        "outDegree": 3,
+        "directDependencies": 3,
+        "transitiveDependencies": 5,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 2,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Malformed/Malformed.csproj",
+        "label": "Malformed",
+        "kind": "project",
+        "path": "Malformed/Malformed.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 8,
+        "community": 8,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Missing/Missing.csproj",
+        "label": "Missing",
+        "kind": "project",
+        "path": "Missing/Missing.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 9,
+        "community": 9,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:OutsideConsumer/OutsideConsumer.csproj",
+        "label": "OutsideConsumer",
+        "kind": "project",
+        "path": "OutsideConsumer/OutsideConsumer.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 3,
+        "community": 10,
+        "inDegree": 0,
+        "outDegree": 1,
+        "directDependencies": 1,
+        "transitiveDependencies": 1,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 1,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Shared/Shared.csproj",
+        "label": "Shared",
+        "kind": "project",
+        "path": "Shared/Shared.csproj",
+        "classification": "packable-library",
+        "classificationEvidence": [
+          "IsPackable=true"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 11,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:ToolA/ToolA.csproj",
+        "label": "ToolA",
+        "kind": "project",
+        "path": "ToolA/ToolA.csproj",
+        "classification": "executable",
+        "classificationEvidence": [
+          "OutputType=Exe"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 1,
+        "community": 12,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:ToolB/ToolB.csproj",
+        "label": "ToolB",
+        "kind": "project",
+        "path": "ToolB/ToolB.csproj",
+        "classification": "executable",
+        "classificationEvidence": [
+          "OutputType=Exe"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 2,
+        "community": 13,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "unresolved-project:home/khalik/workspace/dotnet-depgraph/fixtures/outside/external.csproj",
+        "label": "External",
+        "kind": "unresolved-project",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Outside/External.csproj",
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [],
+        "runtimeIdentifiers": [],
+        "component": 3,
+        "community": 10,
+        "inDegree": 1,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 1,
+        "transitiveDependents": 1,
+        "centrality": 1.1699,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge:PackageDependency:package:company.feature-\u003Epackage:company.storage",
+        "source": "package:company.feature",
+        "target": "package:company.storage",
+        "kind": "package-dependency",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": false,
+            "observationCount": 1
+          },
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0-windows7.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": false,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:PackageDependency:package:company.storage-\u003Epackage:company.serialization",
+        "source": "package:company.storage",
+        "target": "package:company.serialization",
+        "kind": "package-dependency",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": false,
+            "observationCount": 1
+          },
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0-windows7.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": false,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:ProducesPackage:project:Main/App.csproj-\u003Epackage:app",
+        "source": "project:Main/App.csproj",
+        "target": "package:app",
+        "kind": "produces-package",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "",
+            "runtimeIdentifier": null,
+            "requestedVersion": null,
+            "resolvedVersion": null,
+            "direct": false,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:PackageReference:project:Main/App.csproj-\u003Epackage:company.feature",
+        "source": "project:Main/App.csproj",
+        "target": "package:company.feature",
+        "kind": "package-reference",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": true,
+            "observationCount": 1
+          },
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0-windows7.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": true,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:PackageReference:project:Main/App.csproj-\u003Epackage:company.shared.core",
+        "source": "project:Main/App.csproj",
+        "target": "package:company.shared.core",
+        "kind": "package-reference",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": true,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:ProjectReference:project:Main/App.csproj-\u003Eproject:DuplicateA/Foo.csproj",
+        "source": "project:Main/App.csproj",
+        "target": "project:DuplicateA/Foo.csproj",
+        "kind": "project-reference",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "",
+            "runtimeIdentifier": null,
+            "requestedVersion": null,
+            "resolvedVersion": null,
+            "direct": true,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:ProjectReference:project:OutsideConsumer/OutsideConsumer.csproj-\u003Eunresolved-project:home/khalik/workspace/dotnet-depgraph/fixtures/outside/external.csproj",
+        "source": "project:OutsideConsumer/OutsideConsumer.csproj",
+        "target": "unresolved-project:home/khalik/workspace/dotnet-depgraph/fixtures/outside/external.csproj",
+        "kind": "project-reference",
+        "contexts": [
+          {
+            "ownerProjectId": "project:OutsideConsumer/OutsideConsumer.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/OutsideConsumer/obj/project.assets.json",
+            "targetFramework": "",
+            "runtimeIdentifier": null,
+            "requestedVersion": null,
+            "resolvedVersion": null,
+            "direct": true,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:ProducesPackage:project:Shared/Shared.csproj-\u003Epackage:company.shared.core",
+        "source": "project:Shared/Shared.csproj",
+        "target": "package:company.shared.core",
+        "kind": "produces-package",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Shared/Shared.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Shared/obj/project.assets.json",
+            "targetFramework": "",
+            "runtimeIdentifier": null,
+            "requestedVersion": null,
+            "resolvedVersion": null,
+            "direct": false,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:ProducesPackage:project:ToolA/ToolA.csproj-\u003Epackage:toola",
+        "source": "project:ToolA/ToolA.csproj",
+        "target": "package:toola",
+        "kind": "produces-package",
+        "contexts": [
+          {
+            "ownerProjectId": "project:ToolA/ToolA.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/ToolA/obj/project.assets.json",
+            "targetFramework": "",
+            "runtimeIdentifier": null,
+            "requestedVersion": null,
+            "resolvedVersion": null,
+            "direct": false,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:ProducesPackage:project:ToolB/ToolB.csproj-\u003Epackage:toolb",
+        "source": "project:ToolB/ToolB.csproj",
+        "target": "package:toolb",
+        "kind": "produces-package",
+        "contexts": [
+          {
+            "ownerProjectId": "project:ToolB/ToolB.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/ToolB/obj/project.assets.json",
+            "targetFramework": "",
+            "runtimeIdentifier": null,
+            "requestedVersion": null,
+            "resolvedVersion": null,
+            "direct": false,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      }
+    ],
+    "diagnostics": [
+      {
+        "code": "ambiguous-package-producer",
+        "severity": "warning",
+        "message": "Multiple local projects produce package ID \u0027Company.Ambiguous\u0027; no mapping was inferred.",
+        "projectId": "project:AmbiguousA/AmbiguousA.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousA/AmbiguousA.csproj"
+      },
+      {
+        "code": "ambiguous-package-producer",
+        "severity": "warning",
+        "message": "Multiple local projects produce package ID \u0027Company.Ambiguous\u0027; no mapping was inferred.",
+        "projectId": "project:AmbiguousB/AmbiguousB.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousB/AmbiguousB.csproj"
+      },
+      {
+        "code": "assets-malformed",
+        "severity": "error",
+        "message": "NuGet could not parse a package specification and at least one target from the assets file.",
+        "projectId": "project:Malformed/Malformed.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Malformed/malformed.assets.json"
+      },
+      {
+        "code": "assets-missing",
+        "severity": "error",
+        "message": "Assets file is missing; run restore or select a restore mode.",
+        "projectId": "project:AmbiguousA/AmbiguousA.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousA/obj/project.assets.json"
+      },
+      {
+        "code": "assets-missing",
+        "severity": "error",
+        "message": "Assets file is missing; run restore or select a restore mode.",
+        "projectId": "project:AmbiguousB/AmbiguousB.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousB/obj/project.assets.json"
+      },
+      {
+        "code": "assets-missing",
+        "severity": "error",
+        "message": "Assets file is missing; run restore or select a restore mode.",
+        "projectId": "project:Missing/Missing.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Missing/missing.assets.json"
+      },
+      {
+        "code": "assets-missing",
+        "severity": "error",
+        "message": "Assets file is missing; run restore or select a restore mode.",
+        "projectId": "project:OutsideConsumer/OutsideConsumer.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/OutsideConsumer/obj/project.assets.json"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node is isolated because authoritative restore data is missing.",
+        "projectId": "project:AmbiguousA/AmbiguousA.csproj",
+        "path": "AmbiguousA/AmbiguousA.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node is isolated because authoritative restore data is missing.",
+        "projectId": "project:AmbiguousB/AmbiguousB.csproj",
+        "path": "AmbiguousB/AmbiguousB.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node has no resolved dependencies or dependents.",
+        "projectId": "project:DuplicateB/Foo.csproj",
+        "path": "DuplicateB/Foo.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node has no resolved dependencies or dependents.",
+        "projectId": "project:Isolated/Isolated.csproj",
+        "path": "Isolated/Isolated.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node has no resolved dependencies or dependents.",
+        "projectId": "project:Malformed/Malformed.csproj",
+        "path": "Malformed/Malformed.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node is isolated because authoritative restore data is missing.",
+        "projectId": "project:Missing/Missing.csproj",
+        "path": "Missing/Missing.csproj"
+      },
+      {
+        "code": "outside-root-project-reference",
+        "severity": "warning",
+        "message": "Project reference \u0027/home/khalik/workspace/dotnet-depgraph/fixtures/Outside/External.csproj\u0027 was not among discovered projects.",
+        "projectId": "project:OutsideConsumer/OutsideConsumer.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Outside/External.csproj"
+      }
+    ],
+    "completeness": {
+      "discoveredProjects": 12,
+      "evaluatedProjects": 12,
+      "projectsWithValidAssets": 7,
+      "missingAssets": 4,
+      "malformedAssets": 1,
+      "mismatchedAssets": 0,
+      "failedRestores": 0,
+      "complete": false
+    },
+    "targetFrameworks": [
+      "net10.0",
+      "net10.0-windows7.0"
+    ],
+    "runtimeIdentifiers": []
+  },
+  "strict": {
+    "schemaVersion": "1.0",
+    "root": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative",
+    "nodes": [
+      {
+        "id": "package:company.feature",
+        "label": "Company.Feature",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [
+          "1.0.0"
+        ],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0",
+          "net10.0-windows7.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 1,
+        "outDegree": 1,
+        "directDependencies": 1,
+        "transitiveDependencies": 2,
+        "directDependents": 1,
+        "transitiveDependents": 1,
+        "centrality": 1.7004,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "package:company.serialization",
+        "label": "Company.Serialization",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [
+          "1.0.0"
+        ],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0",
+          "net10.0-windows7.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 1,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 1,
+        "transitiveDependents": 3,
+        "centrality": 1.4594,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "package:company.shared.core",
+        "label": "Company.Shared.Core",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [
+          "1.0.0"
+        ],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 1,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 1,
+        "transitiveDependents": 1,
+        "centrality": 1.1699,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "package:company.storage",
+        "label": "Company.Storage",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [
+          "1.0.0"
+        ],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0",
+          "net10.0-windows7.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 1,
+        "outDegree": 1,
+        "directDependencies": 1,
+        "transitiveDependencies": 1,
+        "directDependents": 1,
+        "transitiveDependents": 2,
+        "centrality": 1.8074,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:AmbiguousA/AmbiguousA.csproj",
+        "label": "AmbiguousA",
+        "kind": "project",
+        "path": "AmbiguousA/AmbiguousA.csproj",
+        "classification": "packable-library",
+        "classificationEvidence": [
+          "IsPackable=true"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 2,
+        "community": 1,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:AmbiguousB/AmbiguousB.csproj",
+        "label": "AmbiguousB",
+        "kind": "project",
+        "path": "AmbiguousB/AmbiguousB.csproj",
+        "classification": "packable-library",
+        "classificationEvidence": [
+          "IsPackable=true"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 3,
+        "community": 2,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:DuplicateA/Foo.csproj",
+        "label": "Foo",
+        "kind": "project",
+        "path": "DuplicateA/Foo.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 1,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 1,
+        "transitiveDependents": 1,
+        "centrality": 1.1699,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:DuplicateB/Foo.csproj",
+        "label": "Foo",
+        "kind": "project",
+        "path": "DuplicateB/Foo.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 4,
+        "community": 3,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Isolated/Isolated.csproj",
+        "label": "Isolated",
+        "kind": "project",
+        "path": "Isolated/Isolated.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 5,
+        "community": 4,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Main/App.csproj",
+        "label": "App",
+        "kind": "project",
+        "path": "Main/App.csproj",
+        "classification": "executable",
+        "classificationEvidence": [
+          "OutputType=Exe"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0",
+          "net10.0-windows"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 0,
+        "outDegree": 3,
+        "directDependencies": 3,
+        "transitiveDependencies": 5,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 2,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Malformed/Malformed.csproj",
+        "label": "Malformed",
+        "kind": "project",
+        "path": "Malformed/Malformed.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 6,
+        "community": 5,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Missing/Missing.csproj",
+        "label": "Missing",
+        "kind": "project",
+        "path": "Missing/Missing.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 7,
+        "community": 6,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:OutsideConsumer/OutsideConsumer.csproj",
+        "label": "OutsideConsumer",
+        "kind": "project",
+        "path": "OutsideConsumer/OutsideConsumer.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 1,
+        "community": 7,
+        "inDegree": 0,
+        "outDegree": 1,
+        "directDependencies": 1,
+        "transitiveDependencies": 1,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 1,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Shared/Shared.csproj",
+        "label": "Shared",
+        "kind": "project",
+        "path": "Shared/Shared.csproj",
+        "classification": "packable-library",
+        "classificationEvidence": [
+          "IsPackable=true"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 8,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:ToolA/ToolA.csproj",
+        "label": "ToolA",
+        "kind": "project",
+        "path": "ToolA/ToolA.csproj",
+        "classification": "executable",
+        "classificationEvidence": [
+          "OutputType=Exe"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 8,
+        "community": 9,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:ToolB/ToolB.csproj",
+        "label": "ToolB",
+        "kind": "project",
+        "path": "ToolB/ToolB.csproj",
+        "classification": "executable",
+        "classificationEvidence": [
+          "OutputType=Exe"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 9,
+        "community": 10,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "unresolved-project:home/khalik/workspace/dotnet-depgraph/fixtures/outside/external.csproj",
+        "label": "External",
+        "kind": "unresolved-project",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Outside/External.csproj",
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [],
+        "runtimeIdentifiers": [],
+        "component": 1,
+        "community": 7,
+        "inDegree": 1,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 1,
+        "transitiveDependents": 1,
+        "centrality": 1.1699,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge:PackageDependency:package:company.feature-\u003Epackage:company.storage",
+        "source": "package:company.feature",
+        "target": "package:company.storage",
+        "kind": "package-dependency",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": false,
+            "observationCount": 1
+          },
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0-windows7.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": false,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:PackageDependency:package:company.storage-\u003Epackage:company.serialization",
+        "source": "package:company.storage",
+        "target": "package:company.serialization",
+        "kind": "package-dependency",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": false,
+            "observationCount": 1
+          },
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0-windows7.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": false,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:PackageReference:project:Main/App.csproj-\u003Epackage:company.feature",
+        "source": "project:Main/App.csproj",
+        "target": "package:company.feature",
+        "kind": "package-reference",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": true,
+            "observationCount": 1
+          },
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0-windows7.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": true,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:PackageReference:project:Main/App.csproj-\u003Epackage:company.shared.core",
+        "source": "project:Main/App.csproj",
+        "target": "package:company.shared.core",
+        "kind": "package-reference",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": true,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:ProjectReference:project:Main/App.csproj-\u003Eproject:DuplicateA/Foo.csproj",
+        "source": "project:Main/App.csproj",
+        "target": "project:DuplicateA/Foo.csproj",
+        "kind": "project-reference",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "",
+            "runtimeIdentifier": null,
+            "requestedVersion": null,
+            "resolvedVersion": null,
+            "direct": true,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:ProjectReference:project:OutsideConsumer/OutsideConsumer.csproj-\u003Eunresolved-project:home/khalik/workspace/dotnet-depgraph/fixtures/outside/external.csproj",
+        "source": "project:OutsideConsumer/OutsideConsumer.csproj",
+        "target": "unresolved-project:home/khalik/workspace/dotnet-depgraph/fixtures/outside/external.csproj",
+        "kind": "project-reference",
+        "contexts": [
+          {
+            "ownerProjectId": "project:OutsideConsumer/OutsideConsumer.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/OutsideConsumer/obj/project.assets.json",
+            "targetFramework": "",
+            "runtimeIdentifier": null,
+            "requestedVersion": null,
+            "resolvedVersion": null,
+            "direct": true,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:ProducesPackage:project:Shared/Shared.csproj-\u003Epackage:company.shared.core",
+        "source": "project:Shared/Shared.csproj",
+        "target": "package:company.shared.core",
+        "kind": "produces-package",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Shared/Shared.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Shared/obj/project.assets.json",
+            "targetFramework": "",
+            "runtimeIdentifier": null,
+            "requestedVersion": null,
+            "resolvedVersion": null,
+            "direct": false,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      }
+    ],
+    "diagnostics": [
+      {
+        "code": "ambiguous-package-producer",
+        "severity": "warning",
+        "message": "Multiple local projects produce package ID \u0027Company.Ambiguous\u0027; no mapping was inferred.",
+        "projectId": "project:AmbiguousA/AmbiguousA.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousA/AmbiguousA.csproj"
+      },
+      {
+        "code": "ambiguous-package-producer",
+        "severity": "warning",
+        "message": "Multiple local projects produce package ID \u0027Company.Ambiguous\u0027; no mapping was inferred.",
+        "projectId": "project:AmbiguousB/AmbiguousB.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousB/AmbiguousB.csproj"
+      },
+      {
+        "code": "assets-malformed",
+        "severity": "error",
+        "message": "NuGet could not parse a package specification and at least one target from the assets file.",
+        "projectId": "project:Malformed/Malformed.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Malformed/malformed.assets.json"
+      },
+      {
+        "code": "assets-missing",
+        "severity": "error",
+        "message": "Assets file is missing; run restore or select a restore mode.",
+        "projectId": "project:AmbiguousA/AmbiguousA.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousA/obj/project.assets.json"
+      },
+      {
+        "code": "assets-missing",
+        "severity": "error",
+        "message": "Assets file is missing; run restore or select a restore mode.",
+        "projectId": "project:AmbiguousB/AmbiguousB.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousB/obj/project.assets.json"
+      },
+      {
+        "code": "assets-missing",
+        "severity": "error",
+        "message": "Assets file is missing; run restore or select a restore mode.",
+        "projectId": "project:Missing/Missing.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Missing/missing.assets.json"
+      },
+      {
+        "code": "assets-missing",
+        "severity": "error",
+        "message": "Assets file is missing; run restore or select a restore mode.",
+        "projectId": "project:OutsideConsumer/OutsideConsumer.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/OutsideConsumer/obj/project.assets.json"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node is isolated because authoritative restore data is missing.",
+        "projectId": "project:AmbiguousA/AmbiguousA.csproj",
+        "path": "AmbiguousA/AmbiguousA.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node is isolated because authoritative restore data is missing.",
+        "projectId": "project:AmbiguousB/AmbiguousB.csproj",
+        "path": "AmbiguousB/AmbiguousB.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node has no resolved dependencies or dependents.",
+        "projectId": "project:DuplicateB/Foo.csproj",
+        "path": "DuplicateB/Foo.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node has no resolved dependencies or dependents.",
+        "projectId": "project:Isolated/Isolated.csproj",
+        "path": "Isolated/Isolated.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node has no resolved dependencies or dependents.",
+        "projectId": "project:Malformed/Malformed.csproj",
+        "path": "Malformed/Malformed.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node is isolated because authoritative restore data is missing.",
+        "projectId": "project:Missing/Missing.csproj",
+        "path": "Missing/Missing.csproj"
+      },
+      {
+        "code": "outside-root-project-reference",
+        "severity": "warning",
+        "message": "Project reference \u0027/home/khalik/workspace/dotnet-depgraph/fixtures/Outside/External.csproj\u0027 was not among discovered projects.",
+        "projectId": "project:OutsideConsumer/OutsideConsumer.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Outside/External.csproj"
+      }
+    ],
+    "completeness": {
+      "discoveredProjects": 12,
+      "evaluatedProjects": 12,
+      "projectsWithValidAssets": 7,
+      "missingAssets": 4,
+      "malformedAssets": 1,
+      "mismatchedAssets": 0,
+      "failedRestores": 0,
+      "complete": false
+    },
+    "targetFrameworks": [
+      "net10.0",
+      "net10.0-windows7.0"
+    ],
+    "runtimeIdentifiers": []
+  },
+  "contract": {
+    "schemaVersion": "1.0",
+    "root": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative",
+    "nodes": [
+      {
+        "id": "package:company.feature",
+        "label": "Company.Feature",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [
+          "1.0.0"
+        ],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0",
+          "net10.0-windows7.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 1,
+        "outDegree": 1,
+        "directDependencies": 1,
+        "transitiveDependencies": 2,
+        "directDependents": 1,
+        "transitiveDependents": 1,
+        "centrality": 1.7004,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "package:company.serialization",
+        "label": "Company.Serialization",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [
+          "1.0.0"
+        ],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0",
+          "net10.0-windows7.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 1,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 1,
+        "transitiveDependents": 3,
+        "centrality": 1.4594,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "package:company.shared.core",
+        "label": "Company.Shared.Core",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [
+          "1.0.0"
+        ],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 1,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 1,
+        "transitiveDependents": 1,
+        "centrality": 1.1699,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "package:company.storage",
+        "label": "Company.Storage",
+        "kind": "package",
+        "path": null,
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [
+          "1.0.0"
+        ],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0",
+          "net10.0-windows7.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 1,
+        "outDegree": 1,
+        "directDependencies": 1,
+        "transitiveDependencies": 1,
+        "directDependents": 1,
+        "transitiveDependents": 2,
+        "centrality": 1.8074,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:AmbiguousA/AmbiguousA.csproj",
+        "label": "AmbiguousA",
+        "kind": "project",
+        "path": "AmbiguousA/AmbiguousA.csproj",
+        "classification": "packable-library",
+        "classificationEvidence": [
+          "IsPackable=true"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 2,
+        "community": 1,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:AmbiguousB/AmbiguousB.csproj",
+        "label": "AmbiguousB",
+        "kind": "project",
+        "path": "AmbiguousB/AmbiguousB.csproj",
+        "classification": "packable-library",
+        "classificationEvidence": [
+          "IsPackable=true"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 3,
+        "community": 2,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:DuplicateA/Foo.csproj",
+        "label": "Foo",
+        "kind": "project",
+        "path": "DuplicateA/Foo.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 1,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 1,
+        "transitiveDependents": 1,
+        "centrality": 1.1699,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:DuplicateB/Foo.csproj",
+        "label": "Foo",
+        "kind": "project",
+        "path": "DuplicateB/Foo.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 4,
+        "community": 3,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Isolated/Isolated.csproj",
+        "label": "Isolated",
+        "kind": "project",
+        "path": "Isolated/Isolated.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 5,
+        "community": 4,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Main/App.csproj",
+        "label": "App",
+        "kind": "project",
+        "path": "Main/App.csproj",
+        "classification": "executable",
+        "classificationEvidence": [
+          "OutputType=Exe"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0",
+          "net10.0-windows"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 0,
+        "inDegree": 0,
+        "outDegree": 3,
+        "directDependencies": 3,
+        "transitiveDependencies": 5,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 2,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Malformed/Malformed.csproj",
+        "label": "Malformed",
+        "kind": "project",
+        "path": "Malformed/Malformed.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 6,
+        "community": 5,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Missing/Missing.csproj",
+        "label": "Missing",
+        "kind": "project",
+        "path": "Missing/Missing.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 7,
+        "community": 6,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:OutsideConsumer/OutsideConsumer.csproj",
+        "label": "OutsideConsumer",
+        "kind": "project",
+        "path": "OutsideConsumer/OutsideConsumer.csproj",
+        "classification": "class-library",
+        "classificationEvidence": [
+          "OutputType=Library"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 1,
+        "community": 7,
+        "inDegree": 0,
+        "outDegree": 1,
+        "directDependencies": 1,
+        "transitiveDependencies": 1,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 1,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:Shared/Shared.csproj",
+        "label": "Shared",
+        "kind": "project",
+        "path": "Shared/Shared.csproj",
+        "classification": "packable-library",
+        "classificationEvidence": [
+          "IsPackable=true"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 0,
+        "community": 8,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:ToolA/ToolA.csproj",
+        "label": "ToolA",
+        "kind": "project",
+        "path": "ToolA/ToolA.csproj",
+        "classification": "executable",
+        "classificationEvidence": [
+          "OutputType=Exe"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 8,
+        "community": 9,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "project:ToolB/ToolB.csproj",
+        "label": "ToolB",
+        "kind": "project",
+        "path": "ToolB/ToolB.csproj",
+        "classification": "executable",
+        "classificationEvidence": [
+          "OutputType=Exe"
+        ],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [
+          "net10.0"
+        ],
+        "runtimeIdentifiers": [],
+        "component": 9,
+        "community": 10,
+        "inDegree": 0,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 0,
+        "transitiveDependents": 0,
+        "centrality": 0,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      },
+      {
+        "id": "unresolved-project:home/khalik/workspace/dotnet-depgraph/fixtures/outside/external.csproj",
+        "label": "External",
+        "kind": "unresolved-project",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Outside/External.csproj",
+        "classification": null,
+        "classificationEvidence": [],
+        "versions": [],
+        "versionSkew": false,
+        "targetFrameworks": [],
+        "runtimeIdentifiers": [],
+        "component": 1,
+        "community": 7,
+        "inDegree": 1,
+        "outDegree": 0,
+        "directDependencies": 0,
+        "transitiveDependencies": 0,
+        "directDependents": 1,
+        "transitiveDependents": 1,
+        "centrality": 1.1699,
+        "inCycle": false,
+        "tags": [],
+        "colorHint": null
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge:PackageDependency:package:company.feature-\u003Epackage:company.storage",
+        "source": "package:company.feature",
+        "target": "package:company.storage",
+        "kind": "package-dependency",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": false,
+            "observationCount": 1
+          },
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0-windows7.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": false,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:PackageDependency:package:company.storage-\u003Epackage:company.serialization",
+        "source": "package:company.storage",
+        "target": "package:company.serialization",
+        "kind": "package-dependency",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": false,
+            "observationCount": 1
+          },
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0-windows7.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": false,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:PackageReference:project:Main/App.csproj-\u003Epackage:company.feature",
+        "source": "project:Main/App.csproj",
+        "target": "package:company.feature",
+        "kind": "package-reference",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": true,
+            "observationCount": 1
+          },
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0-windows7.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": true,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:PackageReference:project:Main/App.csproj-\u003Epackage:company.shared.core",
+        "source": "project:Main/App.csproj",
+        "target": "package:company.shared.core",
+        "kind": "package-reference",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "net10.0",
+            "runtimeIdentifier": null,
+            "requestedVersion": "[1.0.0, )",
+            "resolvedVersion": "1.0.0",
+            "direct": true,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:ProjectReference:project:Main/App.csproj-\u003Eproject:DuplicateA/Foo.csproj",
+        "source": "project:Main/App.csproj",
+        "target": "project:DuplicateA/Foo.csproj",
+        "kind": "project-reference",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Main/App.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Main/obj/project.assets.json",
+            "targetFramework": "",
+            "runtimeIdentifier": null,
+            "requestedVersion": null,
+            "resolvedVersion": null,
+            "direct": true,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:ProjectReference:project:OutsideConsumer/OutsideConsumer.csproj-\u003Eunresolved-project:home/khalik/workspace/dotnet-depgraph/fixtures/outside/external.csproj",
+        "source": "project:OutsideConsumer/OutsideConsumer.csproj",
+        "target": "unresolved-project:home/khalik/workspace/dotnet-depgraph/fixtures/outside/external.csproj",
+        "kind": "project-reference",
+        "contexts": [
+          {
+            "ownerProjectId": "project:OutsideConsumer/OutsideConsumer.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/OutsideConsumer/obj/project.assets.json",
+            "targetFramework": "",
+            "runtimeIdentifier": null,
+            "requestedVersion": null,
+            "resolvedVersion": null,
+            "direct": true,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      },
+      {
+        "id": "edge:ProducesPackage:project:Shared/Shared.csproj-\u003Epackage:company.shared.core",
+        "source": "project:Shared/Shared.csproj",
+        "target": "package:company.shared.core",
+        "kind": "produces-package",
+        "contexts": [
+          {
+            "ownerProjectId": "project:Shared/Shared.csproj",
+            "assetsFile": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Shared/obj/project.assets.json",
+            "targetFramework": "",
+            "runtimeIdentifier": null,
+            "requestedVersion": null,
+            "resolvedVersion": null,
+            "direct": false,
+            "observationCount": 1
+          }
+        ],
+        "derived": false,
+        "minimumHiddenHops": null,
+        "pathCount": null,
+        "pathCountLimited": false,
+        "hiddenPathSamples": []
+      }
+    ],
+    "diagnostics": [
+      {
+        "code": "ambiguous-package-producer",
+        "severity": "warning",
+        "message": "Multiple local projects produce package ID \u0027Company.Ambiguous\u0027; no mapping was inferred.",
+        "projectId": "project:AmbiguousA/AmbiguousA.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousA/AmbiguousA.csproj"
+      },
+      {
+        "code": "ambiguous-package-producer",
+        "severity": "warning",
+        "message": "Multiple local projects produce package ID \u0027Company.Ambiguous\u0027; no mapping was inferred.",
+        "projectId": "project:AmbiguousB/AmbiguousB.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousB/AmbiguousB.csproj"
+      },
+      {
+        "code": "assets-malformed",
+        "severity": "error",
+        "message": "NuGet could not parse a package specification and at least one target from the assets file.",
+        "projectId": "project:Malformed/Malformed.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Malformed/malformed.assets.json"
+      },
+      {
+        "code": "assets-missing",
+        "severity": "error",
+        "message": "Assets file is missing; run restore or select a restore mode.",
+        "projectId": "project:AmbiguousA/AmbiguousA.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousA/obj/project.assets.json"
+      },
+      {
+        "code": "assets-missing",
+        "severity": "error",
+        "message": "Assets file is missing; run restore or select a restore mode.",
+        "projectId": "project:AmbiguousB/AmbiguousB.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousB/obj/project.assets.json"
+      },
+      {
+        "code": "assets-missing",
+        "severity": "error",
+        "message": "Assets file is missing; run restore or select a restore mode.",
+        "projectId": "project:Missing/Missing.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Missing/missing.assets.json"
+      },
+      {
+        "code": "assets-missing",
+        "severity": "error",
+        "message": "Assets file is missing; run restore or select a restore mode.",
+        "projectId": "project:OutsideConsumer/OutsideConsumer.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/OutsideConsumer/obj/project.assets.json"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node is isolated because authoritative restore data is missing.",
+        "projectId": "project:AmbiguousA/AmbiguousA.csproj",
+        "path": "AmbiguousA/AmbiguousA.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node is isolated because authoritative restore data is missing.",
+        "projectId": "project:AmbiguousB/AmbiguousB.csproj",
+        "path": "AmbiguousB/AmbiguousB.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node has no resolved dependencies or dependents.",
+        "projectId": "project:DuplicateB/Foo.csproj",
+        "path": "DuplicateB/Foo.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node has no resolved dependencies or dependents.",
+        "projectId": "project:Isolated/Isolated.csproj",
+        "path": "Isolated/Isolated.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node has no resolved dependencies or dependents.",
+        "projectId": "project:Malformed/Malformed.csproj",
+        "path": "Malformed/Malformed.csproj"
+      },
+      {
+        "code": "isolated-node",
+        "severity": "info",
+        "message": "Node is isolated because authoritative restore data is missing.",
+        "projectId": "project:Missing/Missing.csproj",
+        "path": "Missing/Missing.csproj"
+      },
+      {
+        "code": "outside-root-project-reference",
+        "severity": "warning",
+        "message": "Project reference \u0027/home/khalik/workspace/dotnet-depgraph/fixtures/Outside/External.csproj\u0027 was not among discovered projects.",
+        "projectId": "project:OutsideConsumer/OutsideConsumer.csproj",
+        "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Outside/External.csproj"
+      }
+    ],
+    "completeness": {
+      "discoveredProjects": 12,
+      "evaluatedProjects": 12,
+      "projectsWithValidAssets": 7,
+      "missingAssets": 4,
+      "malformedAssets": 1,
+      "mismatchedAssets": 0,
+      "failedRestores": 0,
+      "complete": false
+    },
+    "targetFrameworks": [
+      "net10.0",
+      "net10.0-windows7.0"
+    ],
+    "runtimeIdentifiers": []
+  },
+  "defaults": {
+    "filterMode": "contract",
+    "seed": 42,
+    "collapseLocalPackages": false
+  }
+}</script><script src="cytoscape.min.js"></script><script src="viewer.js"></script></body></html>

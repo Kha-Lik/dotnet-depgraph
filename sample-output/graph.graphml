@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"><key id="label" for="node" attr.name="label" attr.type="string"/><key id="kind" for="all" attr.name="kind" attr.type="string"/><graph id="dependency-graph" edgedefault="directed">
+<node id="package:app"><data key="label">App</data><data key="kind">package</data></node>
+<node id="package:company.feature"><data key="label">Company.Feature</data><data key="kind">package</data></node>
+<node id="package:company.serialization"><data key="label">Company.Serialization</data><data key="kind">package</data></node>
+<node id="package:company.shared.core"><data key="label">Company.Shared.Core</data><data key="kind">package</data></node>
+<node id="package:company.storage"><data key="label">Company.Storage</data><data key="kind">package</data></node>
+<node id="package:toola"><data key="label">ToolA</data><data key="kind">package</data></node>
+<node id="package:toolb"><data key="label">ToolB</data><data key="kind">package</data></node>
+<node id="project:AmbiguousA/AmbiguousA.csproj"><data key="label">AmbiguousA</data><data key="kind">project</data></node>
+<node id="project:AmbiguousB/AmbiguousB.csproj"><data key="label">AmbiguousB</data><data key="kind">project</data></node>
+<node id="project:DuplicateA/Foo.csproj"><data key="label">Foo</data><data key="kind">project</data></node>
+<node id="project:DuplicateB/Foo.csproj"><data key="label">Foo</data><data key="kind">project</data></node>
+<node id="project:Isolated/Isolated.csproj"><data key="label">Isolated</data><data key="kind">project</data></node>
+<node id="project:Main/App.csproj"><data key="label">App</data><data key="kind">project</data></node>
+<node id="project:Malformed/Malformed.csproj"><data key="label">Malformed</data><data key="kind">project</data></node>
+<node id="project:Missing/Missing.csproj"><data key="label">Missing</data><data key="kind">project</data></node>
+<node id="project:OutsideConsumer/OutsideConsumer.csproj"><data key="label">OutsideConsumer</data><data key="kind">project</data></node>
+<node id="project:Shared/Shared.csproj"><data key="label">Shared</data><data key="kind">project</data></node>
+<node id="project:ToolA/ToolA.csproj"><data key="label">ToolA</data><data key="kind">project</data></node>
+<node id="project:ToolB/ToolB.csproj"><data key="label">ToolB</data><data key="kind">project</data></node>
+<node id="unresolved-project:home/khalik/workspace/dotnet-depgraph/fixtures/outside/external.csproj"><data key="label">External</data><data key="kind">unresolved-project</data></node>
+<edge id="edge:PackageDependency:package:company.feature-&gt;package:company.storage" source="package:company.feature" target="package:company.storage"><data key="kind">package-dependency</data></edge>
+<edge id="edge:PackageDependency:package:company.storage-&gt;package:company.serialization" source="package:company.storage" target="package:company.serialization"><data key="kind">package-dependency</data></edge>
+<edge id="edge:ProducesPackage:project:Main/App.csproj-&gt;package:app" source="project:Main/App.csproj" target="package:app"><data key="kind">produces-package</data></edge>
+<edge id="edge:PackageReference:project:Main/App.csproj-&gt;package:company.feature" source="project:Main/App.csproj" target="package:company.feature"><data key="kind">package-reference</data></edge>
+<edge id="edge:PackageReference:project:Main/App.csproj-&gt;package:company.shared.core" source="project:Main/App.csproj" target="package:company.shared.core"><data key="kind">package-reference</data></edge>
+<edge id="edge:ProjectReference:project:Main/App.csproj-&gt;project:DuplicateA/Foo.csproj" source="project:Main/App.csproj" target="project:DuplicateA/Foo.csproj"><data key="kind">project-reference</data></edge>
+<edge id="edge:ProjectReference:project:OutsideConsumer/OutsideConsumer.csproj-&gt;unresolved-project:home/khalik/workspace/dotnet-depgraph/fixtures/outside/external.csproj" source="project:OutsideConsumer/OutsideConsumer.csproj" target="unresolved-project:home/khalik/workspace/dotnet-depgraph/fixtures/outside/external.csproj"><data key="kind">project-reference</data></edge>
+<edge id="edge:ProducesPackage:project:Shared/Shared.csproj-&gt;package:company.shared.core" source="project:Shared/Shared.csproj" target="package:company.shared.core"><data key="kind">produces-package</data></edge>
+<edge id="edge:ProducesPackage:project:ToolA/ToolA.csproj-&gt;package:toola" source="project:ToolA/ToolA.csproj" target="package:toola"><data key="kind">produces-package</data></edge>
+<edge id="edge:ProducesPackage:project:ToolB/ToolB.csproj-&gt;package:toolb" source="project:ToolB/ToolB.csproj" target="package:toolb"><data key="kind">produces-package</data></edge>
+</graph></graphml>

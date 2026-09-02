@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/dotnet-depgraph/graph-1.0.schema.json",
+  "title": "dotnet-depgraph canonical graph",
+  "type": "object",
+  "required": ["schemaVersion", "root", "nodes", "edges", "diagnostics", "completeness"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "root": { "type": "string" },
+    "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+    "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
+    "diagnostics": { "type": "array", "items": { "type": "object", "required": ["code", "severity", "message"] } },
+    "completeness": { "type": "object", "required": ["discoveredProjects", "evaluatedProjects", "projectsWithValidAssets", "complete"] },
+    "targetFrameworks": { "type": "array", "items": { "type": "string" } },
+    "runtimeIdentifiers": { "type": "array", "items": { "type": "string" } }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["id", "label", "kind", "versions", "targetFrameworks", "runtimeIdentifiers"],
+      "properties": {
+        "id": { "type": "string" }, "label": { "type": "string" },
+        "kind": { "enum": ["project", "package", "unresolved-project", "unresolved-library"] },
+        "versions": { "type": "array", "items": { "type": "string" } }, "versionSkew": { "type": "boolean" }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["id", "source", "target", "kind", "contexts", "derived"],
+      "properties": {
+        "source": { "type": "string" }, "target": { "type": "string" },
+        "kind": { "enum": ["project-reference", "package-reference", "package-dependency", "produces-package", "contracted-path"] },
+        "derived": { "type": "boolean" }, "minimumHiddenHops": { "type": ["integer", "null"] },
+        "pathCount": { "type": ["integer", "null"] }, "pathCountLimited": { "type": "boolean" },
+        "contexts": { "type": "array", "items": { "type": "object", "required": ["ownerProjectId", "assetsFile", "targetFramework", "direct", "observationCount"] } }
+      }
+    }
+  }
+}

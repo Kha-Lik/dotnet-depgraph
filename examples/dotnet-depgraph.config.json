@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "includePackages": ["Acme.*"],
+  "excludePackages": ["Acme.Legacy.*"],
+  "excludePaths": ["samples/generated/*"],
+  "filterMode": "contract",
+  "restoreMode": "missing",
+  "properties": { "Configuration": "Release" },
+  "collapseLocalPackages": true,
+  "seed": 42,
+  "projectRules": [
+    { "pathGlob": "src/Gateway/*", "category": "web-application", "label": "Public gateway", "tag": "edge", "colorHint": "#4cc9f0" }
+  ],
+  "packageAliases": { "Acme.Foundation": "Foundation" },
+  "knownPackageProducers": { "Acme.Contracts": "src/Contracts/Contracts.csproj" }
+}

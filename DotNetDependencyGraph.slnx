@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj" />
+  <Project Path="src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj" />
+  <Project Path="tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj" />
+  <Project Path="tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj" />
+</Solution>

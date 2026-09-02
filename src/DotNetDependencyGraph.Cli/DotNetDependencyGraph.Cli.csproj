@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>dotnet-depgraph</ToolCommandName>
+    <PackageId>dotnet-depgraph</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>DotNetDependencyGraph contributors</Authors>
+    <Description>Offline transitive dependency graph explorer for .NET source trees.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj" />
+    <Content Include="viewer/**" CopyToOutputDirectory="PreserveNewest" Pack="false" />
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>
