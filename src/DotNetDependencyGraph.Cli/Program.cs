@@ -3,7 +3,7 @@ using DotNetDependencyGraph.Core;
 
 return await ProgramEntry.RunAsync(args);
 
-internal static class ProgramEntry
+public static class ProgramEntry
 {
     private const string Help = """
 dotnet-depgraph — offline transitive .NET dependency explorer
@@ -11,6 +11,7 @@ dotnet-depgraph — offline transitive .NET dependency explorer
 Usage:
   dotnet-depgraph scan --root <path> --output <path> [options]
   dotnet-depgraph validate --root <path> [options]
+  dotnet-depgraph render --graph <graph.json> --output <path> [--force] [--seed <integer>]
   dotnet-depgraph export --graph <graph.json> --output <file.graphml> --format graphml
 
 Scan options:
@@ -46,6 +47,7 @@ case-insensitive for package IDs. Restore/evaluation should only be used on trus
             {
                 "scan" => await ScanAsync(parsed, true, cancellation.Token),
                 "validate" => await ScanAsync(parsed, false, cancellation.Token),
+                "render" => Render(parsed),
                 "export" => Export(parsed),
                 _ => throw new ArgumentException($"Unknown command '{command}'.\n\n{Help}")
             };
@@ -111,6 +113,29 @@ case-insensitive for package IDs. Restore/evaluation should only be used on trus
         if (!string.Equals(args.One("format") ?? "graphml", "graphml", StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("Only graphml export is supported.");
         var graph = JsonSerializer.Deserialize<DependencyGraph>(File.ReadAllText(args.Required("graph")), OutputWriter.JsonOptions) ?? throw new InvalidDataException("Invalid graph JSON.");
         File.WriteAllText(args.Required("output"), OutputWriter.GraphMl(graph)); return 0;
+    }
+
+    private static int Render(Arguments args)
+    {
+        var graphPath = Path.GetFullPath(args.Required("graph"));
+        var output = Path.GetFullPath(args.Required("output"));
+        var graph = ReadGraph(graphPath);
+        var viewer = Path.Combine(AppContext.BaseDirectory, "viewer");
+        if (!Directory.Exists(viewer)) throw new IOException($"Bundled viewer assets were not found at {viewer}.");
+        var seed = Int(args.One("seed"), 42);
+        var filterMode = ParseEnum(args.One("filter-mode") ?? "contract", FilterMode.Contract);
+        OutputWriter.Write(output, graph, new(args.Many("include-package"), args.Many("exclude-package"), filterMode, seed, args.Flag("force"), args.Flag("collapse-local-packages")), viewer);
+        Console.WriteLine($"Rendered {graph.Nodes.Count} nodes and {graph.Edges.Count} edges without scanning or restore. Report: {Path.Combine(output, "index.html")}");
+        return 0;
+    }
+
+    private static DependencyGraph ReadGraph(string path)
+    {
+        using var stream = File.OpenRead(path);
+        var graph = JsonSerializer.Deserialize<DependencyGraph>(stream, OutputWriter.JsonOptions) ?? throw new InvalidDataException("Invalid graph JSON.");
+        if (!string.Equals(graph.SchemaVersion, "1.0", StringComparison.Ordinal))
+            throw new ArgumentException($"Unsupported graph schemaVersion '{graph.SchemaVersion}'. Expected '1.0'.");
+        return graph;
     }
     private static ToolConfig LoadConfig(string? path)
     {

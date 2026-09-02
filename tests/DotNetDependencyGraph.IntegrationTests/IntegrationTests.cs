@@ -25,11 +25,29 @@ public sealed class IntegrationTests
         {
             var graph = new DependencyGraph { Root = "/repo", Nodes = [new() { Id = "project:x", Label = "</script><script>alert(1)</script>", Kind = NodeKind.Project }], Edges = [], Completeness = new() { Complete = false } };
             OutputWriter.Write(temp, graph, new([], [], FilterMode.Contract, 42, true), Path.Combine(RepositoryRoot(), "src", "DotNetDependencyGraph.Cli", "viewer"));
-            foreach (var file in new[] { "index.html", "graph.json", "diagnostics.json", "summary.md", "graph.graphml", "viewer.js", "viewer.css", "cytoscape.min.js", "THIRD-PARTY-NOTICES.txt" }) Assert.True(File.Exists(Path.Combine(temp, file)), file);
-            var html = File.ReadAllText(Path.Combine(temp, "index.html")); Assert.DoesNotContain("</script><script>alert(1)</script>", html); Assert.Contains("id=\"search\"", html); Assert.Contains("id=\"hops\"", html); Assert.Contains("id=\"component\"", html);
+            foreach (var file in new[] { "index.html", "graph.json", "diagnostics.json", "summary.md", "graph.graphml", "viewer.js", "viewer.css", "cytoscape.min.js", "d3-dispatch.min.js", "d3-quadtree.min.js", "d3-timer.min.js", "d3-force.min.js", "THIRD-PARTY-NOTICES.txt" }) Assert.True(File.Exists(Path.Combine(temp, file)), file);
+            var html = File.ReadAllText(Path.Combine(temp, "index.html")); Assert.DoesNotContain("</script><script>alert(1)</script>", html); Assert.Contains("id=\"search\"", html); Assert.Contains("id=\"hops\"", html); Assert.Contains("id=\"component\"", html); Assert.Contains("id=\"repulsion\"", html); Assert.DoesNotContain("src=\"http", html, StringComparison.OrdinalIgnoreCase);
+            var viewer = File.ReadAllText(Path.Combine(temp, "viewer.js")); Assert.Contains("forceCollide", viewer); Assert.Contains("search-match", viewer); Assert.Contains("\"text-wrap\": \"none\"", viewer); Assert.Contains(PhysicsDefaults.StorageKey, html); Assert.Contains("id=\"important-label-count\"", html); Assert.Contains("dotnet-depgraph.viewer.v1", html);
             using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(temp, "graph.json"))); Assert.Equal("1.0", json.RootElement.GetProperty("schemaVersion").GetString());
         }
         finally { if (Directory.Exists(temp)) Directory.Delete(temp, true); }
+    }
+
+    [Fact]
+    public async Task RenderCommandValidatesSchemaAndDoesNotRequireSourceTree()
+    {
+        var temp = Path.Combine(Path.GetTempPath(), "depgraph-render-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(temp);
+        try
+        {
+            var graphPath = Path.Combine(temp, "input.json"); var output = Path.Combine(temp, "report");
+            var graph = new DependencyGraph { Root = "/path/that/does/not/exist", Nodes = [new() { Id = "a", Label = "A", Kind = NodeKind.Package }], Edges = [], Completeness = new() { Complete = true } };
+            await File.WriteAllTextAsync(graphPath, JsonSerializer.Serialize(graph, OutputWriter.JsonOptions), TestContext.Current.CancellationToken);
+            Assert.Equal(0, await ProgramEntry.RunAsync(["render", "--graph", graphPath, "--output", output]));
+            Assert.True(File.Exists(Path.Combine(output, "index.html")));
+            await File.WriteAllTextAsync(graphPath, "{\"schemaVersion\":\"9.0\",\"root\":\"/\",\"nodes\":[],\"edges\":[]}", TestContext.Current.CancellationToken);
+            Assert.Equal(2, await ProgramEntry.RunAsync(["render", "--graph", graphPath, "--output", output, "--force"]));
+        }
+        finally { Directory.Delete(temp, true); }
     }
 
     [Fact]

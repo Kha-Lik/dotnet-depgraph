@@ -27,6 +27,14 @@ dotnet-depgraph scan --root /path/to/source --output /tmp/dependency-report
 
 Open `index.html` directly. Its graph data is embedded and its Cytoscape.js runtime is adjacent, so no HTTP server or network connection is required.
 
+For fast renderer iteration from an existing canonical graph, skip discovery, MSBuild, and restore entirely:
+
+```bash
+dotnet-depgraph render --graph /path/to/graph.json --output /tmp/dependency-report-rendered
+```
+
+`render` accepts graph schema `1.0`, supports `--seed`, `--force`, `--include-package`, `--exclude-package`, `--filter-mode`, and `--collapse-local-packages`, and refuses unsupported schema versions or unrelated files in a nonempty output directory.
+
 ## Why restore data is required
 
 Literal `<PackageReference>` elements are not a transitive graph and can be changed by imports, conditions, and central package management. The tool uses evaluated MSBuild metadata and NuGet's `NuGet.ProjectModel` lock-file API. Each target framework/RID is resolved independently before identical logical edges are aggregated. Missing or invalid assets are reported and make the result incomplete; they are never treated as an empty dependency set.
@@ -65,11 +73,13 @@ MSBuild evaluation uses `dotnet msbuild -getProperty/-getItem`, including a fram
 
 ## Viewer
 
-The report uses bundled Cytoscape.js 3.34.2 (MIT; license included in every report). A topology-driven CoSE layout spaces disconnected components as islands. Initial positions and community detection are seeded. Labels appear for important, searched, selected, or zoomed nodes.
+The report uses bundled Cytoscape.js 3.34.2 with d3-force 3.0.0 (licenses included in every report). A live many-body simulation repels every node, edge springs retain dependency neighborhoods, rendered-size-aware collision prevents overlap, and weak per-component centering keeps disconnected components as separate islands. Initial positions are seeded; the simulation visibly settles, cools to idle, and reheats after dragging or physics changes.
 
-Search is partial and case-insensitive. Selection shows metadata and immediate dependencies/dependents, with green downstream and orange upstream emphasis. Controls filter node/edge kind, component, community, TFM, RID, and version skew; isolate one-to-three-hop neighborhoods; switch raw/strict/contract and separate/collapsed producer views; navigate components; rerun a force layout (double-click for breadth-first); reset/fit; and export displayed JSON or a PNG.
+Search is partial and case-insensitive. Selection shows metadata and immediate dependencies/dependents, with green outgoing dependencies and orange incoming dependents. Controls filter node/edge kind, component, community, TFM, RID, and version skew; isolate one-to-three-hop neighborhoods; switch raw/strict/contract and separate/collapsed producer views; navigate components; reset/fit; and export displayed JSON or a PNG.
 
-Node size is capped logarithmically from dependency importance. Color indicates topology-derived community. Projects have distinct shapes; version skew has a red ring. Arrows point from consumer to dependency. Contracted paths are dashed and producer mappings dotted.
+The collapsible Physics / Layout panel controls repulsion, edge-spring distance and strength, collision spacing, and weak gravity. It also pauses/resumes physics, deliberately randomizes and reruns the layout, resets tuned defaults, and fits all visible islands. Settings are bounded and stored locally under the versioned key `dotnet-depgraph.physics.v2`; reset removes the saved settings. No graph data is persisted.
+
+Node diameter is `clamp(18 + 6 × log2(transitiveDependents + inDegree + 1), 18, 52)` pixels, preserving relative importance without allowing hubs to cover clusters. Color indicates topology-derived community. Projects have distinct shapes; version skew has a modest red ring. The 12 visually largest nodes remain labeled by default at every zoom level, configurable from 0–50 in the Labels panel; additional labels appear progressively while zooming. Hovered and selected labels use full, untruncated text at a stable screen-space size. Overview edges use contrasting colors and focused edges reveal arrowheads. Contracted paths are dashed and producer mappings dotted.
 
 ## Output and schema
 
@@ -91,6 +101,6 @@ Pass `--config examples/dotnet-depgraph.config.json`. Schema `1.0` supports path
 
 `fixtures/build-representative.sh` builds a private local package chain (`Feature → Storage → Serialization`) and restores a repository containing multi-target conditions, central package management, local producers, ambiguities, duplicate names, disconnected tools, and isolated projects. A committed lock file covers RID target extraction. Tests validate graph facts and report safety, not screenshots.
 
-The viewer targets roughly 2,000 nodes and 10,000 edges. It suppresses overview labels and idle edges are translucent; filters and neighborhoods reduce render work. The core uses linear graph passes except exact per-node reachability counts, which trade memory for straightforward bounded behavior at this scale.
+The viewer targets roughly 2,000 nodes and 10,000 edges. Overview edges use high-contrast colors, while a configurable number of the visually largest nodes remain labeled at every zoom level. Hovered, selected, and searched labels stay a readable screen-space size instead of shrinking with graph zoom. Filters and neighborhoods reduce render work. The core uses linear graph passes except exact per-node reachability counts, which trade memory for straightforward bounded behavior at this scale.
 
 Known limitations: staleness is not guessed (use `always` when necessary); path glob `*` may cross `/` and is deliberately simpler than gitignore syntax; centrality is a stable logarithmic reach/degree measure rather than full betweenness; community detection is deterministic label propagation rather than Louvain; GraphML exports the raw view; no version-expanded graph mode is provided; viewer position persistence and SVG export are not implemented. See [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
