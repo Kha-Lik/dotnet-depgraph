@@ -6,7 +6,7 @@
 - Deterministic seeded starting positions and separated component anchors; `Fit all` and component navigation retain access to every island.
 - Progressive labels for overview importance and zoom, configurable persistent labels for the largest nodes, and full screen-space labels for hover and selection.
 - Bounded logarithmic node diameters (18–52 px), modest borders, selection halo, contrasting overview edges, focused direction arrows, and preserved edge-kind styles.
-- Persisted, bounded controls for repulsion, link distance, link strength, node spacing, and gravity, plus pause/resume, rerun, reset defaults, and fit.
+- Persisted, bounded controls for repulsion, link distance, link strength, node spacing, drag threshold, and gravity, plus pause/resume, rerun, reset defaults, and fit.
 - Render-only `render --graph ... --output ...` flow with schema validation and no scanner/restore access.
 - Locally bundled Cytoscape and d3 assets with combined notices; generated reports contain no CDN references.
 
@@ -26,7 +26,7 @@
 - Local 920-node/7,883-edge reference report: nodes appeared in 1.6 s and settled in 15.1 s with zero overlaps; the 12 visually largest nodes remain labeled at Fit all by default in headless Chrome.
 - Coarse headless-Chrome process-tree RSS was 2.44 GiB for the 136 MiB reference input versus 1.95 GiB for the sample/browser baseline. Canvas edges retain only rendering fields; canonical edge contexts remain in the single embedded payload and are restored on JSON export.
 - A synthetic graph with the same node/edge counts and reference degree distribution settled in 175 force ticks with zero overlaps; the same machine-only check found zero overlaps for the reference topology.
-- Hover/selection label disclosure without truncation, zoom-independent screen sizing, persisted label-count control, drag reheat, physics slider reheat, pause/resume, reset, and fit passed with no browser console errors.
+- Hover/selection label disclosure without truncation, zoom-independent screen sizing, persisted label-count control, click-versus-drag threshold handling, drag reheat, physics slider reheat, pause/resume, reset, and fit passed with no browser console errors.
 - The viewer exposes `window.__depgraphDebug.overlapCount()` and reports the settled count in the header for repeatable inspection.
 
 ## Remaining limitations

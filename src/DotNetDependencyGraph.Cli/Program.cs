@@ -17,6 +17,9 @@ Usage:
 Scan options:
   --include-package <glob>       Repeatable, case-insensitive package ID glob
   --exclude-package <glob>       Repeatable; excludes take precedence
+  --include-project <glob>       Repeatable root-relative project path glob
+  --exclude-project <glob>       Repeatable; hides projects but retains produced packages
+  --collapse-local-packages     Merge producer projects with their package nodes by default
   --filter-mode strict|contract  Default: contract
   --restore never|missing|always Default: missing
   --jobs <n>                     Restore concurrency; default: processor-aware (max 4)
@@ -64,6 +67,8 @@ case-insensitive for package IDs. Restore/evaluation should only be used on trus
         var output = write ? Path.GetFullPath(args.Required("output")) : null;
         var includes = args.ManyOr("include-package", config.IncludePackages);
         var excludes = args.ManyOr("exclude-package", config.ExcludePackages);
+        var includeProjects = args.ManyOr("include-project", config.IncludeProjects);
+        var excludeProjects = args.ManyOr("exclude-project", config.ExcludeProjects);
         var includePaths = args.ManyOr("include-path", config.IncludePaths);
         var excludePaths = args.ManyOr("exclude-path", config.ExcludePaths);
         var tfms = args.Many("target-framework"); if (tfms.Count == 0) tfms = ["all"];
@@ -101,9 +106,10 @@ case-insensitive for package IDs. Restore/evaluation should only be used on trus
         {
             var viewer = Path.Combine(AppContext.BaseDirectory, "viewer");
             if (!Directory.Exists(viewer)) throw new IOException($"Bundled viewer assets were not found at {viewer}.");
-            OutputWriter.Write(output!, result.Graph, new(includes, excludes, filterMode, seed, args.Flag("force"), config.CollapseLocalPackages), viewer);
+            var collapseLocalPackages = args.Flag("collapse-local-packages") || config.CollapseLocalPackages;
+            OutputWriter.Write(output!, result.Graph, new(includes, excludes, includeProjects, excludeProjects, filterMode, seed, args.Flag("force"), collapseLocalPackages), viewer);
         }
-        var g = filterMode == FilterMode.Contract ? GraphFilter.Apply(result.Graph, includes, excludes, FilterMode.Contract) : GraphFilter.Apply(result.Graph, includes, excludes, FilterMode.Strict);
+        var g = GraphFilter.Apply(result.Graph, includes, excludes, filterMode, includeProjects, excludeProjects);
         Console.WriteLine($"{(result.Graph.Completeness.Complete ? "Complete" : "INCOMPLETE")}: {result.Projects.Count} projects, {g.Nodes.Count(x => x.Kind == NodeKind.Package)} packages, {g.Edges.Count} displayed edges, {g.Nodes.Select(x => x.Component).Distinct().Count()} components, {result.Graph.Diagnostics.Count(x => x.Severity != DiagnosticSeverity.Info)} warnings/errors{(write ? $". Report: {Path.Combine(output!, "index.html")}" : ".")}");
         return args.Flag("fail-on-incomplete") && !result.Graph.Completeness.Complete ? 3 : 0;
     }
@@ -124,7 +130,7 @@ case-insensitive for package IDs. Restore/evaluation should only be used on trus
         if (!Directory.Exists(viewer)) throw new IOException($"Bundled viewer assets were not found at {viewer}.");
         var seed = Int(args.One("seed"), 42);
         var filterMode = ParseEnum(args.One("filter-mode") ?? "contract", FilterMode.Contract);
-        OutputWriter.Write(output, graph, new(args.Many("include-package"), args.Many("exclude-package"), filterMode, seed, args.Flag("force"), args.Flag("collapse-local-packages")), viewer);
+        OutputWriter.Write(output, graph, new(args.Many("include-package"), args.Many("exclude-package"), args.Many("include-project"), args.Many("exclude-project"), filterMode, seed, args.Flag("force"), args.Flag("collapse-local-packages")), viewer);
         Console.WriteLine($"Rendered {graph.Nodes.Count} nodes and {graph.Edges.Count} edges without scanning or restore. Report: {Path.Combine(output, "index.html")}");
         return 0;
     }
@@ -169,7 +175,8 @@ case-insensitive for package IDs. Restore/evaluation should only be used on trus
 internal sealed record ToolConfig
 {
     public string SchemaVersion { get; init; } = "1.0"; public string[] IncludePackages { get; init; } = []; public string[] ExcludePackages { get; init; } = [];
-    public string[] IncludePaths { get; init; } = []; public string[] ExcludePaths { get; init; } = []; public string? FilterMode { get; init; }
+    public string[] IncludePaths { get; init; } = []; public string[] ExcludePaths { get; init; } = [];
+    public string[] IncludeProjects { get; init; } = []; public string[] ExcludeProjects { get; init; } = []; public string? FilterMode { get; init; }
     public string? RestoreMode { get; init; }
     public Dictionary<string, string> Properties { get; init; } = new(); public int? Seed { get; init; }
     public bool CollapseLocalPackages { get; init; }

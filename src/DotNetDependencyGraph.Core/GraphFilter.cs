@@ -4,13 +4,31 @@ public enum FilterMode { Strict, Contract }
 
 public static class GraphFilter
 {
-    public static DependencyGraph Apply(DependencyGraph raw, IReadOnlyList<string> includes, IReadOnlyList<string> excludes, FilterMode mode, int sampleLimit = 3, int pathLimit = 1000)
+    public static DependencyGraph Apply(
+        DependencyGraph raw,
+        IReadOnlyList<string> includes,
+        IReadOnlyList<string> excludes,
+        FilterMode mode,
+        IReadOnlyList<string>? includeProjects = null,
+        IReadOnlyList<string>? excludeProjects = null,
+        int sampleLimit = 3,
+        int pathLimit = 1000)
     {
+        includeProjects ??= [];
+        excludeProjects ??= [];
+
         bool Retain(GraphNode node)
         {
-            if (node.Kind != NodeKind.Package) return true;
-            var packageId = node.Id.StartsWith("package:", StringComparison.Ordinal) ? node.Id["package:".Length..] : node.Label;
-            return (includes.Count == 0 || includes.Any(x => Glob.IsMatch(packageId, x))) && !excludes.Any(x => Glob.IsMatch(packageId, x));
+            if (node.Kind == NodeKind.Package)
+            {
+                var packageId = node.Id.StartsWith("package:", StringComparison.Ordinal) ? node.Id["package:".Length..] : node.Label;
+                return (includes.Count == 0 || includes.Any(x => Glob.IsMatch(packageId, x))) && !excludes.Any(x => Glob.IsMatch(packageId, x));
+            }
+
+            if (node.Kind != NodeKind.Project) return true;
+            var path = ProjectDiscovery.Normalize(node.Path ?? node.Id["project:".Length..]);
+            return (includeProjects.Count == 0 || includeProjects.Any(x => Glob.IsMatch(path, x)))
+                && !excludeProjects.Any(x => Glob.IsMatch(path, x));
         }
         var retained = raw.Nodes.Where(Retain).Select(x => x.Id).ToHashSet(StringComparer.Ordinal);
         var nodes = raw.Nodes.Where(x => retained.Contains(x.Id)).ToArray();
@@ -57,7 +75,7 @@ public static class GraphFilter
         var rawConnected = raw.Edges.Where(GraphAnalysis.IsDependency).SelectMany(x => new[] { x.Source, x.Target }).ToHashSet(StringComparer.Ordinal);
         var added = display.Nodes.Where(x => x.InDegree == 0 && x.OutDegree == 0 && rawConnected.Contains(x.Id)).Select(x => new GraphDiagnostic(
             mode == FilterMode.Strict ? "isolated-by-strict-filter" : "isolated-after-contract-filter", DiagnosticSeverity.Info,
-            mode == FilterMode.Strict ? "Package filtering removed this node's connecting paths in strict mode." : "No retained dependency endpoint was reachable through the hidden package paths.", x.Id, x.Path));
+            mode == FilterMode.Strict ? "Filtering removed this node's connecting paths in strict mode." : "No retained dependency endpoint was reachable through the hidden dependency paths.", x.Id, x.Path));
         return display with { Diagnostics = display.Diagnostics.Concat(added).OrderBy(x => x.Code).ThenBy(x => x.ProjectId).ThenBy(x => x.Message).ToArray() };
     }
 

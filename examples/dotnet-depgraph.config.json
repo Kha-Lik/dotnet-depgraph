@@ -2,6 +2,7 @@
   "schemaVersion": "1.0",
   "includePackages": ["Acme.*"],
   "excludePackages": ["Acme.Legacy.*"],
+  "excludeProjects": ["src/Generators/*"],
   "excludePaths": ["samples/generated/*"],
   "filterMode": "contract",
   "restoreMode": "missing",

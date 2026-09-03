@@ -33,7 +33,7 @@ For fast renderer iteration from an existing canonical graph, skip discovery, MS
 dotnet-depgraph render --graph /path/to/graph.json --output /tmp/dependency-report-rendered
 ```
 
-`render` accepts graph schema `1.0`, supports `--seed`, `--force`, `--include-package`, `--exclude-package`, `--filter-mode`, and `--collapse-local-packages`, and refuses unsupported schema versions or unrelated files in a nonempty output directory.
+`render` accepts graph schema `1.0`, supports `--seed`, `--force`, package and project filters, `--filter-mode`, and `--collapse-local-packages`, and refuses unsupported schema versions or unrelated files in a nonempty output directory.
 
 ## Why restore data is required
 
@@ -54,18 +54,23 @@ Package patterns are repeatable, case-insensitive globs: `*` means any character
 ```bash
 dotnet-depgraph scan --root /repos/product --output /tmp/product-graph \
   --include-package 'Company.*' --exclude-package 'Company.Legacy.*' \
+  --exclude-project 'Tools/*' --collapse-local-packages \
   --filter-mode contract --restore missing --target-framework all --jobs 4 --seed 42
 ```
 
 `strict` removes hidden packages and incident edges. `contract` traverses hidden dependency nodes and adds a dashed `contracted-path` only to the first retained node reached. It records minimum hidden hops, bounded path samples/counts, and contributing contexts. Raw facts are never modified. The viewer can switch among raw, strict, and contracted data.
 
+Use repeatable `--include-project` and `--exclude-project` options to filter project nodes without preventing their evaluation. These patterns match normalized, root-relative project paths. For `--root /repo/Renovation`, use `--exclude-project 'Tools/*'`, not `Renovation/Tools/*`. Package nodes produced by hidden projects remain available, and contract mode preserves dependency reachability through those projects.
+
 Packable local projects are matched case-insensitively to their evaluated `PackageId`. A unique match creates a subordinate `produces-package` edge. Ambiguous producers generate diagnostics. Separate identity is the raw truth; “collapse local packages” visually projects references onto the producer without replacing the resolved package version or historical dependency metadata.
+
+Pass `--collapse-local-packages` to make that merged producer/package projection the generated viewer's default. The viewer checkbox can still switch back to separate nodes, and the canonical `graph.json` always retains both identities and their producer edge.
 
 ## Targets, discovery, and evaluation
 
 Use repeatable `--target-framework` and `--runtime` selections. `all` is the default TFM selection. Edge contexts retain owner, assets path, TFM, RID, requested range, resolved version, directness, and observation count.
 
-Discovery is deterministic and excludes `.git`, `.svn`, `.hg`, `bin`, `obj`, and `node_modules`. It does not follow directory symlinks/reparse points, preventing cycles. Inaccessible paths become diagnostics. `--include-path` and `--exclude-path` accept normalized root-relative globs. Duplicate filenames are safe because project IDs contain the complete root-relative path.
+Discovery is deterministic and excludes `.git`, `.svn`, `.hg`, `bin`, `obj`, and `node_modules`. It does not follow directory symlinks/reparse points, preventing cycles. Inaccessible paths become diagnostics. `--include-path` and `--exclude-path` accept normalized root-relative globs and control which projects are discovered at all; use project filters instead when produced packages must be retained. Duplicate filenames are safe because project IDs contain the complete root-relative path.
 
 MSBuild evaluation uses `dotnet msbuild -getProperty/-getItem`, including a framework-specific pass for multi-target project references. This avoids compilation while honoring imports and conditions. `--property Name=Value` is repeatable and also passed safely to restore.
 
@@ -77,7 +82,7 @@ The report uses bundled Cytoscape.js 3.34.2 with d3-force 3.0.0 (licenses includ
 
 Search is partial and case-insensitive. Selection shows metadata and immediate dependencies/dependents, with green outgoing dependencies and orange incoming dependents. Controls filter node/edge kind, component, community, TFM, RID, and version skew; isolate one-to-three-hop neighborhoods; switch raw/strict/contract and separate/collapsed producer views; navigate components; reset/fit; and export displayed JSON or a PNG.
 
-The collapsible Physics / Layout panel controls repulsion, edge-spring distance and strength, collision spacing, and weak gravity. It also pauses/resumes physics, deliberately randomizes and reruns the layout, resets tuned defaults, and fits all visible islands. Settings are bounded and stored locally under the versioned key `dotnet-depgraph.physics.v2`; reset removes the saved settings. No graph data is persisted.
+The collapsible Physics / Layout panel controls repulsion, edge-spring distance and strength, collision spacing, drag threshold, and weak gravity. Drag threshold is measured in screen pixels, preventing clicks and small pointer jitter from reheating the graph. The panel also pauses/resumes physics, deliberately randomizes and reruns the layout, resets tuned defaults, and fits all visible islands. Settings are bounded and stored locally under the versioned key `dotnet-depgraph.physics.v2`; reset removes the saved settings. No graph data is persisted.
 
 Node diameter is `clamp(18 + 6 × log2(transitiveDependents + inDegree + 1), 18, 52)` pixels, preserving relative importance without allowing hubs to cover clusters. Color indicates topology-derived community. Projects have distinct shapes; version skew has a modest red ring. The 12 visually largest nodes remain labeled by default at every zoom level, configurable from 0–50 in the Labels panel; additional labels appear progressively while zooming. Hovered and selected labels use full, untruncated text at a stable screen-space size. Overview edges use contrasting colors and focused edges reveal arrowheads. Contracted paths are dashed and producer mappings dotted.
 
@@ -95,7 +100,7 @@ Exit codes: `0` success (including a disclosed partial report unless strict comp
 
 ## Configuration
 
-Pass `--config examples/dotnet-depgraph.config.json`. Schema `1.0` supports path/package filters, restore/filter defaults, global properties, seed, collapsed-producer default, ordered project rules (`pathGlob`, category, label, tag, color), package display aliases, and explicit package-to-project producer mappings. Repeatable CLI filters replace configured lists when supplied; scalar CLI arguments override config. See the [fictional example](examples/dotnet-depgraph.config.json).
+Pass `--config examples/dotnet-depgraph.config.json`. Schema `1.0` supports discovery path filters, displayed project/package filters, restore/filter defaults, global properties, seed, collapsed-producer default, ordered project rules (`pathGlob`, category, label, tag, color), package display aliases, and explicit package-to-project producer mappings. Repeatable CLI filters replace configured lists when supplied; scalar CLI arguments override config. See the [fictional example](examples/dotnet-depgraph.config.json).
 
 ## Fixtures, performance, and limitations
 

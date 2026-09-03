@@ -13,6 +13,7 @@
     forceNodes: [],
     forceById: new Map(),
     paused: false,
+    dragGesture: null,
     run: 0,
     fitted: false,
   };
@@ -41,6 +42,7 @@
     linkDistance: [30, 240],
     linkStrength: [.02, 1],
     collisionPadding: [2, 50],
+    dragThreshold: [0, 30],
     gravity: [0, .2],
   };
   const clamp = (value, min, max) =>
@@ -127,15 +129,41 @@
       localStorage.setItem(viewerStorageKey, JSON.stringify(viewerPreferences));
     } catch { /* storage may be disabled */ }
   }
+  function addDragThresholdControl() {
+    const label = document.createElement("label"),
+      output = document.createElement("output"),
+      input = document.createElement("input");
+    label.title =
+      "Screen-pixel travel required before a pointer press becomes a drag";
+    label.append(document.createTextNode("Drag threshold "));
+    output.id = "drag-threshold-value";
+    label.append(output);
+    input.id = "drag-threshold";
+    input.type = "range";
+    input.min = "0";
+    input.max = "30";
+    input.step = "1";
+    label.append(input);
+    $("physics").querySelector(".physics-actions").before(label);
+  }
+  addDragThresholdControl();
   function graph() {
     return payload[state.view] || payload.raw;
   }
 
   function elements() {
-    const g = graph(), producer = new Map();
+    const g = graph(),
+      producer = new Map(),
+      graphNodeIds = new Set(
+        g.nodes.map((n) => n.id),
+      );
     if (state.collapsed) {
       payload.raw.edges.filter((e) => e.kind === "produces-package").forEach(
-        (e) => producer.set(e.target, e.source),
+        (e) => {
+          if (graphNodeIds.has(e.source) && graphNodeIds.has(e.target)) {
+            producer.set(e.target, e.source);
+          }
+        },
       );
     }
     const visibleNodes = g.nodes.filter((n) => !producer.has(n.id)),
@@ -783,6 +811,7 @@
       linkDistance: "link-distance",
       linkStrength: "link-strength",
       collisionPadding: "collision-padding",
+      dragThreshold: "drag-threshold",
       gravity: "gravity",
     };
     for (const [key, id] of Object.entries(controls)) {
@@ -823,23 +852,49 @@
   cy.on("grab", "node", (e) => {
     const d = state.forceById.get(e.target.id());
     if (!d) return;
-    d.fx = e.target.position("x");
-    d.fy = e.target.position("y");
-    state.simulation?.alphaTarget(.12).alpha(
-      Math.max(.35, state.simulation.alpha()),
-    ).restart();
-    setStatus("Physics reheated by drag");
+    state.dragGesture = {
+      id: e.target.id(),
+      position: { ...e.target.position() },
+      renderedPosition: { ...e.target.renderedPosition() },
+      active: false,
+    };
   });
   cy.on("drag", "node", (e) => {
-    const d = state.forceById.get(e.target.id());
-    if (d) {
-      d.fx = e.target.position("x");
-      d.fy = e.target.position("y");
+    const gesture = state.dragGesture,
+      d = state.forceById.get(e.target.id());
+    if (!gesture || gesture.id !== e.target.id() || !d) return;
+    if (!gesture.active) {
+      const current = e.target.renderedPosition();
+      if (
+        Math.hypot(
+          current.x - gesture.renderedPosition.x,
+          current.y - gesture.renderedPosition.y,
+        ) < physics.dragThreshold
+      ) return;
+      gesture.active = true;
+      state.simulation?.alphaTarget(.12).alpha(
+        Math.max(.35, state.simulation.alpha()),
+      ).restart();
+      setStatus("Physics reheated by drag");
     }
+    d.fx = e.target.position("x");
+    d.fy = e.target.position("y");
   });
   cy.on("free", "node", (e) => {
-    const d = state.forceById.get(e.target.id());
-    if (!d) return;
+    const gesture = state.dragGesture,
+      d = state.forceById.get(e.target.id());
+    state.dragGesture = null;
+    if (!gesture || gesture.id !== e.target.id() || !d) return;
+    if (!gesture.active) {
+      e.target.position(gesture.position);
+      d.x = gesture.position.x;
+      d.y = gesture.position.y;
+      d.vx = 0;
+      d.vy = 0;
+      d.fx = null;
+      d.fy = null;
+      return;
+    }
     d.fx = null;
     d.fy = null;
     state.simulation?.alphaTarget(0).alpha(
@@ -921,6 +976,14 @@
     );
     saveViewerPreferences();
     updateLabels();
+  });
+  $("drag-threshold").addEventListener("input", () => {
+    physics = {
+      ...physics,
+      dragThreshold: Number($("drag-threshold").value),
+    };
+    $("drag-threshold-value").value = $("drag-threshold").value;
+    savePhysics();
   });
   [
     ["repulsion", "repulsion"],

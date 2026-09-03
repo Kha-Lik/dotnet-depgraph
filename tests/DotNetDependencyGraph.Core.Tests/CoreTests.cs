@@ -71,6 +71,42 @@ public sealed class FilterTests
         Assert.Equal(2, edges.Count); Assert.Equal(2, edges.Select(x => x.Target).Distinct().Count());
     }
 
+    [Fact]
+    public void ProjectFilterHidesProducerButRetainsItsPackage()
+    {
+        var project = new GraphNode { Id = "project:src/Generator/Generator.csproj", Label = "Generator", Kind = NodeKind.Project, Path = "src/Generator/Generator.csproj" };
+        var package = new GraphNode { Id = "package:company.generated", Label = "Company.Generated", Kind = NodeKind.Package };
+        var producer = new GraphEdge { Id = "producer", Source = project.Id, Target = package.Id, Kind = EdgeKind.ProducesPackage };
+        var raw = GraphAnalysis.Analyze(new DependencyGraph { Root = "/repo", Nodes = [project, package], Edges = [producer] });
+
+        var view = GraphFilter.Apply(raw, [], [], FilterMode.Strict, [], ["src/Generator/*"]);
+
+        Assert.DoesNotContain(view.Nodes, x => x.Id == project.Id);
+        Assert.Contains(view.Nodes, x => x.Id == package.Id);
+        Assert.Empty(view.Edges);
+    }
+
+    [Fact]
+    public void ContractModeBridgesDependenciesThroughHiddenProject()
+    {
+        var app = new GraphNode { Id = "project:src/App/App.csproj", Label = "App", Kind = NodeKind.Project, Path = "src/App/App.csproj" };
+        var hidden = new GraphNode { Id = "project:src/Generator/Generator.csproj", Label = "Generator", Kind = NodeKind.Project, Path = "src/Generator/Generator.csproj" };
+        var package = new GraphNode { Id = "package:company.runtime", Label = "Company.Runtime", Kind = NodeKind.Package };
+        var edges = new[]
+        {
+            new GraphEdge { Id = "project", Source = app.Id, Target = hidden.Id, Kind = EdgeKind.ProjectReference },
+            new GraphEdge { Id = "package", Source = hidden.Id, Target = package.Id, Kind = EdgeKind.PackageReference }
+        };
+        var raw = GraphAnalysis.Analyze(new DependencyGraph { Root = "/repo", Nodes = [app, hidden, package], Edges = edges });
+
+        var edge = Assert.Single(GraphFilter.Apply(raw, [], [], FilterMode.Contract, [], ["src/Generator/*"]).Edges);
+
+        Assert.Equal(EdgeKind.ContractedPath, edge.Kind);
+        Assert.Equal(app.Id, edge.Source);
+        Assert.Equal(package.Id, edge.Target);
+        Assert.Equal([hidden.Id], edge.HiddenPathSamples.Single());
+    }
+
     private static DependencyGraph Graph(params (string Source, string Target)[] edges)
     {
         var names = edges.SelectMany(x => new[] { x.Source, x.Target }).Distinct().ToArray();
@@ -161,6 +197,7 @@ public sealed class RenderingPolicyTests
     public void PhysicsDefaultsAreBoundedAndStorageKeyIsVersioned()
     {
         Assert.True(new PhysicsDefaults().IsValid());
+        Assert.InRange(new PhysicsDefaults().DragThreshold, 0, 30);
         Assert.EndsWith(".v2", PhysicsDefaults.StorageKey, StringComparison.Ordinal);
     }
 
