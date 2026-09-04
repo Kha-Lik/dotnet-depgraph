@@ -1,6 +1,14 @@
 using System.Diagnostics;
 using System.Text.Json;
-using DotNetDependencyGraph.Core;
+using DotNetDependencyGraph.Core.Application.Analysis;
+using DotNetDependencyGraph.Core.Application.Filtering;
+using DotNetDependencyGraph.Core.Application.Scanning;
+using DotNetDependencyGraph.Core.Domain.Communities;
+using DotNetDependencyGraph.Core.Domain.Graph;
+using DotNetDependencyGraph.Core.Infrastructure.NuGet;
+using DotNetDependencyGraph.Core.Infrastructure.Output;
+using DotNetDependencyGraph.Core.Infrastructure.Processes;
+using DotNetDependencyGraph.Core.Infrastructure.MSBuild;
 
 return await ProgramEntry.RunAsync(args);
 
