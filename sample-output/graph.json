@@ -14,7 +14,7 @@
       "targetFrameworks": [],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 9,
+      "community": 0,
       "inDegree": 0,
       "outDegree": 0,
       "directDependencies": 0,
@@ -49,7 +49,7 @@
       "targetFrameworks": [],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 9,
+      "community": 0,
       "inDegree": 0,
       "outDegree": 0,
       "directDependencies": 0,
@@ -88,7 +88,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 0,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 0,
       "directDependencies": 0,
@@ -101,14 +101,12 @@
       "affectedComponentCount": 0,
       "centrality": 1.8074,
       "betweennessCentrality": 0,
-      "neighboringCommunityCount": 1,
-      "crossCommunityEdgeCount": 1,
-      "crossCommunityEdgeRatio": 1,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
       "architecturalRole": "leaf",
-      "roleEvidence": [
-        "neighbors 1 communities across 1 incident edges"
-      ],
+      "roleEvidence": [],
       "inCycle": false,
       "tags": [],
       "colorHint": null
@@ -129,7 +127,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 3,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 0,
       "directDependencies": 0,
@@ -168,7 +166,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 13,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 0,
       "directDependencies": 0,
@@ -207,7 +205,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 13,
+      "community": -1,
       "inDegree": 2,
       "outDegree": 2,
       "directDependencies": 2,
@@ -220,14 +218,13 @@
       "affectedComponentCount": 0,
       "centrality": 2.4594,
       "betweennessCentrality": 148.416667,
-      "neighboringCommunityCount": 2,
-      "crossCommunityEdgeCount": 3,
-      "crossCommunityEdgeRatio": 0.75,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": true,
-      "architecturalRole": "cross-community bridge",
+      "architecturalRole": "feature-local",
       "roleEvidence": [
-        "articulation point in undirected dependency projection",
-        "neighbors 2 communities across 3 incident edges"
+        "articulation point in undirected dependency projection"
       ],
       "inCycle": false,
       "tags": [],
@@ -249,7 +246,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 14,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 2,
       "directDependencies": 2,
@@ -262,14 +259,13 @@
       "affectedComponentCount": 0,
       "centrality": 2.3923,
       "betweennessCentrality": 35,
-      "neighboringCommunityCount": 1,
-      "crossCommunityEdgeCount": 1,
-      "crossCommunityEdgeRatio": 0.333333,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": true,
       "architecturalRole": "feature-local",
       "roleEvidence": [
-        "articulation point in undirected dependency projection",
-        "neighbors 1 communities across 1 incident edges"
+        "articulation point in undirected dependency projection"
       ],
       "inCycle": false,
       "tags": [],
@@ -291,7 +287,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 14,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 1,
       "directDependencies": 1,
@@ -330,7 +326,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 14,
+      "community": -1,
       "inDegree": 4,
       "outDegree": 0,
       "directDependencies": 0,
@@ -369,7 +365,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 14,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 1,
       "directDependencies": 1,
@@ -408,7 +404,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 12,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 0,
       "directDependencies": 0,
@@ -447,7 +443,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 12,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 2,
       "directDependencies": 2,
@@ -460,14 +456,13 @@
       "affectedComponentCount": 0,
       "centrality": 2.2479,
       "betweennessCentrality": 122.833333,
-      "neighboringCommunityCount": 1,
-      "crossCommunityEdgeCount": 1,
-      "crossCommunityEdgeRatio": 0.333333,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": true,
       "architecturalRole": "feature-local",
       "roleEvidence": [
-        "articulation point in undirected dependency projection",
-        "neighbors 1 communities across 1 incident edges"
+        "articulation point in undirected dependency projection"
       ],
       "inCycle": false,
       "tags": [],
@@ -489,7 +484,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 6,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 0,
       "directDependencies": 0,
@@ -528,7 +523,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 12,
+      "community": -1,
       "inDegree": 2,
       "outDegree": 0,
       "directDependencies": 0,
@@ -543,13 +538,12 @@
       "affectedComponentCount": 1,
       "centrality": 2.4594,
       "betweennessCentrality": 84.833333,
-      "neighboringCommunityCount": 1,
-      "crossCommunityEdgeCount": 1,
-      "crossCommunityEdgeRatio": 0.5,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
       "architecturalRole": "feature-local",
       "roleEvidence": [
-        "neighbors 1 communities across 1 incident edges",
         "reachable from 1 runnable projects"
       ],
       "inCycle": false,
@@ -572,7 +566,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 1,
+      "community": -1,
       "inDegree": 2,
       "outDegree": 1,
       "directDependencies": 1,
@@ -587,14 +581,13 @@
       "affectedComponentCount": 1,
       "centrality": 2.7004,
       "betweennessCentrality": 36,
-      "neighboringCommunityCount": 2,
-      "crossCommunityEdgeCount": 2,
-      "crossCommunityEdgeRatio": 0.666667,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": true,
-      "architecturalRole": "cross-community bridge",
+      "architecturalRole": "feature-local",
       "roleEvidence": [
         "articulation point in undirected dependency projection",
-        "neighbors 2 communities across 2 incident edges",
         "reachable from 1 runnable projects"
       ],
       "inCycle": false,
@@ -617,7 +610,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 4,
+      "community": -1,
       "inDegree": 2,
       "outDegree": 2,
       "directDependencies": 2,
@@ -632,14 +625,13 @@
       "affectedComponentCount": 1,
       "centrality": 2.8074,
       "betweennessCentrality": 79,
-      "neighboringCommunityCount": 2,
-      "crossCommunityEdgeCount": 2,
-      "crossCommunityEdgeRatio": 0.5,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": true,
-      "architecturalRole": "cross-community bridge",
+      "architecturalRole": "feature-local",
       "roleEvidence": [
         "articulation point in undirected dependency projection",
-        "neighbors 2 communities across 2 incident edges",
         "reachable from 1 runnable projects"
       ],
       "inCycle": false,
@@ -662,7 +654,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 4,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 3,
       "directDependencies": 3,
@@ -677,13 +669,12 @@
       "affectedComponentCount": 1,
       "centrality": 2.6439,
       "betweennessCentrality": 156.5,
-      "neighboringCommunityCount": 3,
-      "crossCommunityEdgeCount": 3,
-      "crossCommunityEdgeRatio": 0.75,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
-      "architecturalRole": "cross-community bridge",
+      "architecturalRole": "feature-local",
       "roleEvidence": [
-        "neighbors 3 communities across 3 incident edges",
         "reachable from 1 runnable projects"
       ],
       "inCycle": false,
@@ -706,7 +697,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 1,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 0,
       "directDependencies": 0,
@@ -749,7 +740,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 7,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 2,
       "directDependencies": 2,
@@ -764,13 +755,12 @@
       "affectedComponentCount": 1,
       "centrality": 2.4594,
       "betweennessCentrality": 39.166667,
-      "neighboringCommunityCount": 2,
-      "crossCommunityEdgeCount": 2,
-      "crossCommunityEdgeRatio": 0.666667,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
-      "architecturalRole": "cross-community bridge",
+      "architecturalRole": "feature-local",
       "roleEvidence": [
-        "neighbors 2 communities across 2 incident edges",
         "reachable from 1 runnable projects"
       ],
       "inCycle": false,
@@ -793,7 +783,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 8,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 4,
       "directDependencies": 4,
@@ -808,14 +798,13 @@
       "affectedComponentCount": 1,
       "centrality": 2.9542,
       "betweennessCentrality": 86.833333,
-      "neighboringCommunityCount": 4,
-      "crossCommunityEdgeCount": 4,
-      "crossCommunityEdgeRatio": 0.8,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": true,
-      "architecturalRole": "cross-community bridge",
+      "architecturalRole": "feature-local",
       "roleEvidence": [
         "articulation point in undirected dependency projection",
-        "neighbors 4 communities across 4 incident edges",
         "reachable from 1 runnable projects"
       ],
       "inCycle": false,
@@ -838,7 +827,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 9,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 1,
       "directDependencies": 1,
@@ -853,13 +842,12 @@
       "affectedComponentCount": 1,
       "centrality": 2,
       "betweennessCentrality": 165.166667,
-      "neighboringCommunityCount": 1,
-      "crossCommunityEdgeCount": 1,
-      "crossCommunityEdgeRatio": 0.5,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
       "architecturalRole": "feature-local",
       "roleEvidence": [
-        "neighbors 1 communities across 1 incident edges",
         "reachable from 1 runnable projects"
       ],
       "inCycle": false,
@@ -882,7 +870,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 8,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 1,
       "directDependencies": 1,
@@ -897,13 +885,12 @@
       "affectedComponentCount": 1,
       "centrality": 2.1699,
       "betweennessCentrality": 5.666667,
-      "neighboringCommunityCount": 1,
-      "crossCommunityEdgeCount": 1,
-      "crossCommunityEdgeRatio": 0.5,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
       "architecturalRole": "feature-local",
       "roleEvidence": [
-        "neighbors 1 communities across 1 incident edges",
         "reachable from 1 runnable projects"
       ],
       "inCycle": false,
@@ -926,7 +913,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 7,
+      "community": -1,
       "inDegree": 2,
       "outDegree": 0,
       "directDependencies": 0,
@@ -941,13 +928,12 @@
       "affectedComponentCount": 1,
       "centrality": 2.3923,
       "betweennessCentrality": 5.666667,
-      "neighboringCommunityCount": 1,
-      "crossCommunityEdgeCount": 1,
-      "crossCommunityEdgeRatio": 0.5,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
       "architecturalRole": "feature-local",
       "roleEvidence": [
-        "neighbors 1 communities across 1 incident edges",
         "reachable from 1 runnable projects"
       ],
       "inCycle": false,
@@ -970,7 +956,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 5,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 0,
       "directDependencies": 0,
@@ -985,13 +971,12 @@
       "affectedComponentCount": 1,
       "centrality": 2,
       "betweennessCentrality": 0,
-      "neighboringCommunityCount": 1,
-      "crossCommunityEdgeCount": 1,
-      "crossCommunityEdgeRatio": 1,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
       "architecturalRole": "leaf",
       "roleEvidence": [
-        "neighbors 1 communities across 1 incident edges",
         "reachable from 1 runnable projects"
       ],
       "inCycle": false,
@@ -1014,7 +999,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 4,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 0,
       "directDependencies": 0,
@@ -1057,7 +1042,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 11,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 0,
       "directDependencies": 0,
@@ -1096,7 +1081,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 2,
+      "community": -1,
       "inDegree": 2,
       "outDegree": 0,
       "directDependencies": 0,
@@ -1109,14 +1094,12 @@
       "affectedComponentCount": 0,
       "centrality": 1.8074,
       "betweennessCentrality": 0.25,
-      "neighboringCommunityCount": 1,
-      "crossCommunityEdgeCount": 2,
-      "crossCommunityEdgeRatio": 1,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
       "architecturalRole": "feature-local",
-      "roleEvidence": [
-        "neighbors 1 communities across 2 incident edges"
-      ],
+      "roleEvidence": [],
       "inCycle": false,
       "tags": [],
       "colorHint": null
@@ -1137,7 +1120,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 11,
+      "community": -1,
       "inDegree": 2,
       "outDegree": 1,
       "directDependencies": 1,
@@ -1150,14 +1133,13 @@
       "affectedComponentCount": 0,
       "centrality": 2.1699,
       "betweennessCentrality": 315.25,
-      "neighboringCommunityCount": 1,
-      "crossCommunityEdgeCount": 2,
-      "crossCommunityEdgeRatio": 0.666667,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": true,
       "architecturalRole": "feature-local",
       "roleEvidence": [
-        "articulation point in undirected dependency projection",
-        "neighbors 1 communities across 2 incident edges"
+        "articulation point in undirected dependency projection"
       ],
       "inCycle": false,
       "tags": [],
@@ -1179,7 +1161,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 11,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 0,
       "directDependencies": 0,
@@ -1218,7 +1200,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 3,
+      "community": -1,
       "inDegree": 2,
       "outDegree": 1,
       "directDependencies": 1,
@@ -1231,14 +1213,13 @@
       "affectedComponentCount": 0,
       "centrality": 2.585,
       "betweennessCentrality": 36,
-      "neighboringCommunityCount": 2,
-      "crossCommunityEdgeCount": 2,
-      "crossCommunityEdgeRatio": 0.666667,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": true,
-      "architecturalRole": "cross-community bridge",
+      "architecturalRole": "feature-local",
       "roleEvidence": [
-        "articulation point in undirected dependency projection",
-        "neighbors 2 communities across 2 incident edges"
+        "articulation point in undirected dependency projection"
       ],
       "inCycle": false,
       "tags": [],
@@ -1260,7 +1241,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 14,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 6,
       "directDependencies": 6,
@@ -1273,14 +1254,13 @@
       "affectedComponentCount": 0,
       "centrality": 3.1699,
       "betweennessCentrality": 307.5,
-      "neighboringCommunityCount": 2,
-      "crossCommunityEdgeCount": 3,
-      "crossCommunityEdgeRatio": 0.428571,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": true,
-      "architecturalRole": "cross-community bridge",
+      "architecturalRole": "feature-local",
       "roleEvidence": [
-        "articulation point in undirected dependency projection",
-        "neighbors 2 communities across 3 incident edges"
+        "articulation point in undirected dependency projection"
       ],
       "inCycle": false,
       "tags": [],
@@ -1302,7 +1282,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 10,
+      "community": -1,
       "inDegree": 2,
       "outDegree": 1,
       "directDependencies": 1,
@@ -1315,14 +1295,12 @@
       "affectedComponentCount": 0,
       "centrality": 2.4594,
       "betweennessCentrality": 63,
-      "neighboringCommunityCount": 2,
-      "crossCommunityEdgeCount": 2,
-      "crossCommunityEdgeRatio": 0.666667,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
-      "architecturalRole": "cross-community bridge",
-      "roleEvidence": [
-        "neighbors 2 communities across 2 incident edges"
-      ],
+      "architecturalRole": "feature-local",
+      "roleEvidence": [],
       "inCycle": false,
       "tags": [],
       "colorHint": null
@@ -1343,7 +1321,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 11,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 3,
       "directDependencies": 3,
@@ -1356,14 +1334,13 @@
       "affectedComponentCount": 0,
       "centrality": 2.5236,
       "betweennessCentrality": 333,
-      "neighboringCommunityCount": 1,
-      "crossCommunityEdgeCount": 1,
-      "crossCommunityEdgeRatio": 0.25,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": true,
       "architecturalRole": "feature-local",
       "roleEvidence": [
-        "articulation point in undirected dependency projection",
-        "neighbors 1 communities across 1 incident edges"
+        "articulation point in undirected dependency projection"
       ],
       "inCycle": false,
       "tags": [],
@@ -1385,7 +1362,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 6,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 2,
       "directDependencies": 2,
@@ -1398,14 +1375,13 @@
       "affectedComponentCount": 0,
       "centrality": 2.4594,
       "betweennessCentrality": 36,
-      "neighboringCommunityCount": 2,
-      "crossCommunityEdgeCount": 2,
-      "crossCommunityEdgeRatio": 0.666667,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": true,
-      "architecturalRole": "cross-community bridge",
+      "architecturalRole": "feature-local",
       "roleEvidence": [
-        "articulation point in undirected dependency projection",
-        "neighbors 2 communities across 2 incident edges"
+        "articulation point in undirected dependency projection"
       ],
       "inCycle": false,
       "tags": [],
@@ -1427,7 +1403,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 10,
+      "community": -1,
       "inDegree": 1,
       "outDegree": 2,
       "directDependencies": 2,
@@ -1440,14 +1416,12 @@
       "affectedComponentCount": 0,
       "centrality": 2.3923,
       "betweennessCentrality": 63,
-      "neighboringCommunityCount": 2,
-      "crossCommunityEdgeCount": 2,
-      "crossCommunityEdgeRatio": 0.666667,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
-      "architecturalRole": "cross-community bridge",
-      "roleEvidence": [
-        "neighbors 2 communities across 2 incident edges"
-      ],
+      "architecturalRole": "feature-local",
+      "roleEvidence": [],
       "inCycle": false,
       "tags": [],
       "colorHint": null
@@ -1468,7 +1442,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 9,
+      "community": 0,
       "inDegree": 1,
       "outDegree": 1,
       "directDependencies": 1,
@@ -1507,7 +1481,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 9,
+      "community": 0,
       "inDegree": 3,
       "outDegree": 1,
       "directDependencies": 1,
@@ -1550,7 +1524,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 9,
+      "community": 0,
       "inDegree": 0,
       "outDegree": 4,
       "directDependencies": 4,
@@ -1563,14 +1537,12 @@
       "affectedComponentCount": 0,
       "centrality": 2.3219,
       "betweennessCentrality": 158.666667,
-      "neighboringCommunityCount": 3,
-      "crossCommunityEdgeCount": 3,
-      "crossCommunityEdgeRatio": 0.75,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
       "architecturalRole": "test-only",
-      "roleEvidence": [
-        "neighbors 3 communities across 3 incident edges"
-      ],
+      "roleEvidence": [],
       "inCycle": false,
       "tags": [],
       "colorHint": null
@@ -1591,7 +1563,7 @@
       ],
       "runtimeIdentifiers": [],
       "component": 0,
-      "community": 9,
+      "community": 0,
       "inDegree": 0,
       "outDegree": 5,
       "directDependencies": 5,
@@ -1604,14 +1576,12 @@
       "affectedComponentCount": 0,
       "centrality": 2.585,
       "betweennessCentrality": 181.333333,
-      "neighboringCommunityCount": 3,
-      "crossCommunityEdgeCount": 3,
-      "crossCommunityEdgeRatio": 0.6,
+      "neighboringCommunityCount": 0,
+      "crossCommunityEdgeCount": 0,
+      "crossCommunityEdgeRatio": 0,
       "articulationPoint": false,
       "architecturalRole": "test-only",
-      "roleEvidence": [
-        "neighbors 3 communities across 3 incident edges"
-      ],
+      "roleEvidence": [],
       "inCycle": false,
       "tags": [],
       "colorHint": null
@@ -3483,10 +3453,15 @@
       "minSize": 2,
       "includeTestsInDetection": false,
       "includeUnresolved": false,
+      "includeThirdPartyPackages": false,
+      "includeSystemPackages": false,
+      "includeUnmappedInternalPackages": false,
+      "internalPackagePatterns": [],
       "edgeWeights": {
         "projectReference": 3,
         "packageReference": 2,
-        "packageDependency": 1
+        "packageDependency": 1,
+        "contractedPath": 0.25
       }
     },
     "projectionRules": {
@@ -3494,804 +3469,122 @@
       "excludeTests": true,
       "excludeUnresolved": true,
       "collapseLocalProducerPackages": true,
-      "includeContractedPaths": false,
+      "includeContractedPaths": true,
       "includeProducerEdges": false,
+      "includeThirdPartyPackages": false,
+      "includeSystemPackages": false,
+      "includeUnmappedInternalPackages": false,
+      "ownershipRule": "source-evidence",
+      "contractedPathContextRule": "same-owner-compatible-tfm-rid",
       "oppositeEdgeRule": "sum-distinct-directed-relationships",
       "contextMultiplicityRule": "one-logical-edge-one-base-weight"
+    },
+    "projection": {
+      "policyVersion": "source-ownership-v1",
+      "scope": "source-owned",
+      "detectionVertexCount": 2,
+      "detectionNodeCount": 4,
+      "localProjectCount": 4,
+      "localProducedPackageCount": 2,
+      "includedUnmappedInternalPackageCount": 0,
+      "includedSystemPackageCount": 0,
+      "includedThirdPartyPackageCount": 0,
+      "collapsedProducerPairCount": 2,
+      "excludedTestProjectCount": 2,
+      "excludedSystemPackageCount": 4,
+      "excludedThirdPartyPackageCount": 29,
+      "excludedUnresolvedExternalCount": 0,
+      "contractedEdgeCount": 0
+    },
+    "nodeOwnership": {
+      "package:dotnet-depgraph": "local-produced-package",
+      "package:dotnetdependencygraph.core": "local-produced-package",
+      "package:microsoft.applicationinsights": "third-party-package",
+      "package:microsoft.bcl.asyncinterfaces": "third-party-package",
+      "package:microsoft.codecoverage": "third-party-package",
+      "package:microsoft.net.test.sdk": "system-package",
+      "package:microsoft.testing.extensions.telemetry": "third-party-package",
+      "package:microsoft.testing.extensions.trxreport.abstractions": "third-party-package",
+      "package:microsoft.testing.platform": "third-party-package",
+      "package:microsoft.testing.platform.msbuild": "third-party-package",
+      "package:microsoft.testplatform.objectmodel": "third-party-package",
+      "package:microsoft.testplatform.testhost": "third-party-package",
+      "package:microsoft.win32.registry": "system-package",
+      "package:newtonsoft.json": "third-party-package",
+      "package:nuget.common": "third-party-package",
+      "package:nuget.configuration": "third-party-package",
+      "package:nuget.dependencyresolver.core": "third-party-package",
+      "package:nuget.frameworks": "third-party-package",
+      "package:nuget.librarymodel": "third-party-package",
+      "package:nuget.packaging": "third-party-package",
+      "package:nuget.projectmodel": "third-party-package",
+      "package:nuget.protocol": "third-party-package",
+      "package:nuget.versioning": "third-party-package",
+      "package:system.security.cryptography.pkcs": "system-package",
+      "package:system.security.cryptography.protecteddata": "system-package",
+      "package:xunit.analyzers": "third-party-package",
+      "package:xunit.runner.visualstudio": "third-party-package",
+      "package:xunit.v3": "third-party-package",
+      "package:xunit.v3.assert": "third-party-package",
+      "package:xunit.v3.common": "third-party-package",
+      "package:xunit.v3.core.mtp-v1": "third-party-package",
+      "package:xunit.v3.extensibility.core": "third-party-package",
+      "package:xunit.v3.mtp-v1": "third-party-package",
+      "package:xunit.v3.runner.common": "third-party-package",
+      "package:xunit.v3.runner.inproc.console": "third-party-package",
+      "project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj": "local-project",
+      "project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj": "local-project",
+      "project:tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj": "local-project",
+      "project:tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj": "local-project"
     },
     "resolutionProfile": [
       {
         "resolution": 0.25,
-        "quality": 18.5,
-        "communityCount": 11,
+        "quality": 2.75,
+        "communityCount": 1,
         "sizes": [
-          1,
-          1,
-          1,
-          2,
-          3,
-          3,
-          4,
-          4,
-          5,
-          5,
-          6
+          2
         ],
-        "singletonCount": 3,
+        "singletonCount": 0,
         "connected": true,
-        "winningSeed": 733145,
+        "winningSeed": 42,
         "trials": 10,
-        "stability": 0.825303,
-        "neighborSimilarity": 0.556822,
+        "stability": 1,
+        "neighborSimilarity": 1,
         "selectedStandard": false
       },
       {
         "resolution": 0.5,
-        "quality": 11.5,
-        "communityCount": 16,
+        "quality": 2.5,
+        "communityCount": 1,
         "sizes": [
-          1,
-          1,
-          2,
-          2,
-          2,
-          2,
-          2,
-          2,
-          2,
-          2,
-          2,
-          2,
-          3,
-          3,
-          3,
-          4
+          2
         ],
-        "singletonCount": 2,
+        "singletonCount": 0,
         "connected": true,
         "winningSeed": 42,
         "trials": 10,
-        "stability": 0.906295,
-        "neighborSimilarity": 0.556822,
+        "stability": 1,
+        "neighborSimilarity": 1,
         "selectedStandard": true
       },
       {
         "resolution": 1,
         "quality": 2,
-        "communityCount": 20,
+        "communityCount": 1,
         "sizes": [
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          2,
-          2,
-          2,
-          2,
-          2,
-          2,
-          2,
-          2,
-          2,
-          2,
-          2,
-          3,
-          3
+          2
         ],
-        "singletonCount": 7,
+        "singletonCount": 0,
         "connected": true,
-        "winningSeed": 837874,
+        "winningSeed": 42,
         "trials": 10,
-        "stability": 0.781031,
-        "neighborSimilarity": 0.704225,
+        "stability": 1,
+        "neighborSimilarity": 1,
         "selectedStandard": false
       }
     ],
     "communities": [
-      {
-        "stableKey": "community:v1:26df6bee4d9ec894",
-        "parentKey": null,
-        "depth": 0,
-        "memberNodeIds": [
-          "package:microsoft.applicationinsights"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.25,
-        "quality": 18.5,
-        "stability": 0.825303,
-        "size": 1,
-        "projectCount": 0,
-        "packageCount": 1,
-        "runnableCount": 0,
-        "name": "Application",
-        "nameConfidence": 0.666332,
-        "nameEvidence": [
-          {
-            "token": "Application",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.applicationinsights"
-            ]
-          },
-          {
-            "token": "Insights",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.applicationinsights"
-            ]
-          },
-          {
-            "token": "Microsoft",
-            "score": 1.203973,
-            "members": [
-              "package:microsoft.applicationinsights"
-            ]
-          }
-        ],
-        "color": "#E7E40D",
-        "borderColor": "#8BF9C4",
-        "internalEdgeCount": 0,
-        "weightedDensity": 0,
-        "outgoingEdgeCount": 0,
-        "incomingEdgeCount": 1,
-        "couplingRatio": 1,
-        "representativeNodeIds": [
-          "package:microsoft.applicationinsights"
-        ],
-        "bridgeNodeIds": [],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:2aee617039ce17be",
-        "parentKey": "community:v1:57cd9474a0488e2c",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:nuget.common",
-          "package:nuget.frameworks"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 2,
-        "projectCount": 0,
-        "packageCount": 2,
-        "runnableCount": 0,
-        "name": "Frameworks",
-        "nameConfidence": 0.769333,
-        "nameEvidence": [
-          {
-            "token": "Frameworks",
-            "score": 2.995732,
-            "members": [
-              "package:nuget.frameworks"
-            ]
-          },
-          {
-            "token": "Get",
-            "score": 2.772589,
-            "members": [
-              "package:nuget.common",
-              "package:nuget.frameworks"
-            ]
-          }
-        ],
-        "color": "#3EE54C",
-        "borderColor": "#F98B8B",
-        "internalEdgeCount": 1,
-        "weightedDensity": 1,
-        "outgoingEdgeCount": 0,
-        "incomingEdgeCount": 2,
-        "couplingRatio": 0.666667,
-        "representativeNodeIds": [
-          "package:nuget.common",
-          "package:nuget.frameworks"
-        ],
-        "bridgeNodeIds": [
-          "package:nuget.common"
-        ],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:3bf160808884bfc6",
-        "parentKey": null,
-        "depth": 0,
-        "memberNodeIds": [
-          "package:xunit.runner.visualstudio"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.25,
-        "quality": 18.5,
-        "stability": 0.825303,
-        "size": 1,
-        "projectCount": 0,
-        "packageCount": 1,
-        "runnableCount": 0,
-        "name": "Visualstudio",
-        "nameConfidence": 0.704629,
-        "nameEvidence": [
-          {
-            "token": "Visualstudio",
-            "score": 2.995732,
-            "members": [
-              "package:xunit.runner.visualstudio"
-            ]
-          },
-          {
-            "token": "Runner",
-            "score": 2.302585,
-            "members": [
-              "package:xunit.runner.visualstudio"
-            ]
-          },
-          {
-            "token": "Xunit",
-            "score": 1.290984,
-            "members": [
-              "package:xunit.runner.visualstudio"
-            ]
-          }
-        ],
-        "color": "#99E24B",
-        "borderColor": "#AE094B",
-        "internalEdgeCount": 0,
-        "weightedDensity": 0,
-        "outgoingEdgeCount": 0,
-        "incomingEdgeCount": 2,
-        "couplingRatio": 1,
-        "representativeNodeIds": [
-          "package:xunit.runner.visualstudio"
-        ],
-        "bridgeNodeIds": [],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:439b0b10e4e6591f",
-        "parentKey": "community:v1:58044639030d47ee",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:microsoft.bcl.asyncinterfaces",
-          "package:xunit.v3.common"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 2,
-        "projectCount": 0,
-        "packageCount": 2,
-        "runnableCount": 0,
-        "name": "Async \u00B7 Bcl \u00B7 Interfaces",
-        "nameConfidence": 0.58333,
-        "nameEvidence": [
-          {
-            "token": "Async",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.bcl.asyncinterfaces"
-            ]
-          },
-          {
-            "token": "Bcl",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.bcl.asyncinterfaces"
-            ]
-          },
-          {
-            "token": "Interfaces",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.bcl.asyncinterfaces"
-            ]
-          }
-        ],
-        "color": "#1C47E3",
-        "borderColor": "#F98BD4",
-        "internalEdgeCount": 1,
-        "weightedDensity": 1,
-        "outgoingEdgeCount": 0,
-        "incomingEdgeCount": 2,
-        "couplingRatio": 0.666667,
-        "representativeNodeIds": [
-          "package:xunit.v3.common",
-          "package:microsoft.bcl.asyncinterfaces"
-        ],
-        "bridgeNodeIds": [
-          "package:xunit.v3.common"
-        ],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:469d0d6549e8ce21",
-        "parentKey": "community:v1:a361af83daaef75a",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:nuget.configuration",
-          "package:nuget.dependencyresolver.core",
-          "package:system.security.cryptography.protecteddata"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 3,
-        "projectCount": 0,
-        "packageCount": 3,
-        "runnableCount": 0,
-        "name": "Configuration \u00B7 Data \u00B7 Protected",
-        "nameConfidence": 0.58333,
-        "nameEvidence": [
-          {
-            "token": "Configuration",
-            "score": 2.995732,
-            "members": [
-              "package:nuget.configuration"
-            ]
-          },
-          {
-            "token": "Data",
-            "score": 2.995732,
-            "members": [
-              "package:system.security.cryptography.protecteddata"
-            ]
-          },
-          {
-            "token": "Protected",
-            "score": 2.995732,
-            "members": [
-              "package:system.security.cryptography.protecteddata"
-            ]
-          }
-        ],
-        "color": "#F53D9F",
-        "borderColor": "#0996AE",
-        "internalEdgeCount": 2,
-        "weightedDensity": 0.666667,
-        "outgoingEdgeCount": 3,
-        "incomingEdgeCount": 2,
-        "couplingRatio": 0.714286,
-        "representativeNodeIds": [
-          "package:nuget.configuration",
-          "package:nuget.dependencyresolver.core",
-          "package:system.security.cryptography.protecteddata"
-        ],
-        "bridgeNodeIds": [
-          "package:nuget.configuration",
-          "package:nuget.dependencyresolver.core"
-        ],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:57cd9474a0488e2c",
-        "parentKey": null,
-        "depth": 0,
-        "memberNodeIds": [
-          "package:nuget.common",
-          "package:nuget.frameworks",
-          "package:nuget.librarymodel",
-          "package:nuget.versioning"
-        ],
-        "directChildKeys": [
-          "community:v1:2aee617039ce17be",
-          "community:v1:72399749517558d5"
-        ],
-        "resolution": 0.25,
-        "quality": 18.5,
-        "stability": 0.825303,
-        "size": 4,
-        "projectCount": 0,
-        "packageCount": 4,
-        "runnableCount": 0,
-        "name": "Get",
-        "nameConfidence": 0.730654,
-        "nameEvidence": [
-          {
-            "token": "Get",
-            "score": 5.545177,
-            "members": [
-              "package:nuget.common",
-              "package:nuget.frameworks",
-              "package:nuget.librarymodel",
-              "package:nuget.versioning"
-            ]
-          },
-          {
-            "token": "Frameworks",
-            "score": 2.995732,
-            "members": [
-              "package:nuget.frameworks"
-            ]
-          },
-          {
-            "token": "Versioning",
-            "score": 2.995732,
-            "members": [
-              "package:nuget.versioning"
-            ]
-          }
-        ],
-        "color": "#CB26E8",
-        "borderColor": "#AE7509",
-        "internalEdgeCount": 3,
-        "weightedDensity": 0.5,
-        "outgoingEdgeCount": 0,
-        "incomingEdgeCount": 3,
-        "couplingRatio": 0.5,
-        "representativeNodeIds": [
-          "package:nuget.common",
-          "package:nuget.librarymodel",
-          "package:nuget.versioning",
-          "package:nuget.frameworks"
-        ],
-        "bridgeNodeIds": [
-          "package:nuget.common",
-          "package:nuget.librarymodel"
-        ],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:58044639030d47ee",
-        "parentKey": null,
-        "depth": 0,
-        "memberNodeIds": [
-          "package:microsoft.bcl.asyncinterfaces",
-          "package:microsoft.win32.registry",
-          "package:xunit.v3.common",
-          "package:xunit.v3.extensibility.core",
-          "package:xunit.v3.runner.common",
-          "package:xunit.v3.runner.inproc.console"
-        ],
-        "directChildKeys": [
-          "community:v1:439b0b10e4e6591f",
-          "community:v1:71294a9c6877f097",
-          "community:v1:b1d26b5edcb58291"
-        ],
-        "resolution": 0.25,
-        "quality": 18.5,
-        "stability": 0.825303,
-        "size": 6,
-        "projectCount": 0,
-        "packageCount": 6,
-        "runnableCount": 0,
-        "name": "Xunit",
-        "nameConfidence": 0.654541,
-        "nameEvidence": [
-          {
-            "token": "Xunit",
-            "score": 5.163937,
-            "members": [
-              "package:xunit.v3.common",
-              "package:xunit.v3.extensibility.core",
-              "package:xunit.v3.runner.common",
-              "package:xunit.v3.runner.inproc.console"
-            ]
-          },
-          {
-            "token": "Runner",
-            "score": 4.60517,
-            "members": [
-              "package:xunit.v3.runner.common",
-              "package:xunit.v3.runner.inproc.console"
-            ]
-          },
-          {
-            "token": "Async",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.bcl.asyncinterfaces"
-            ]
-          }
-        ],
-        "color": "#30E883",
-        "borderColor": "#3809AE",
-        "internalEdgeCount": 6,
-        "weightedDensity": 0.4,
-        "outgoingEdgeCount": 0,
-        "incomingEdgeCount": 2,
-        "couplingRatio": 0.25,
-        "representativeNodeIds": [
-          "package:xunit.v3.common",
-          "package:xunit.v3.extensibility.core",
-          "package:xunit.v3.runner.common",
-          "package:xunit.v3.runner.inproc.console",
-          "package:microsoft.bcl.asyncinterfaces"
-        ],
-        "bridgeNodeIds": [
-          "package:xunit.v3.common",
-          "package:xunit.v3.extensibility.core",
-          "package:xunit.v3.runner.common",
-          "package:xunit.v3.runner.inproc.console"
-        ],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:63d89639776b868e",
-        "parentKey": null,
-        "depth": 0,
-        "memberNodeIds": [
-          "package:system.security.cryptography.pkcs"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.25,
-        "quality": 18.5,
-        "stability": 0.825303,
-        "size": 1,
-        "projectCount": 0,
-        "packageCount": 1,
-        "runnableCount": 0,
-        "name": "Pkcs \u00B7 Cryptography \u00B7 Security",
-        "nameConfidence": 0.616389,
-        "nameEvidence": [
-          {
-            "token": "Pkcs",
-            "score": 2.995732,
-            "members": [
-              "package:system.security.cryptography.pkcs"
-            ]
-          },
-          {
-            "token": "Cryptography",
-            "score": 2.590267,
-            "members": [
-              "package:system.security.cryptography.pkcs"
-            ]
-          },
-          {
-            "token": "Security",
-            "score": 2.590267,
-            "members": [
-              "package:system.security.cryptography.pkcs"
-            ]
-          }
-        ],
-        "color": "#41E6AF",
-        "borderColor": "#F98B8D",
-        "internalEdgeCount": 0,
-        "weightedDensity": 0,
-        "outgoingEdgeCount": 0,
-        "incomingEdgeCount": 1,
-        "couplingRatio": 1,
-        "representativeNodeIds": [
-          "package:system.security.cryptography.pkcs"
-        ],
-        "bridgeNodeIds": [],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:67bceb20e47924f3",
-        "parentKey": "community:v1:c4ec49890a3800c4",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:xunit.v3.assert"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 1,
-        "projectCount": 0,
-        "packageCount": 1,
-        "runnableCount": 0,
-        "name": "Assert",
-        "nameConfidence": 0.948824,
-        "nameEvidence": [
-          {
-            "token": "Assert",
-            "score": 2.995732,
-            "members": [
-              "package:xunit.v3.assert"
-            ]
-          },
-          {
-            "token": "Xunit",
-            "score": 1.290984,
-            "members": [
-              "package:xunit.v3.assert"
-            ]
-          }
-        ],
-        "color": "#E6A22D",
-        "borderColor": "#8BAFF9",
-        "internalEdgeCount": 0,
-        "weightedDensity": 0,
-        "outgoingEdgeCount": 0,
-        "incomingEdgeCount": 1,
-        "couplingRatio": 1,
-        "representativeNodeIds": [
-          "package:xunit.v3.assert"
-        ],
-        "bridgeNodeIds": [],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:71294a9c6877f097",
-        "parentKey": "community:v1:58044639030d47ee",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:microsoft.win32.registry",
-          "package:xunit.v3.runner.common"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 2,
-        "projectCount": 0,
-        "packageCount": 2,
-        "runnableCount": 0,
-        "name": "Registry \u00B7 Win32 \u00B7 Runner",
-        "nameConfidence": 0.611186,
-        "nameEvidence": [
-          {
-            "token": "Registry",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.win32.registry"
-            ]
-          },
-          {
-            "token": "Win32",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.win32.registry"
-            ]
-          },
-          {
-            "token": "Runner",
-            "score": 2.302585,
-            "members": [
-              "package:xunit.v3.runner.common"
-            ]
-          }
-        ],
-        "color": "#46E7AC",
-        "borderColor": "#B38BF9",
-        "internalEdgeCount": 1,
-        "weightedDensity": 1,
-        "outgoingEdgeCount": 1,
-        "incomingEdgeCount": 1,
-        "couplingRatio": 0.666667,
-        "representativeNodeIds": [
-          "package:xunit.v3.runner.common",
-          "package:microsoft.win32.registry"
-        ],
-        "bridgeNodeIds": [
-          "package:xunit.v3.runner.common"
-        ],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:72399749517558d5",
-        "parentKey": "community:v1:57cd9474a0488e2c",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:nuget.librarymodel",
-          "package:nuget.versioning"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 2,
-        "projectCount": 0,
-        "packageCount": 2,
-        "runnableCount": 0,
-        "name": "Versioning \u00B7 Get \u00B7 Model",
-        "nameConfidence": 0.621172,
-        "nameEvidence": [
-          {
-            "token": "Versioning",
-            "score": 2.995732,
-            "members": [
-              "package:nuget.versioning"
-            ]
-          },
-          {
-            "token": "Get",
-            "score": 2.772589,
-            "members": [
-              "package:nuget.librarymodel",
-              "package:nuget.versioning"
-            ]
-          },
-          {
-            "token": "Model",
-            "score": 2.302585,
-            "members": [
-              "package:nuget.librarymodel"
-            ]
-          }
-        ],
-        "color": "#E01AC2",
-        "borderColor": "#AE5F09",
-        "internalEdgeCount": 1,
-        "weightedDensity": 1,
-        "outgoingEdgeCount": 1,
-        "incomingEdgeCount": 2,
-        "couplingRatio": 0.75,
-        "representativeNodeIds": [
-          "package:nuget.librarymodel",
-          "package:nuget.versioning"
-        ],
-        "bridgeNodeIds": [
-          "package:nuget.librarymodel"
-        ],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:76cad86ec88967c1",
-        "parentKey": "community:v1:a361af83daaef75a",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:nuget.packaging",
-          "package:nuget.protocol"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 2,
-        "projectCount": 0,
-        "packageCount": 2,
-        "runnableCount": 0,
-        "name": "Packaging \u00B7 Protocol \u00B7 Get",
-        "nameConfidence": 0.591817,
-        "nameEvidence": [
-          {
-            "token": "Packaging",
-            "score": 2.995732,
-            "members": [
-              "package:nuget.packaging"
-            ]
-          },
-          {
-            "token": "Protocol",
-            "score": 2.995732,
-            "members": [
-              "package:nuget.protocol"
-            ]
-          },
-          {
-            "token": "Get",
-            "score": 2.772589,
-            "members": [
-              "package:nuget.packaging",
-              "package:nuget.protocol"
-            ]
-          }
-        ],
-        "color": "#9016F3",
-        "borderColor": "#F7F98B",
-        "internalEdgeCount": 1,
-        "weightedDensity": 1,
-        "outgoingEdgeCount": 4,
-        "incomingEdgeCount": 1,
-        "couplingRatio": 0.833333,
-        "representativeNodeIds": [
-          "package:nuget.packaging",
-          "package:nuget.protocol"
-        ],
-        "bridgeNodeIds": [
-          "package:nuget.packaging"
-        ],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
       {
         "stableKey": "community:v1:8cf6393f4dc0efb1",
         "parentKey": null,
@@ -4299,7 +3592,6 @@
         "memberNodeIds": [
           "package:dotnet-depgraph",
           "package:dotnetdependencygraph.core",
-          "package:nuget.projectmodel",
           "project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj",
           "project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj",
           "project:tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj",
@@ -4307,720 +3599,54 @@
         ],
         "directChildKeys": [],
         "resolution": 0.25,
-        "quality": 18.5,
-        "stability": 0.825303,
-        "size": 7,
+        "quality": 2.75,
+        "stability": 1,
+        "size": 6,
+        "detectionVertexCount": 2,
+        "expandedProducerPackageCount": 2,
         "projectCount": 4,
-        "packageCount": 3,
+        "packageCount": 2,
+        "testProjectCount": 2,
         "runnableCount": 1,
-        "name": "Dot \u00B7 Graph \u00B7 Dependency",
-        "nameConfidence": 0.592612,
+        "name": "Cli",
+        "nameConfidence": 1,
         "nameEvidence": [
           {
-            "token": "Dot",
-            "score": 9.4856,
+            "token": "Cli",
+            "score": 0.405465,
             "members": [
-              "package:dotnetdependencygraph.core",
-              "project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj",
-              "project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj",
-              "project:tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj",
-              "project:tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj"
-            ]
-          },
-          {
-            "token": "Graph",
-            "score": 9.4856,
-            "members": [
-              "package:dotnetdependencygraph.core",
-              "project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj",
-              "project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj",
-              "project:tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj",
-              "project:tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj"
+              "project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj"
             ]
           },
           {
             "token": "Dependency",
-            "score": 8.714847,
+            "score": 0,
             "members": [
-              "package:dotnetdependencygraph.core",
               "project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj",
-              "project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj",
-              "project:tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj",
-              "project:tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj"
+              "project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj"
+            ]
+          },
+          {
+            "token": "Dot",
+            "score": 0,
+            "members": [
+              "project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj",
+              "project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj"
             ]
           }
         ],
         "color": "#E5AE48",
         "borderColor": "#F98BEC",
-        "internalEdgeCount": 5,
-        "weightedDensity": 0.238095,
+        "internalEdgeCount": 4,
+        "weightedDensity": 0.266667,
         "outgoingEdgeCount": 7,
         "incomingEdgeCount": 0,
-        "couplingRatio": 0.583333,
+        "couplingRatio": 0.636364,
         "representativeNodeIds": [
-          "project:tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj",
-          "project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj",
-          "project:tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj",
-          "package:nuget.projectmodel",
           "project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj"
         ],
+        "representativeStatus": "eligible-source-nodes",
         "bridgeNodeIds": [],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:9652f98fca5e5160",
-        "parentKey": "community:v1:fcb1b7dbd35df319",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:microsoft.testing.platform.msbuild"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 1,
-        "projectCount": 0,
-        "packageCount": 1,
-        "runnableCount": 0,
-        "name": "Msbuild",
-        "nameConfidence": 0.668707,
-        "nameEvidence": [
-          {
-            "token": "Msbuild",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.testing.platform.msbuild"
-            ]
-          },
-          {
-            "token": "Platform",
-            "score": 2.079442,
-            "members": [
-              "package:microsoft.testing.platform.msbuild"
-            ]
-          },
-          {
-            "token": "Testing",
-            "score": 2.079442,
-            "members": [
-              "package:microsoft.testing.platform.msbuild"
-            ]
-          }
-        ],
-        "color": "#1AF4CC",
-        "borderColor": "#7709AE",
-        "internalEdgeCount": 0,
-        "weightedDensity": 0,
-        "outgoingEdgeCount": 1,
-        "incomingEdgeCount": 1,
-        "couplingRatio": 1,
-        "representativeNodeIds": [
-          "package:microsoft.testing.platform.msbuild"
-        ],
-        "bridgeNodeIds": [],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:a361af83daaef75a",
-        "parentKey": null,
-        "depth": 0,
-        "memberNodeIds": [
-          "package:nuget.configuration",
-          "package:nuget.dependencyresolver.core",
-          "package:nuget.packaging",
-          "package:nuget.protocol",
-          "package:system.security.cryptography.protecteddata"
-        ],
-        "directChildKeys": [
-          "community:v1:469d0d6549e8ce21",
-          "community:v1:76cad86ec88967c1"
-        ],
-        "resolution": 0.25,
-        "quality": 18.5,
-        "stability": 0.825303,
-        "size": 5,
-        "projectCount": 0,
-        "packageCount": 5,
-        "runnableCount": 0,
-        "name": "Get",
-        "nameConfidence": 0.730654,
-        "nameEvidence": [
-          {
-            "token": "Get",
-            "score": 5.545177,
-            "members": [
-              "package:nuget.configuration",
-              "package:nuget.dependencyresolver.core",
-              "package:nuget.packaging",
-              "package:nuget.protocol"
-            ]
-          },
-          {
-            "token": "Configuration",
-            "score": 2.995732,
-            "members": [
-              "package:nuget.configuration"
-            ]
-          },
-          {
-            "token": "Data",
-            "score": 2.995732,
-            "members": [
-              "package:system.security.cryptography.protecteddata"
-            ]
-          }
-        ],
-        "color": "#217FF2",
-        "borderColor": "#AE9609",
-        "internalEdgeCount": 5,
-        "weightedDensity": 0.5,
-        "outgoingEdgeCount": 5,
-        "incomingEdgeCount": 1,
-        "couplingRatio": 0.545455,
-        "representativeNodeIds": [
-          "package:nuget.packaging",
-          "package:nuget.configuration",
-          "package:nuget.dependencyresolver.core",
-          "package:nuget.protocol",
-          "package:system.security.cryptography.protecteddata"
-        ],
-        "bridgeNodeIds": [
-          "package:nuget.configuration",
-          "package:nuget.dependencyresolver.core",
-          "package:nuget.packaging"
-        ],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:b1d26b5edcb58291",
-        "parentKey": "community:v1:58044639030d47ee",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:xunit.v3.extensibility.core",
-          "package:xunit.v3.runner.inproc.console"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 2,
-        "projectCount": 0,
-        "packageCount": 2,
-        "runnableCount": 0,
-        "name": "Console \u00B7 Extensibility \u00B7 Inproc",
-        "nameConfidence": 0.58333,
-        "nameEvidence": [
-          {
-            "token": "Console",
-            "score": 2.995732,
-            "members": [
-              "package:xunit.v3.runner.inproc.console"
-            ]
-          },
-          {
-            "token": "Extensibility",
-            "score": 2.995732,
-            "members": [
-              "package:xunit.v3.extensibility.core"
-            ]
-          },
-          {
-            "token": "Inproc",
-            "score": 2.995732,
-            "members": [
-              "package:xunit.v3.runner.inproc.console"
-            ]
-          }
-        ],
-        "color": "#35E38C",
-        "borderColor": "#8DAE09",
-        "internalEdgeCount": 1,
-        "weightedDensity": 1,
-        "outgoingEdgeCount": 2,
-        "incomingEdgeCount": 2,
-        "couplingRatio": 0.8,
-        "representativeNodeIds": [
-          "package:xunit.v3.extensibility.core",
-          "package:xunit.v3.runner.inproc.console"
-        ],
-        "bridgeNodeIds": [
-          "package:xunit.v3.extensibility.core",
-          "package:xunit.v3.runner.inproc.console"
-        ],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:c4ec49890a3800c4",
-        "parentKey": null,
-        "depth": 0,
-        "memberNodeIds": [
-          "package:xunit.analyzers",
-          "package:xunit.v3",
-          "package:xunit.v3.assert",
-          "package:xunit.v3.mtp-v1"
-        ],
-        "directChildKeys": [
-          "community:v1:67bceb20e47924f3",
-          "community:v1:d0d16c05d6853f76",
-          "community:v1:df29bb8a78ab7920"
-        ],
-        "resolution": 0.25,
-        "quality": 18.5,
-        "stability": 0.825303,
-        "size": 4,
-        "projectCount": 0,
-        "packageCount": 4,
-        "runnableCount": 0,
-        "name": "Xunit",
-        "nameConfidence": 0.712905,
-        "nameEvidence": [
-          {
-            "token": "Xunit",
-            "score": 5.163937,
-            "members": [
-              "package:xunit.analyzers",
-              "package:xunit.v3",
-              "package:xunit.v3.assert",
-              "package:xunit.v3.mtp-v1"
-            ]
-          },
-          {
-            "token": "Analyzers",
-            "score": 2.995732,
-            "members": [
-              "package:xunit.analyzers"
-            ]
-          },
-          {
-            "token": "Assert",
-            "score": 2.995732,
-            "members": [
-              "package:xunit.v3.assert"
-            ]
-          }
-        ],
-        "color": "#A841F1",
-        "borderColor": "#AE2A09",
-        "internalEdgeCount": 3,
-        "weightedDensity": 0.5,
-        "outgoingEdgeCount": 1,
-        "incomingEdgeCount": 2,
-        "couplingRatio": 0.5,
-        "representativeNodeIds": [
-          "package:xunit.v3.mtp-v1",
-          "package:xunit.v3",
-          "package:xunit.analyzers",
-          "package:xunit.v3.assert"
-        ],
-        "bridgeNodeIds": [],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:cd28f67122812d8b",
-        "parentKey": "community:v1:fcb1b7dbd35df319",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:microsoft.testing.extensions.trxreport.abstractions"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 1,
-        "projectCount": 0,
-        "packageCount": 1,
-        "runnableCount": 0,
-        "name": "Abstractions \u00B7 Report \u00B7 Trx",
-        "nameConfidence": 0.58333,
-        "nameEvidence": [
-          {
-            "token": "Abstractions",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.testing.extensions.trxreport.abstractions"
-            ]
-          },
-          {
-            "token": "Report",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.testing.extensions.trxreport.abstractions"
-            ]
-          },
-          {
-            "token": "Trx",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.testing.extensions.trxreport.abstractions"
-            ]
-          }
-        ],
-        "color": "#CE3FE4",
-        "borderColor": "#8BF9A3",
-        "internalEdgeCount": 0,
-        "weightedDensity": 0,
-        "outgoingEdgeCount": 1,
-        "incomingEdgeCount": 1,
-        "couplingRatio": 1,
-        "representativeNodeIds": [
-          "package:microsoft.testing.extensions.trxreport.abstractions"
-        ],
-        "bridgeNodeIds": [],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:d0d16c05d6853f76",
-        "parentKey": "community:v1:c4ec49890a3800c4",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:xunit.v3"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 1,
-        "projectCount": 0,
-        "packageCount": 1,
-        "runnableCount": 0,
-        "name": "Xunit",
-        "nameConfidence": 1,
-        "nameEvidence": [
-          {
-            "token": "Xunit",
-            "score": 1.290984,
-            "members": [
-              "package:xunit.v3"
-            ]
-          }
-        ],
-        "color": "#93EF43",
-        "borderColor": "#8BDAF9",
-        "internalEdgeCount": 0,
-        "weightedDensity": 0,
-        "outgoingEdgeCount": 1,
-        "incomingEdgeCount": 2,
-        "couplingRatio": 1,
-        "representativeNodeIds": [
-          "package:xunit.v3"
-        ],
-        "bridgeNodeIds": [],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:dba70be1268e660d",
-        "parentKey": "community:v1:fcb1b7dbd35df319",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:microsoft.testing.extensions.telemetry",
-          "package:microsoft.testing.platform",
-          "package:xunit.v3.core.mtp-v1"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 3,
-        "projectCount": 0,
-        "packageCount": 3,
-        "runnableCount": 0,
-        "name": "Testing",
-        "nameConfidence": 0.676772,
-        "nameEvidence": [
-          {
-            "token": "Testing",
-            "score": 4.158883,
-            "members": [
-              "package:microsoft.testing.extensions.telemetry",
-              "package:microsoft.testing.platform"
-            ]
-          },
-          {
-            "token": "Telemetry",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.testing.extensions.telemetry"
-            ]
-          },
-          {
-            "token": "Extensions",
-            "score": 2.590267,
-            "members": [
-              "package:microsoft.testing.extensions.telemetry"
-            ]
-          }
-        ],
-        "color": "#2026D5",
-        "borderColor": "#09AE0F",
-        "internalEdgeCount": 3,
-        "weightedDensity": 1,
-        "outgoingEdgeCount": 5,
-        "incomingEdgeCount": 3,
-        "couplingRatio": 0.727273,
-        "representativeNodeIds": [
-          "package:xunit.v3.core.mtp-v1",
-          "package:microsoft.testing.platform",
-          "package:microsoft.testing.extensions.telemetry"
-        ],
-        "bridgeNodeIds": [
-          "package:xunit.v3.core.mtp-v1"
-        ],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:df29bb8a78ab7920",
-        "parentKey": "community:v1:c4ec49890a3800c4",
-        "depth": 1,
-        "memberNodeIds": [
-          "package:xunit.analyzers",
-          "package:xunit.v3.mtp-v1"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.5,
-        "quality": 11.5,
-        "stability": 0.906295,
-        "size": 2,
-        "projectCount": 0,
-        "packageCount": 2,
-        "runnableCount": 0,
-        "name": "Analyzers \u00B7 Mtp \u00B7 Xunit",
-        "nameConfidence": 0.616761,
-        "nameEvidence": [
-          {
-            "token": "Analyzers",
-            "score": 2.995732,
-            "members": [
-              "package:xunit.analyzers"
-            ]
-          },
-          {
-            "token": "Mtp",
-            "score": 2.590267,
-            "members": [
-              "package:xunit.v3.mtp-v1"
-            ]
-          },
-          {
-            "token": "Xunit",
-            "score": 2.581968,
-            "members": [
-              "package:xunit.analyzers",
-              "package:xunit.v3.mtp-v1"
-            ]
-          }
-        ],
-        "color": "#23E788",
-        "borderColor": "#3009AE",
-        "internalEdgeCount": 1,
-        "weightedDensity": 1,
-        "outgoingEdgeCount": 2,
-        "incomingEdgeCount": 1,
-        "couplingRatio": 0.75,
-        "representativeNodeIds": [
-          "package:xunit.v3.mtp-v1",
-          "package:xunit.analyzers"
-        ],
-        "bridgeNodeIds": [],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:e38345859da5bbd7",
-        "parentKey": null,
-        "depth": 0,
-        "memberNodeIds": [
-          "package:microsoft.testplatform.objectmodel",
-          "package:microsoft.testplatform.testhost",
-          "package:newtonsoft.json"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.25,
-        "quality": 18.5,
-        "stability": 0.825303,
-        "size": 3,
-        "projectCount": 0,
-        "packageCount": 3,
-        "runnableCount": 0,
-        "name": "Platform",
-        "nameConfidence": 0.659724,
-        "nameEvidence": [
-          {
-            "token": "Platform",
-            "score": 4.158883,
-            "members": [
-              "package:microsoft.testplatform.objectmodel",
-              "package:microsoft.testplatform.testhost"
-            ]
-          },
-          {
-            "token": "Host",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.testplatform.testhost"
-            ]
-          },
-          {
-            "token": "Json",
-            "score": 2.995732,
-            "members": [
-              "package:newtonsoft.json"
-            ]
-          }
-        ],
-        "color": "#E7505A",
-        "borderColor": "#C9F98B",
-        "internalEdgeCount": 2,
-        "weightedDensity": 0.666667,
-        "outgoingEdgeCount": 0,
-        "incomingEdgeCount": 2,
-        "couplingRatio": 0.5,
-        "representativeNodeIds": [
-          "package:newtonsoft.json",
-          "package:microsoft.testplatform.testhost",
-          "package:microsoft.testplatform.objectmodel"
-        ],
-        "bridgeNodeIds": [],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:f8bbf1abe64226c6",
-        "parentKey": null,
-        "depth": 0,
-        "memberNodeIds": [
-          "package:microsoft.codecoverage",
-          "package:microsoft.net.test.sdk"
-        ],
-        "directChildKeys": [],
-        "resolution": 0.25,
-        "quality": 18.5,
-        "stability": 0.825303,
-        "size": 2,
-        "projectCount": 0,
-        "packageCount": 2,
-        "runnableCount": 0,
-        "name": "Code \u00B7 Coverage \u00B7 Sdk",
-        "nameConfidence": 0.58333,
-        "nameEvidence": [
-          {
-            "token": "Code",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.codecoverage"
-            ]
-          },
-          {
-            "token": "Coverage",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.codecoverage"
-            ]
-          },
-          {
-            "token": "Sdk",
-            "score": 2.995732,
-            "members": [
-              "package:microsoft.net.test.sdk"
-            ]
-          }
-        ],
-        "color": "#58E335",
-        "borderColor": "#0988AE",
-        "internalEdgeCount": 1,
-        "weightedDensity": 1,
-        "outgoingEdgeCount": 1,
-        "incomingEdgeCount": 2,
-        "couplingRatio": 0.75,
-        "representativeNodeIds": [
-          "package:microsoft.net.test.sdk",
-          "package:microsoft.codecoverage"
-        ],
-        "bridgeNodeIds": [
-          "package:microsoft.net.test.sdk"
-        ],
-        "internalCycleCount": 0,
-        "versionSkewedPackageCount": 0
-      },
-      {
-        "stableKey": "community:v1:fcb1b7dbd35df319",
-        "parentKey": null,
-        "depth": 0,
-        "memberNodeIds": [
-          "package:microsoft.testing.extensions.telemetry",
-          "package:microsoft.testing.extensions.trxreport.abstractions",
-          "package:microsoft.testing.platform",
-          "package:microsoft.testing.platform.msbuild",
-          "package:xunit.v3.core.mtp-v1"
-        ],
-        "directChildKeys": [
-          "community:v1:9652f98fca5e5160",
-          "community:v1:cd28f67122812d8b",
-          "community:v1:dba70be1268e660d"
-        ],
-        "resolution": 0.25,
-        "quality": 18.5,
-        "stability": 0.825303,
-        "size": 5,
-        "projectCount": 0,
-        "packageCount": 5,
-        "runnableCount": 0,
-        "name": "Testing",
-        "nameConfidence": 0.704168,
-        "nameEvidence": [
-          {
-            "token": "Testing",
-            "score": 8.317766,
-            "members": [
-              "package:microsoft.testing.extensions.telemetry",
-              "package:microsoft.testing.extensions.trxreport.abstractions",
-              "package:microsoft.testing.platform",
-              "package:microsoft.testing.platform.msbuild"
-            ]
-          },
-          {
-            "token": "Extensions",
-            "score": 5.180534,
-            "members": [
-              "package:microsoft.testing.extensions.telemetry",
-              "package:microsoft.testing.extensions.trxreport.abstractions"
-            ]
-          },
-          {
-            "token": "Microsoft",
-            "score": 4.815891,
-            "members": [
-              "package:microsoft.testing.extensions.telemetry",
-              "package:microsoft.testing.extensions.trxreport.abstractions",
-              "package:microsoft.testing.platform",
-              "package:microsoft.testing.platform.msbuild"
-            ]
-          }
-        ],
-        "color": "#48F4AC",
-        "borderColor": "#F9C08B",
-        "internalEdgeCount": 7,
-        "weightedDensity": 0.7,
-        "outgoingEdgeCount": 3,
-        "incomingEdgeCount": 1,
-        "couplingRatio": 0.363636,
-        "representativeNodeIds": [
-          "package:xunit.v3.core.mtp-v1",
-          "package:microsoft.testing.platform",
-          "package:microsoft.testing.extensions.telemetry",
-          "package:microsoft.testing.extensions.trxreport.abstractions",
-          "package:microsoft.testing.platform.msbuild"
-        ],
-        "bridgeNodeIds": [
-          "package:xunit.v3.core.mtp-v1"
-        ],
         "internalCycleCount": 0,
         "versionSkewedPackageCount": 0
       }
@@ -5040,360 +3666,6 @@
         "nodeId": "package:dotnetdependencygraph.core",
         "detectedCommunityPath": [
           "community:v1:8cf6393f4dc0efb1"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:microsoft.applicationinsights": {
-        "nodeId": "package:microsoft.applicationinsights",
-        "detectedCommunityPath": [
-          "community:v1:26df6bee4d9ec894"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:microsoft.bcl.asyncinterfaces": {
-        "nodeId": "package:microsoft.bcl.asyncinterfaces",
-        "detectedCommunityPath": [
-          "community:v1:58044639030d47ee",
-          "community:v1:439b0b10e4e6591f"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:microsoft.codecoverage": {
-        "nodeId": "package:microsoft.codecoverage",
-        "detectedCommunityPath": [
-          "community:v1:f8bbf1abe64226c6"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:microsoft.net.test.sdk": {
-        "nodeId": "package:microsoft.net.test.sdk",
-        "detectedCommunityPath": [
-          "community:v1:f8bbf1abe64226c6"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:microsoft.testing.extensions.telemetry": {
-        "nodeId": "package:microsoft.testing.extensions.telemetry",
-        "detectedCommunityPath": [
-          "community:v1:fcb1b7dbd35df319",
-          "community:v1:dba70be1268e660d"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:microsoft.testing.extensions.trxreport.abstractions": {
-        "nodeId": "package:microsoft.testing.extensions.trxreport.abstractions",
-        "detectedCommunityPath": [
-          "community:v1:fcb1b7dbd35df319",
-          "community:v1:cd28f67122812d8b"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:microsoft.testing.platform": {
-        "nodeId": "package:microsoft.testing.platform",
-        "detectedCommunityPath": [
-          "community:v1:fcb1b7dbd35df319",
-          "community:v1:dba70be1268e660d"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:microsoft.testing.platform.msbuild": {
-        "nodeId": "package:microsoft.testing.platform.msbuild",
-        "detectedCommunityPath": [
-          "community:v1:fcb1b7dbd35df319",
-          "community:v1:9652f98fca5e5160"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:microsoft.testplatform.objectmodel": {
-        "nodeId": "package:microsoft.testplatform.objectmodel",
-        "detectedCommunityPath": [
-          "community:v1:e38345859da5bbd7"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:microsoft.testplatform.testhost": {
-        "nodeId": "package:microsoft.testplatform.testhost",
-        "detectedCommunityPath": [
-          "community:v1:e38345859da5bbd7"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:microsoft.win32.registry": {
-        "nodeId": "package:microsoft.win32.registry",
-        "detectedCommunityPath": [
-          "community:v1:58044639030d47ee",
-          "community:v1:71294a9c6877f097"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:newtonsoft.json": {
-        "nodeId": "package:newtonsoft.json",
-        "detectedCommunityPath": [
-          "community:v1:e38345859da5bbd7"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:nuget.common": {
-        "nodeId": "package:nuget.common",
-        "detectedCommunityPath": [
-          "community:v1:57cd9474a0488e2c",
-          "community:v1:2aee617039ce17be"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:nuget.configuration": {
-        "nodeId": "package:nuget.configuration",
-        "detectedCommunityPath": [
-          "community:v1:a361af83daaef75a",
-          "community:v1:469d0d6549e8ce21"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:nuget.dependencyresolver.core": {
-        "nodeId": "package:nuget.dependencyresolver.core",
-        "detectedCommunityPath": [
-          "community:v1:a361af83daaef75a",
-          "community:v1:469d0d6549e8ce21"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:nuget.frameworks": {
-        "nodeId": "package:nuget.frameworks",
-        "detectedCommunityPath": [
-          "community:v1:57cd9474a0488e2c",
-          "community:v1:2aee617039ce17be"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:nuget.librarymodel": {
-        "nodeId": "package:nuget.librarymodel",
-        "detectedCommunityPath": [
-          "community:v1:57cd9474a0488e2c",
-          "community:v1:72399749517558d5"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:nuget.packaging": {
-        "nodeId": "package:nuget.packaging",
-        "detectedCommunityPath": [
-          "community:v1:a361af83daaef75a",
-          "community:v1:76cad86ec88967c1"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:nuget.projectmodel": {
-        "nodeId": "package:nuget.projectmodel",
-        "detectedCommunityPath": [
-          "community:v1:8cf6393f4dc0efb1"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:nuget.protocol": {
-        "nodeId": "package:nuget.protocol",
-        "detectedCommunityPath": [
-          "community:v1:a361af83daaef75a",
-          "community:v1:76cad86ec88967c1"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:nuget.versioning": {
-        "nodeId": "package:nuget.versioning",
-        "detectedCommunityPath": [
-          "community:v1:57cd9474a0488e2c",
-          "community:v1:72399749517558d5"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:system.security.cryptography.pkcs": {
-        "nodeId": "package:system.security.cryptography.pkcs",
-        "detectedCommunityPath": [
-          "community:v1:63d89639776b868e"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:system.security.cryptography.protecteddata": {
-        "nodeId": "package:system.security.cryptography.protecteddata",
-        "detectedCommunityPath": [
-          "community:v1:a361af83daaef75a",
-          "community:v1:469d0d6549e8ce21"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:xunit.analyzers": {
-        "nodeId": "package:xunit.analyzers",
-        "detectedCommunityPath": [
-          "community:v1:c4ec49890a3800c4",
-          "community:v1:df29bb8a78ab7920"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:xunit.runner.visualstudio": {
-        "nodeId": "package:xunit.runner.visualstudio",
-        "detectedCommunityPath": [
-          "community:v1:3bf160808884bfc6"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:xunit.v3": {
-        "nodeId": "package:xunit.v3",
-        "detectedCommunityPath": [
-          "community:v1:c4ec49890a3800c4",
-          "community:v1:d0d16c05d6853f76"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:xunit.v3.assert": {
-        "nodeId": "package:xunit.v3.assert",
-        "detectedCommunityPath": [
-          "community:v1:c4ec49890a3800c4",
-          "community:v1:67bceb20e47924f3"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:xunit.v3.common": {
-        "nodeId": "package:xunit.v3.common",
-        "detectedCommunityPath": [
-          "community:v1:58044639030d47ee",
-          "community:v1:439b0b10e4e6591f"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:xunit.v3.core.mtp-v1": {
-        "nodeId": "package:xunit.v3.core.mtp-v1",
-        "detectedCommunityPath": [
-          "community:v1:fcb1b7dbd35df319",
-          "community:v1:dba70be1268e660d"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:xunit.v3.extensibility.core": {
-        "nodeId": "package:xunit.v3.extensibility.core",
-        "detectedCommunityPath": [
-          "community:v1:58044639030d47ee",
-          "community:v1:b1d26b5edcb58291"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:xunit.v3.mtp-v1": {
-        "nodeId": "package:xunit.v3.mtp-v1",
-        "detectedCommunityPath": [
-          "community:v1:c4ec49890a3800c4",
-          "community:v1:df29bb8a78ab7920"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:xunit.v3.runner.common": {
-        "nodeId": "package:xunit.v3.runner.common",
-        "detectedCommunityPath": [
-          "community:v1:58044639030d47ee",
-          "community:v1:71294a9c6877f097"
-        ],
-        "assignmentSource": "automatic",
-        "assignmentEvidence": [],
-        "assignmentScore": 0,
-        "candidateCommunities": []
-      },
-      "package:xunit.v3.runner.inproc.console": {
-        "nodeId": "package:xunit.v3.runner.inproc.console",
-        "detectedCommunityPath": [
-          "community:v1:58044639030d47ee",
-          "community:v1:b1d26b5edcb58291"
         ],
         "assignmentSource": "automatic",
         "assignmentEvidence": [],
@@ -5427,17 +3699,11 @@
         ],
         "assignmentSource": "inherited-test",
         "assignmentEvidence": [
-          "PackageReference to package:microsoft.net.test.sdk at distance 1: 2",
-          "PackageReference to package:xunit.runner.visualstudio at distance 1: 2",
-          "PackageReference to package:xunit.v3 at distance 1: 2",
           "ProjectReference to project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj at distance 1: 3"
         ],
         "assignmentScore": 3,
         "candidateCommunities": [
-          "community:v1:8cf6393f4dc0efb1",
-          "community:v1:3bf160808884bfc6",
-          "community:v1:d0d16c05d6853f76",
-          "community:v1:f8bbf1abe64226c6"
+          "community:v1:8cf6393f4dc0efb1"
         ]
       },
       "project:tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj": {
@@ -5447,19 +3713,343 @@
         ],
         "assignmentSource": "inherited-test",
         "assignmentEvidence": [
-          "PackageReference to package:microsoft.net.test.sdk at distance 1: 2",
-          "PackageReference to package:xunit.runner.visualstudio at distance 1: 2",
-          "PackageReference to package:xunit.v3 at distance 1: 2",
           "ProjectReference to project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj at distance 1: 3",
           "ProjectReference to project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj at distance 1: 3"
         ],
         "assignmentScore": 6,
         "candidateCommunities": [
-          "community:v1:8cf6393f4dc0efb1",
-          "community:v1:3bf160808884bfc6",
-          "community:v1:d0d16c05d6853f76",
-          "community:v1:f8bbf1abe64226c6"
+          "community:v1:8cf6393f4dc0efb1"
         ]
+      },
+      "package:microsoft.applicationinsights": {
+        "nodeId": "package:microsoft.applicationinsights",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:microsoft.bcl.asyncinterfaces": {
+        "nodeId": "package:microsoft.bcl.asyncinterfaces",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:microsoft.codecoverage": {
+        "nodeId": "package:microsoft.codecoverage",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:microsoft.net.test.sdk": {
+        "nodeId": "package:microsoft.net.test.sdk",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: systempackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:microsoft.testing.extensions.telemetry": {
+        "nodeId": "package:microsoft.testing.extensions.telemetry",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:microsoft.testing.extensions.trxreport.abstractions": {
+        "nodeId": "package:microsoft.testing.extensions.trxreport.abstractions",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:microsoft.testing.platform": {
+        "nodeId": "package:microsoft.testing.platform",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:microsoft.testing.platform.msbuild": {
+        "nodeId": "package:microsoft.testing.platform.msbuild",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:microsoft.testplatform.objectmodel": {
+        "nodeId": "package:microsoft.testplatform.objectmodel",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:microsoft.testplatform.testhost": {
+        "nodeId": "package:microsoft.testplatform.testhost",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:microsoft.win32.registry": {
+        "nodeId": "package:microsoft.win32.registry",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: systempackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:newtonsoft.json": {
+        "nodeId": "package:newtonsoft.json",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:nuget.common": {
+        "nodeId": "package:nuget.common",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:nuget.configuration": {
+        "nodeId": "package:nuget.configuration",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:nuget.dependencyresolver.core": {
+        "nodeId": "package:nuget.dependencyresolver.core",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:nuget.frameworks": {
+        "nodeId": "package:nuget.frameworks",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:nuget.librarymodel": {
+        "nodeId": "package:nuget.librarymodel",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:nuget.packaging": {
+        "nodeId": "package:nuget.packaging",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:nuget.projectmodel": {
+        "nodeId": "package:nuget.projectmodel",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:nuget.protocol": {
+        "nodeId": "package:nuget.protocol",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:nuget.versioning": {
+        "nodeId": "package:nuget.versioning",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:system.security.cryptography.pkcs": {
+        "nodeId": "package:system.security.cryptography.pkcs",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: systempackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:system.security.cryptography.protecteddata": {
+        "nodeId": "package:system.security.cryptography.protecteddata",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: systempackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:xunit.analyzers": {
+        "nodeId": "package:xunit.analyzers",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:xunit.runner.visualstudio": {
+        "nodeId": "package:xunit.runner.visualstudio",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:xunit.v3": {
+        "nodeId": "package:xunit.v3",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:xunit.v3.assert": {
+        "nodeId": "package:xunit.v3.assert",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:xunit.v3.common": {
+        "nodeId": "package:xunit.v3.common",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:xunit.v3.core.mtp-v1": {
+        "nodeId": "package:xunit.v3.core.mtp-v1",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:xunit.v3.extensibility.core": {
+        "nodeId": "package:xunit.v3.extensibility.core",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:xunit.v3.mtp-v1": {
+        "nodeId": "package:xunit.v3.mtp-v1",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:xunit.v3.runner.common": {
+        "nodeId": "package:xunit.v3.runner.common",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
+      },
+      "package:xunit.v3.runner.inproc.console": {
+        "nodeId": "package:xunit.v3.runner.inproc.console",
+        "detectedCommunityPath": [],
+        "assignmentSource": "excluded",
+        "assignmentEvidence": [
+          "excluded from detection projection: thirdpartypackage"
+        ],
+        "assignmentScore": 0,
+        "candidateCommunities": []
       }
     },
     "granularityAssignments": {
@@ -5468,39 +4058,6 @@
         "project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj": "community:v1:8cf6393f4dc0efb1",
         "package:dotnetdependencygraph.core": "community:v1:8cf6393f4dc0efb1",
         "project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj": "community:v1:8cf6393f4dc0efb1",
-        "package:microsoft.applicationinsights": "community:v1:26df6bee4d9ec894",
-        "package:microsoft.bcl.asyncinterfaces": "community:v1:58044639030d47ee",
-        "package:microsoft.codecoverage": "community:v1:f8bbf1abe64226c6",
-        "package:microsoft.net.test.sdk": "community:v1:f8bbf1abe64226c6",
-        "package:microsoft.testing.extensions.telemetry": "community:v1:fcb1b7dbd35df319",
-        "package:microsoft.testing.extensions.trxreport.abstractions": "community:v1:fcb1b7dbd35df319",
-        "package:microsoft.testing.platform": "community:v1:fcb1b7dbd35df319",
-        "package:microsoft.testing.platform.msbuild": "community:v1:fcb1b7dbd35df319",
-        "package:microsoft.testplatform.objectmodel": "community:v1:e38345859da5bbd7",
-        "package:microsoft.testplatform.testhost": "community:v1:e38345859da5bbd7",
-        "package:microsoft.win32.registry": "community:v1:58044639030d47ee",
-        "package:newtonsoft.json": "community:v1:e38345859da5bbd7",
-        "package:nuget.common": "community:v1:57cd9474a0488e2c",
-        "package:nuget.configuration": "community:v1:a361af83daaef75a",
-        "package:nuget.dependencyresolver.core": "community:v1:a361af83daaef75a",
-        "package:nuget.frameworks": "community:v1:57cd9474a0488e2c",
-        "package:nuget.librarymodel": "community:v1:57cd9474a0488e2c",
-        "package:nuget.packaging": "community:v1:a361af83daaef75a",
-        "package:nuget.projectmodel": "community:v1:8cf6393f4dc0efb1",
-        "package:nuget.protocol": "community:v1:a361af83daaef75a",
-        "package:nuget.versioning": "community:v1:57cd9474a0488e2c",
-        "package:system.security.cryptography.pkcs": "community:v1:63d89639776b868e",
-        "package:system.security.cryptography.protecteddata": "community:v1:a361af83daaef75a",
-        "package:xunit.analyzers": "community:v1:c4ec49890a3800c4",
-        "package:xunit.runner.visualstudio": "community:v1:3bf160808884bfc6",
-        "package:xunit.v3": "community:v1:c4ec49890a3800c4",
-        "package:xunit.v3.assert": "community:v1:c4ec49890a3800c4",
-        "package:xunit.v3.common": "community:v1:58044639030d47ee",
-        "package:xunit.v3.core.mtp-v1": "community:v1:fcb1b7dbd35df319",
-        "package:xunit.v3.extensibility.core": "community:v1:58044639030d47ee",
-        "package:xunit.v3.mtp-v1": "community:v1:c4ec49890a3800c4",
-        "package:xunit.v3.runner.common": "community:v1:58044639030d47ee",
-        "package:xunit.v3.runner.inproc.console": "community:v1:58044639030d47ee",
         "project:tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj": "community:v1:8cf6393f4dc0efb1",
         "project:tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj": "community:v1:8cf6393f4dc0efb1"
       },
@@ -5509,39 +4066,6 @@
         "project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj": "community:v1:8cf6393f4dc0efb1",
         "package:dotnetdependencygraph.core": "community:v1:8cf6393f4dc0efb1",
         "project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj": "community:v1:8cf6393f4dc0efb1",
-        "package:microsoft.applicationinsights": "community:v1:26df6bee4d9ec894",
-        "package:microsoft.bcl.asyncinterfaces": "community:v1:439b0b10e4e6591f",
-        "package:microsoft.codecoverage": "community:v1:f8bbf1abe64226c6",
-        "package:microsoft.net.test.sdk": "community:v1:f8bbf1abe64226c6",
-        "package:microsoft.testing.extensions.telemetry": "community:v1:fcb1b7dbd35df319",
-        "package:microsoft.testing.extensions.trxreport.abstractions": "community:v1:fcb1b7dbd35df319",
-        "package:microsoft.testing.platform": "community:v1:fcb1b7dbd35df319",
-        "package:microsoft.testing.platform.msbuild": "community:v1:fcb1b7dbd35df319",
-        "package:microsoft.testplatform.objectmodel": "community:v1:e38345859da5bbd7",
-        "package:microsoft.testplatform.testhost": "community:v1:e38345859da5bbd7",
-        "package:microsoft.win32.registry": "community:v1:71294a9c6877f097",
-        "package:newtonsoft.json": "community:v1:e38345859da5bbd7",
-        "package:nuget.common": "community:v1:2aee617039ce17be",
-        "package:nuget.configuration": "community:v1:469d0d6549e8ce21",
-        "package:nuget.dependencyresolver.core": "community:v1:469d0d6549e8ce21",
-        "package:nuget.frameworks": "community:v1:2aee617039ce17be",
-        "package:nuget.librarymodel": "community:v1:72399749517558d5",
-        "package:nuget.packaging": "community:v1:76cad86ec88967c1",
-        "package:nuget.projectmodel": "community:v1:8cf6393f4dc0efb1",
-        "package:nuget.protocol": "community:v1:76cad86ec88967c1",
-        "package:nuget.versioning": "community:v1:72399749517558d5",
-        "package:system.security.cryptography.pkcs": "community:v1:63d89639776b868e",
-        "package:system.security.cryptography.protecteddata": "community:v1:469d0d6549e8ce21",
-        "package:xunit.analyzers": "community:v1:c4ec49890a3800c4",
-        "package:xunit.runner.visualstudio": "community:v1:3bf160808884bfc6",
-        "package:xunit.v3": "community:v1:c4ec49890a3800c4",
-        "package:xunit.v3.assert": "community:v1:c4ec49890a3800c4",
-        "package:xunit.v3.common": "community:v1:439b0b10e4e6591f",
-        "package:xunit.v3.core.mtp-v1": "community:v1:fcb1b7dbd35df319",
-        "package:xunit.v3.extensibility.core": "community:v1:b1d26b5edcb58291",
-        "package:xunit.v3.mtp-v1": "community:v1:c4ec49890a3800c4",
-        "package:xunit.v3.runner.common": "community:v1:71294a9c6877f097",
-        "package:xunit.v3.runner.inproc.console": "community:v1:b1d26b5edcb58291",
         "project:tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj": "community:v1:8cf6393f4dc0efb1",
         "project:tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj": "community:v1:8cf6393f4dc0efb1"
       },
@@ -5550,327 +4074,12 @@
         "project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj": "community:v1:8cf6393f4dc0efb1",
         "package:dotnetdependencygraph.core": "community:v1:8cf6393f4dc0efb1",
         "project:src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj": "community:v1:8cf6393f4dc0efb1",
-        "package:microsoft.applicationinsights": "community:v1:26df6bee4d9ec894",
-        "package:microsoft.bcl.asyncinterfaces": "community:v1:439b0b10e4e6591f",
-        "package:microsoft.codecoverage": "community:v1:f8bbf1abe64226c6",
-        "package:microsoft.net.test.sdk": "community:v1:f8bbf1abe64226c6",
-        "package:microsoft.testing.extensions.telemetry": "community:v1:dba70be1268e660d",
-        "package:microsoft.testing.extensions.trxreport.abstractions": "community:v1:cd28f67122812d8b",
-        "package:microsoft.testing.platform": "community:v1:dba70be1268e660d",
-        "package:microsoft.testing.platform.msbuild": "community:v1:9652f98fca5e5160",
-        "package:microsoft.testplatform.objectmodel": "community:v1:e38345859da5bbd7",
-        "package:microsoft.testplatform.testhost": "community:v1:e38345859da5bbd7",
-        "package:microsoft.win32.registry": "community:v1:71294a9c6877f097",
-        "package:newtonsoft.json": "community:v1:e38345859da5bbd7",
-        "package:nuget.common": "community:v1:2aee617039ce17be",
-        "package:nuget.configuration": "community:v1:469d0d6549e8ce21",
-        "package:nuget.dependencyresolver.core": "community:v1:469d0d6549e8ce21",
-        "package:nuget.frameworks": "community:v1:2aee617039ce17be",
-        "package:nuget.librarymodel": "community:v1:72399749517558d5",
-        "package:nuget.packaging": "community:v1:76cad86ec88967c1",
-        "package:nuget.projectmodel": "community:v1:8cf6393f4dc0efb1",
-        "package:nuget.protocol": "community:v1:76cad86ec88967c1",
-        "package:nuget.versioning": "community:v1:72399749517558d5",
-        "package:system.security.cryptography.pkcs": "community:v1:63d89639776b868e",
-        "package:system.security.cryptography.protecteddata": "community:v1:469d0d6549e8ce21",
-        "package:xunit.analyzers": "community:v1:df29bb8a78ab7920",
-        "package:xunit.runner.visualstudio": "community:v1:3bf160808884bfc6",
-        "package:xunit.v3": "community:v1:d0d16c05d6853f76",
-        "package:xunit.v3.assert": "community:v1:67bceb20e47924f3",
-        "package:xunit.v3.common": "community:v1:439b0b10e4e6591f",
-        "package:xunit.v3.core.mtp-v1": "community:v1:dba70be1268e660d",
-        "package:xunit.v3.extensibility.core": "community:v1:b1d26b5edcb58291",
-        "package:xunit.v3.mtp-v1": "community:v1:df29bb8a78ab7920",
-        "package:xunit.v3.runner.common": "community:v1:71294a9c6877f097",
-        "package:xunit.v3.runner.inproc.console": "community:v1:b1d26b5edcb58291",
         "project:tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj": "community:v1:8cf6393f4dc0efb1",
         "project:tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj": "community:v1:8cf6393f4dc0efb1"
       }
     },
-    "crossCommunityDependencies": [
-      {
-        "sourceCommunity": "community:v1:469d0d6549e8ce21",
-        "targetCommunity": "community:v1:2aee617039ce17be",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:nuget.configuration-\u003Epackage:nuget.common"
-        ],
-        "uniqueContextCount": 4
-      },
-      {
-        "sourceCommunity": "community:v1:469d0d6549e8ce21",
-        "targetCommunity": "community:v1:72399749517558d5",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:nuget.dependencyresolver.core-\u003Epackage:nuget.librarymodel"
-        ],
-        "uniqueContextCount": 4
-      },
-      {
-        "sourceCommunity": "community:v1:469d0d6549e8ce21",
-        "targetCommunity": "community:v1:76cad86ec88967c1",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:nuget.dependencyresolver.core-\u003Epackage:nuget.protocol"
-        ],
-        "uniqueContextCount": 4
-      },
-      {
-        "sourceCommunity": "community:v1:71294a9c6877f097",
-        "targetCommunity": "community:v1:439b0b10e4e6591f",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:xunit.v3.runner.common-\u003Epackage:xunit.v3.common"
-        ],
-        "uniqueContextCount": 2
-      },
-      {
-        "sourceCommunity": "community:v1:72399749517558d5",
-        "targetCommunity": "community:v1:2aee617039ce17be",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:nuget.librarymodel-\u003Epackage:nuget.common"
-        ],
-        "uniqueContextCount": 4
-      },
-      {
-        "sourceCommunity": "community:v1:76cad86ec88967c1",
-        "targetCommunity": "community:v1:469d0d6549e8ce21",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:nuget.packaging-\u003Epackage:nuget.configuration"
-        ],
-        "uniqueContextCount": 4
-      },
-      {
-        "sourceCommunity": "community:v1:76cad86ec88967c1",
-        "targetCommunity": "community:v1:63d89639776b868e",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:nuget.packaging-\u003Epackage:system.security.cryptography.pkcs"
-        ],
-        "uniqueContextCount": 4
-      },
-      {
-        "sourceCommunity": "community:v1:76cad86ec88967c1",
-        "targetCommunity": "community:v1:72399749517558d5",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:nuget.packaging-\u003Epackage:nuget.versioning"
-        ],
-        "uniqueContextCount": 4
-      },
-      {
-        "sourceCommunity": "community:v1:76cad86ec88967c1",
-        "targetCommunity": "community:v1:e38345859da5bbd7",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:nuget.packaging-\u003Epackage:newtonsoft.json"
-        ],
-        "uniqueContextCount": 4
-      },
-      {
-        "sourceCommunity": "community:v1:8cf6393f4dc0efb1",
-        "targetCommunity": "community:v1:3bf160808884bfc6",
-        "edgeCount": 2,
-        "sourceNodeCount": 2,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageReference": 2
-        },
-        "representativeEdgeIds": [
-          "edge:PackageReference:project:tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj-\u003Epackage:xunit.runner.visualstudio",
-          "edge:PackageReference:project:tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj-\u003Epackage:xunit.runner.visualstudio"
-        ],
-        "uniqueContextCount": 2
-      },
-      {
-        "sourceCommunity": "community:v1:8cf6393f4dc0efb1",
-        "targetCommunity": "community:v1:469d0d6549e8ce21",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:nuget.projectmodel-\u003Epackage:nuget.dependencyresolver.core"
-        ],
-        "uniqueContextCount": 4
-      },
-      {
-        "sourceCommunity": "community:v1:8cf6393f4dc0efb1",
-        "targetCommunity": "community:v1:c4ec49890a3800c4",
-        "edgeCount": 2,
-        "sourceNodeCount": 2,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageReference": 2
-        },
-        "representativeEdgeIds": [
-          "edge:PackageReference:project:tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj-\u003Epackage:xunit.v3",
-          "edge:PackageReference:project:tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj-\u003Epackage:xunit.v3"
-        ],
-        "uniqueContextCount": 2
-      },
-      {
-        "sourceCommunity": "community:v1:8cf6393f4dc0efb1",
-        "targetCommunity": "community:v1:f8bbf1abe64226c6",
-        "edgeCount": 2,
-        "sourceNodeCount": 2,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageReference": 2
-        },
-        "representativeEdgeIds": [
-          "edge:PackageReference:project:tests/DotNetDependencyGraph.Core.Tests/DotNetDependencyGraph.Core.Tests.csproj-\u003Epackage:microsoft.net.test.sdk",
-          "edge:PackageReference:project:tests/DotNetDependencyGraph.IntegrationTests/DotNetDependencyGraph.IntegrationTests.csproj-\u003Epackage:microsoft.net.test.sdk"
-        ],
-        "uniqueContextCount": 2
-      },
-      {
-        "sourceCommunity": "community:v1:b1d26b5edcb58291",
-        "targetCommunity": "community:v1:439b0b10e4e6591f",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:xunit.v3.extensibility.core-\u003Epackage:xunit.v3.common"
-        ],
-        "uniqueContextCount": 2
-      },
-      {
-        "sourceCommunity": "community:v1:b1d26b5edcb58291",
-        "targetCommunity": "community:v1:71294a9c6877f097",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:xunit.v3.runner.inproc.console-\u003Epackage:xunit.v3.runner.common"
-        ],
-        "uniqueContextCount": 2
-      },
-      {
-        "sourceCommunity": "community:v1:c4ec49890a3800c4",
-        "targetCommunity": "community:v1:fcb1b7dbd35df319",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:xunit.v3.mtp-v1-\u003Epackage:xunit.v3.core.mtp-v1"
-        ],
-        "uniqueContextCount": 2
-      },
-      {
-        "sourceCommunity": "community:v1:f8bbf1abe64226c6",
-        "targetCommunity": "community:v1:e38345859da5bbd7",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:microsoft.net.test.sdk-\u003Epackage:microsoft.testplatform.testhost"
-        ],
-        "uniqueContextCount": 2
-      },
-      {
-        "sourceCommunity": "community:v1:fcb1b7dbd35df319",
-        "targetCommunity": "community:v1:26df6bee4d9ec894",
-        "edgeCount": 1,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 1,
-        "edgeKinds": {
-          "PackageDependency": 1
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:microsoft.testing.extensions.telemetry-\u003Epackage:microsoft.applicationinsights"
-        ],
-        "uniqueContextCount": 2
-      },
-      {
-        "sourceCommunity": "community:v1:fcb1b7dbd35df319",
-        "targetCommunity": "community:v1:b1d26b5edcb58291",
-        "edgeCount": 2,
-        "sourceNodeCount": 1,
-        "targetNodeCount": 2,
-        "edgeKinds": {
-          "PackageDependency": 2
-        },
-        "representativeEdgeIds": [
-          "edge:PackageDependency:package:xunit.v3.core.mtp-v1-\u003Epackage:xunit.v3.extensibility.core",
-          "edge:PackageDependency:package:xunit.v3.core.mtp-v1-\u003Epackage:xunit.v3.runner.inproc.console"
-        ],
-        "uniqueContextCount": 2
-      }
-    ],
-    "communityCycles": [
-      {
-        "communityKeys": [
-          "community:v1:469d0d6549e8ce21",
-          "community:v1:76cad86ec88967c1"
-        ],
-        "supportingEdgeIds": [
-          "edge:PackageDependency:package:nuget.dependencyresolver.core-\u003Epackage:nuget.protocol",
-          "edge:PackageDependency:package:nuget.packaging-\u003Epackage:nuget.configuration"
-        ]
-      }
-    ],
+    "crossCommunityDependencies": [],
+    "communityCycles": [],
     "runnableImpactPaths": [
       {
         "source": "project:src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj",
@@ -6159,16 +4368,9 @@
     ],
     "diagnostics": [
       {
-        "code": "community-hierarchy-split-rejected",
+        "code": "community-projection-scope",
         "severity": "info",
-        "message": "A 5-vertex community remained a leaf at resolution 0.5: split lacked stable objective support.",
-        "projectId": null,
-        "path": null
-      },
-      {
-        "code": "community-hierarchy-split-rejected",
-        "severity": "info",
-        "message": "A 4-vertex community remained a leaf at resolution 0.5: split lacked stable objective support.",
+        "message": "Community scope \u0027source-owned\u0027: 2 detection vertices from 4 included nodes; 2 producer pairs collapsed; 2 tests, 4 system packages, 29 third-party packages, and 0 unresolved external nodes excluded; 0 contracted relationships used.",
         "projectId": null,
         "path": null
       }

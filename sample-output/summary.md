@@ -25,30 +25,22 @@ Communities and architectural roles are dependency-topology heuristics, not conf
 - Warnings/errors: 0/0
 - Frameworks: net10.0
 - RIDs: none
-- Communities: Leiden/CPM; standard resolution 0.5; 15 strict-hierarchy groups; trial stability 0.906
-- Community projection: project/package weights 3/2/1; tests excluded: True; producer pairs collapsed: True
+- Communities: Leiden/CPM; standard resolution 0.5; 1 strict-hierarchy groups; trial stability 1
+- Community scope: source-owned
+- Detection vertices/nodes: 2/4
+- Local projects/produced packages: 4/2; producer pairs collapsed: 2
+- Excluded tests/system packages/third-party packages/unresolved external nodes: 2/4/29/0
+- Included unmapped internal/system/third-party packages: 0/0/0
+- Contracted detection edges: 0 at weight 0.25
+- Community projection weights: project/package/dependency 3/2/1; tests excluded: True; producer pairs collapsed: True
 
 ## Detected communities
 
 These are the automatically detected communities at standard granularity, ordered by size. Names are inferred from member-node labels; use the stable key when correlating a community with `graph.json` or the viewer.
 
-| Community | Stable key | Nodes | Projects | Packages | Runnable | Representative nodes |
-| --- | --- | ---: | ---: | ---: | ---: | --- |
-| Dot · Graph · Dependency | `community:v1:8cf6393f4dc0efb1` | 7 | 4 | 3 | 1 | DotNetDependencyGraph.IntegrationTests, DotNetDependencyGraph.Core, DotNetDependencyGraph.Core.Tests, NuGet.ProjectModel, DotNetDependencyGraph.Cli |
-| Testing | `community:v1:fcb1b7dbd35df319` | 5 | 0 | 5 | 0 | xunit.v3.core.mtp-v1, Microsoft.Testing.Platform, Microsoft.Testing.Extensions.Telemetry, Microsoft.Testing.Extensions.TrxReport.Abstractions, Microsoft.Testing.Platform.MSBuild |
-| Xunit | `community:v1:c4ec49890a3800c4` | 4 | 0 | 4 | 0 | xunit.v3.mtp-v1, xunit.v3, xunit.analyzers, xunit.v3.assert |
-| Configuration · Data · Protected | `community:v1:469d0d6549e8ce21` | 3 | 0 | 3 | 0 | NuGet.Configuration, NuGet.DependencyResolver.Core, System.Security.Cryptography.ProtectedData |
-| Platform | `community:v1:e38345859da5bbd7` | 3 | 0 | 3 | 0 | Newtonsoft.Json, Microsoft.TestPlatform.TestHost, Microsoft.TestPlatform.ObjectModel |
-| Async · Bcl · Interfaces | `community:v1:439b0b10e4e6591f` | 2 | 0 | 2 | 0 | xunit.v3.common, Microsoft.Bcl.AsyncInterfaces |
-| Code · Coverage · Sdk | `community:v1:f8bbf1abe64226c6` | 2 | 0 | 2 | 0 | Microsoft.NET.Test.Sdk, Microsoft.CodeCoverage |
-| Console · Extensibility · Inproc | `community:v1:b1d26b5edcb58291` | 2 | 0 | 2 | 0 | xunit.v3.extensibility.core, xunit.v3.runner.inproc.console |
-| Frameworks | `community:v1:2aee617039ce17be` | 2 | 0 | 2 | 0 | NuGet.Common, NuGet.Frameworks |
-| Packaging · Protocol · Get | `community:v1:76cad86ec88967c1` | 2 | 0 | 2 | 0 | NuGet.Packaging, NuGet.Protocol |
-| Registry · Win32 · Runner | `community:v1:71294a9c6877f097` | 2 | 0 | 2 | 0 | xunit.v3.runner.common, Microsoft.Win32.Registry |
-| Versioning · Get · Model | `community:v1:72399749517558d5` | 2 | 0 | 2 | 0 | NuGet.LibraryModel, NuGet.Versioning |
-| Application | `community:v1:26df6bee4d9ec894` | 1 | 0 | 1 | 0 | Microsoft.ApplicationInsights |
-| Pkcs · Cryptography · Security | `community:v1:63d89639776b868e` | 1 | 0 | 1 | 0 | System.Security.Cryptography.Pkcs |
-| Visualstudio | `community:v1:3bf160808884bfc6` | 1 | 0 | 1 | 0 | xunit.runner.visualstudio |
+| Community | Stable key | Members | Detection vertices | Expanded producer packages | Projects | Packages | Tests | Runnable | Representative nodes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Cli | `community:v1:8cf6393f4dc0efb1` | 6 | 2 | 2 | 4 | 2 | 2 | 1 | DotNetDependencyGraph.Cli |
 
 ## Components
 

@@ -10,6 +10,21 @@
     analysis.communities.map((community) => [community.stableKey, community]),
   );
   $("color-mode").parentElement.after($("community-legend"));
+  const projection = analysis.projection || {};
+  const scope = document.createElement("section");
+  scope.id = "community-scope";
+  const scopeHeading = document.createElement("b");
+  scopeHeading.textContent = "Community input";
+  const scopeDetails = document.createElement("p");
+  scopeDetails.textContent = `Scope: ${projection.scope || "legacy/unknown"}`;
+  const scopeCounts = document.createElement("p");
+  scopeCounts.textContent = `${projection.detectionVertexCount ?? "?"} detection vertices from ${projection.detectionNodeCount ?? "?"} nodes · ${projection.localProjectCount ?? "?"} local projects · ${projection.localProducedPackageCount ?? "?"} produced packages · ${projection.collapsedProducerPairCount ?? "?"} producer pairs collapsed · ${projection.contractedEdgeCount ?? "?"} contracted edges`;
+  const scopeExcluded = document.createElement("p");
+  scopeExcluded.textContent = `Excluded: ${projection.excludedTestProjectCount ?? "?"} tests · ${projection.excludedSystemPackageCount ?? "?"} system packages · ${projection.excludedThirdPartyPackageCount ?? "?"} third-party packages · ${projection.excludedUnresolvedExternalCount ?? "?"} unresolved external nodes`;
+  const scopeIncluded = document.createElement("p");
+  scopeIncluded.textContent = `Optional packages included: ${projection.includedUnmappedInternalPackageCount ?? "?"} unmapped internal · ${projection.includedSystemPackageCount ?? "?"} system · ${projection.includedThirdPartyPackageCount ?? "?"} third-party`;
+  scope.append(scopeHeading, scopeDetails, scopeCounts, scopeExcluded, scopeIncluded);
+  $("community-legend").before(scope);
   const state = {
     view: payload.defaults.filterMode || "contract",
     selected: null,
@@ -189,6 +204,7 @@
   function effectiveKey(nodeId) { return overrides.nodeAssignments[nodeId] || automaticKey(nodeId); }
   function generatedBorder(key) { return borderPalette[hash(key, 0x6d2b79f5) % borderPalette.length]; }
   function communityInfo(key) {
+    if (!key) return { stableKey: null, name: "Not in detection scope", color: "#484F58", borderColor: "#6E7681", memberNodeIds: [] };
     const manual = manualMap().get(key);
     if (manual) return { stableKey: key, borderColor: generatedBorder(key), ...manual, manual: true };
     const automatic = automaticCommunities.get(key) || { stableKey: key, name: key, color: "#8B949E", borderColor: generatedBorder(key), memberNodeIds: [] };
@@ -297,7 +313,7 @@
               (analysis.nodeAssignments[n.id]?.assignmentSource || "automatic"),
             communityName: info.name,
             color: state.colorMode === "community" ? info.color : kindColor,
-            borderColor: state.colorMode === "community" ? (info.borderColor || generatedBorder(effective)) : "#F0F6FC",
+            borderColor: state.colorMode === "community" ? info.borderColor : "#F0F6FC",
           },
         };
       }),
@@ -520,11 +536,13 @@
       if (!strength) return;
       const groups = new Map();
       nodes.forEach((node) => {
+        if (!node.community) return;
         const key = `${node.component}|${node.community}`;
         const group = groups.get(key) || { x: 0, y: 0, count: 0 };
         group.x += node.x; group.y += node.y; group.count++; groups.set(key, group);
       });
       nodes.forEach((node) => {
+        if (!node.community) return;
         const group = groups.get(`${node.component}|${node.community}`);
         if (!group || group.count < 2) return;
         node.vx += (group.x / group.count - node.x) * strength * alpha;
@@ -742,7 +760,8 @@
   function effectiveGroups() {
     const groups = new Map();
     graph().nodes.forEach((node) => {
-      const key = effectiveKey(node.id), values = groups.get(key) || [];
+      const key = effectiveKey(node.id); if (!key) return;
+      const values = groups.get(key) || [];
       values.push(node); groups.set(key, values);
     });
     return groups;
@@ -837,7 +856,7 @@
     const rows = new Map();
     cy.edges().forEach(edge => {
       if (edge.data("kind") === "produces-package") return;
-      const source = effectiveKey(edge.source().id()), target = effectiveKey(edge.target().id()); if (source === target) return;
+      const source = effectiveKey(edge.source().id()), target = effectiveKey(edge.target().id()); if (!source || !target || source === target) return;
       const key = `${source}\n${target}`, row = rows.get(key) || { sourceCommunity: source, targetCommunity: target, edgeCount: 0, edgeKinds: {} };
       row.edgeCount++; row.edgeKinds[edge.data("kind")] = (row.edgeKinds[edge.data("kind")] || 0) + 1; rows.set(key, row);
     });
@@ -1010,6 +1029,7 @@
     const values = {
       Identifier: d.id,
       Kind: d.kind,
+      "Community ownership": analysis.nodeOwnership?.[d.id] || "legacy/unknown",
       Classification: d.classification || "—",
       Path: d.path || "—",
       Versions: (d.versions || []).join(", ") || "—",

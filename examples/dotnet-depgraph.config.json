@@ -18,10 +18,15 @@
     "targetSize": 20,
     "minSize": 2,
     "includeTestsInDetection": false,
+    "includeThirdPartyPackages": false,
+    "includeSystemPackages": false,
+    "includeUnmappedInternalPackages": false,
+    "internalPackagePatterns": ["Acme.*"],
     "edgeWeights": {
       "projectReference": 3.0,
       "packageReference": 2.0,
-      "packageDependency": 1.0
+      "packageDependency": 1.0,
+      "contractedPath": 0.25
     }
   },
   "projectRules": [

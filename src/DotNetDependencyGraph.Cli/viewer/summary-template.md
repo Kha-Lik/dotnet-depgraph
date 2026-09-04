@@ -11,7 +11,7 @@ Open `index.html` in a modern browser. The report is self-contained and works of
 - **Community granularity** switches between coarse, standard, and fine detected partitions without changing dependency edges. **Color by** can show effective communities or node kinds.
 - **Size by** scales nodes using all transitive dependents or runnable dependents. The remaining filters narrow by neighborhood, kind, edge kind, component, community, TFM, RID, version skew, or minimum runnable-dependent count.
 - The **Communities** legend supports navigation and manual rename, recolor, create, reassign, merge, restore, import, and export operations. Manual changes affect presentation only; they do not rewrite dependencies or automatic analysis.
-- Select two nodes and use **Explain path** to show a directed dependency path. **Fit all** restores the overview, while the Physics/Layout and Labels panels tune presentation.
+- Select the first node, then **Ctrl-click** the second (**Cmd-click** on macOS), and use **Explain path** to show a directed dependency path. **Fit all** restores the overview, while the Physics/Layout and Labels panels tune presentation.
 - **PNG** exports the current canvas. **Displayed JSON** exports the currently selected and filtered projection; `graph.json` remains the canonical machine-readable graph.
 
 Communities and architectural roles are dependency-topology heuristics, not confirmed business domains or design violations.
@@ -26,14 +26,20 @@ Communities and architectural roles are dependency-topology heuristics, not conf
 - Frameworks: {{FRAMEWORKS}}
 - RIDs: {{RIDS}}
 - Communities: Leiden/CPM; standard resolution {{STANDARD_RESOLUTION}}; {{STANDARD_COMMUNITY_COUNT}} strict-hierarchy groups; trial stability {{STANDARD_STABILITY}}
-- Community projection: project/package weights {{PROJECT_REFERENCE_WEIGHT}}/{{PACKAGE_REFERENCE_WEIGHT}}/{{PACKAGE_DEPENDENCY_WEIGHT}}; tests excluded: {{TESTS_EXCLUDED}}; producer pairs collapsed: {{PRODUCER_PAIRS_COLLAPSED}}
+- Community scope: {{COMMUNITY_SCOPE}}
+- Detection vertices/nodes: {{DETECTION_VERTEX_COUNT}}/{{DETECTION_NODE_COUNT}}
+- Local projects/produced packages: {{LOCAL_PROJECT_COUNT}}/{{LOCAL_PRODUCED_PACKAGE_COUNT}}; producer pairs collapsed: {{COLLAPSED_PRODUCER_PAIR_COUNT}}
+- Excluded tests/system packages/third-party packages/unresolved external nodes: {{EXCLUDED_TEST_PROJECT_COUNT}}/{{EXCLUDED_SYSTEM_PACKAGE_COUNT}}/{{EXCLUDED_THIRD_PARTY_PACKAGE_COUNT}}/{{EXCLUDED_UNRESOLVED_EXTERNAL_COUNT}}
+- Included unmapped internal/system/third-party packages: {{INCLUDED_UNMAPPED_INTERNAL_PACKAGE_COUNT}}/{{INCLUDED_SYSTEM_PACKAGE_COUNT}}/{{INCLUDED_THIRD_PARTY_PACKAGE_COUNT}}
+- Contracted detection edges: {{DETECTION_CONTRACTED_EDGE_COUNT}} at weight {{CONTRACTED_PATH_WEIGHT}}
+- Community projection weights: project/package/dependency {{PROJECT_REFERENCE_WEIGHT}}/{{PACKAGE_REFERENCE_WEIGHT}}/{{PACKAGE_DEPENDENCY_WEIGHT}}; tests excluded: {{TESTS_EXCLUDED}}; producer pairs collapsed: {{PRODUCER_PAIRS_COLLAPSED}}
 
 ## Detected communities
 
 These are the automatically detected communities at standard granularity, ordered by size. Names are inferred from member-node labels; use the stable key when correlating a community with `graph.json` or the viewer.
 
-| Community | Stable key | Nodes | Projects | Packages | Runnable | Representative nodes |
-| --- | --- | ---: | ---: | ---: | ---: | --- |
+| Community | Stable key | Members | Detection vertices | Expanded producer packages | Projects | Packages | Tests | Runnable | Representative nodes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 {{COMMUNITY_ROWS}}
 
 ## Components

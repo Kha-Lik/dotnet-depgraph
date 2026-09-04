@@ -39,7 +39,14 @@ public static class OutputWriter
         var strict = GraphFilter.Apply(raw, options.IncludePackages, options.ExcludePackages, FilterMode.Strict, options.IncludeProjects, options.ExcludeProjects);
         var contract = GraphFilter.Apply(raw, options.IncludePackages, options.ExcludePackages, FilterMode.Contract, options.IncludeProjects, options.ExcludeProjects);
         WriteJson(Path.Combine(output, "graph.json"), raw);
-        WriteJson(Path.Combine(output, "diagnostics.json"), new { schemaVersion = "2.0", completeness = raw.Completeness, diagnostics = raw.Diagnostics.Concat(raw.CommunityAnalysis?.Diagnostics ?? []) });
+        WriteJson(Path.Combine(output, "diagnostics.json"), new
+        {
+            schemaVersion = "2.0",
+            completeness = raw.Completeness,
+            communityProjection = raw.CommunityAnalysis?.Projection,
+            communityOwnershipCounts = raw.CommunityAnalysis?.NodeOwnership.Values.GroupBy(ownership => ownership).OrderBy(group => group.Key).ToDictionary(group => Kebab(group.Key.ToString()), group => group.Count()),
+            diagnostics = raw.Diagnostics.Concat(raw.CommunityAnalysis?.Diagnostics ?? [])
+        });
         File.WriteAllText(Path.Combine(output, "graph.graphml"), GraphMl(raw), new UTF8Encoding(false));
         File.WriteAllText(Path.Combine(output, "summary.md"), Summary(raw, options.FilterMode == FilterMode.Strict ? strict : contract, viewerDirectory), new UTF8Encoding(false));
         CopyAsset(viewerDirectory, output, "viewer.js"); CopyAsset(viewerDirectory, output, "viewer.css");
@@ -116,12 +123,27 @@ public static class OutputWriter
             ["STANDARD_RESOLUTION"] = selected is null ? "unknown" : DecimalNumber(selected.Resolution, "0.########"),
             ["STANDARD_COMMUNITY_COUNT"] = Number(analysis.GranularityAssignments["standard"].Values.Distinct(StringComparer.Ordinal).Count()),
             ["STANDARD_STABILITY"] = selected is null ? "unknown" : DecimalNumber(selected.Stability, "0.###"),
+            ["COMMUNITY_SCOPE"] = analysis.Projection.Scope,
+            ["DETECTION_VERTEX_COUNT"] = Number(analysis.Projection.DetectionVertexCount),
+            ["DETECTION_NODE_COUNT"] = Number(analysis.Projection.DetectionNodeCount),
+            ["LOCAL_PROJECT_COUNT"] = Number(analysis.Projection.LocalProjectCount),
+            ["LOCAL_PRODUCED_PACKAGE_COUNT"] = Number(analysis.Projection.LocalProducedPackageCount),
+            ["COLLAPSED_PRODUCER_PAIR_COUNT"] = Number(analysis.Projection.CollapsedProducerPairCount),
+            ["EXCLUDED_TEST_PROJECT_COUNT"] = Number(analysis.Projection.ExcludedTestProjectCount),
+            ["EXCLUDED_SYSTEM_PACKAGE_COUNT"] = Number(analysis.Projection.ExcludedSystemPackageCount),
+            ["EXCLUDED_THIRD_PARTY_PACKAGE_COUNT"] = Number(analysis.Projection.ExcludedThirdPartyPackageCount),
+            ["EXCLUDED_UNRESOLVED_EXTERNAL_COUNT"] = Number(analysis.Projection.ExcludedUnresolvedExternalCount),
+            ["INCLUDED_UNMAPPED_INTERNAL_PACKAGE_COUNT"] = Number(analysis.Projection.IncludedUnmappedInternalPackageCount),
+            ["INCLUDED_SYSTEM_PACKAGE_COUNT"] = Number(analysis.Projection.IncludedSystemPackageCount),
+            ["INCLUDED_THIRD_PARTY_PACKAGE_COUNT"] = Number(analysis.Projection.IncludedThirdPartyPackageCount),
+            ["DETECTION_CONTRACTED_EDGE_COUNT"] = Number(analysis.Projection.ContractedEdgeCount),
+            ["CONTRACTED_PATH_WEIGHT"] = DecimalNumber(analysis.Settings.EdgeWeights.ContractedPath, "0.###"),
             ["PROJECT_REFERENCE_WEIGHT"] = DecimalNumber(analysis.Settings.EdgeWeights.ProjectReference, "0.###"),
             ["PACKAGE_REFERENCE_WEIGHT"] = DecimalNumber(analysis.Settings.EdgeWeights.PackageReference, "0.###"),
             ["PACKAGE_DEPENDENCY_WEIGHT"] = DecimalNumber(analysis.Settings.EdgeWeights.PackageDependency, "0.###"),
             ["TESTS_EXCLUDED"] = analysis.ProjectionRules.ExcludeTests.ToString(),
             ["PRODUCER_PAIRS_COLLAPSED"] = analysis.ProjectionRules.CollapseLocalProducerPackages.ToString(),
-            ["COMMUNITY_ROWS"] = string.Join("\n", standardCommunities.Select(community => $"| {MarkdownCell(community.Name)} | `{community.StableKey}` | {Number(community.Size)} | {Number(community.ProjectCount)} | {Number(community.PackageCount)} | {Number(community.RunnableCount)} | {MarkdownCell(string.Join(", ", community.RepresentativeNodeIds.Select(id => nodesById.GetValueOrDefault(id)?.Label ?? id)))} |")),
+            ["COMMUNITY_ROWS"] = string.Join("\n", standardCommunities.Select(community => $"| {MarkdownCell(community.Name)} | `{community.StableKey}` | {Number(community.Size)} | {Number(community.DetectionVertexCount)} | {Number(community.ExpandedProducerPackageCount)} | {Number(community.ProjectCount)} | {Number(community.PackageCount)} | {Number(community.TestProjectCount)} | {Number(community.RunnableCount)} | {MarkdownCell(community.RepresentativeNodeIds.Count == 0 ? "none — no eligible source representative" : string.Join(", ", community.RepresentativeNodeIds.Select(id => nodesById.GetValueOrDefault(id)?.Label ?? id)))} |")),
             ["COMPONENT_ROWS"] = string.Join("\n", components.Select(component => $"- Component {component.Key}: {component.Count()} nodes; representative: {MarkdownCell(string.Join(", ", component.OrderByDescending(node => node.Centrality).ThenBy(node => node.Label).Take(3).Select(node => node.Label)))}"))
         };
         foreach (var value in values)

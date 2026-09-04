@@ -10,18 +10,34 @@
     "failedRestores": 0,
     "complete": true
   },
+  "communityProjection": {
+    "policyVersion": "source-ownership-v1",
+    "scope": "source-owned",
+    "detectionVertexCount": 2,
+    "detectionNodeCount": 4,
+    "localProjectCount": 4,
+    "localProducedPackageCount": 2,
+    "includedUnmappedInternalPackageCount": 0,
+    "includedSystemPackageCount": 0,
+    "includedThirdPartyPackageCount": 0,
+    "collapsedProducerPairCount": 2,
+    "excludedTestProjectCount": 2,
+    "excludedSystemPackageCount": 4,
+    "excludedThirdPartyPackageCount": 29,
+    "excludedUnresolvedExternalCount": 0,
+    "contractedEdgeCount": 0
+  },
+  "communityOwnershipCounts": {
+    "local-project": 4,
+    "local-produced-package": 2,
+    "system-package": 4,
+    "third-party-package": 29
+  },
   "diagnostics": [
     {
-      "code": "community-hierarchy-split-rejected",
+      "code": "community-projection-scope",
       "severity": "info",
-      "message": "A 5-vertex community remained a leaf at resolution 0.5: split lacked stable objective support.",
-      "projectId": null,
-      "path": null
-    },
-    {
-      "code": "community-hierarchy-split-rejected",
-      "severity": "info",
-      "message": "A 4-vertex community remained a leaf at resolution 0.5: split lacked stable objective support.",
+      "message": "Community scope \u0027source-owned\u0027: 2 detection vertices from 4 included nodes; 2 producer pairs collapsed; 2 tests, 4 system packages, 29 third-party packages, and 0 unresolved external nodes excluded; 0 contracted relationships used.",
       "projectId": null,
       "path": null
     }

@@ -42,20 +42,26 @@
     },
     "communityAnalysis": {
       "type": "object",
-      "required": ["version", "algorithm", "algorithmVersion", "keyDerivationVersion", "graphFingerprint", "settings", "projectionRules", "resolutionProfile", "communities", "nodeAssignments", "granularityAssignments", "crossCommunityDependencies", "communityCycles", "runnableImpactPaths", "diagnostics"],
+      "required": ["version", "algorithm", "algorithmVersion", "keyDerivationVersion", "graphFingerprint", "settings", "projectionRules", "projection", "nodeOwnership", "resolutionProfile", "communities", "nodeAssignments", "granularityAssignments", "crossCommunityDependencies", "communityCycles", "runnableImpactPaths", "diagnostics"],
       "properties": {
         "version": { "const": "1.0" }, "algorithm": { "const": "leiden-cpm" },
         "algorithmVersion": { "type": "string" }, "keyDerivationVersion": { "type": "string" },
         "graphFingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "settings": { "type": "object", "required": ["algorithm", "seed", "trials", "levels", "resolution", "edgeWeights"] },
-        "projectionRules": { "type": "object", "required": ["directedForDetection", "excludeTests", "excludeUnresolved", "collapseLocalProducerPackages", "includeContractedPaths", "includeProducerEdges", "oppositeEdgeRule", "contextMultiplicityRule"] },
+        "settings": { "type": "object", "required": ["algorithm", "seed", "trials", "levels", "resolution", "includeThirdPartyPackages", "includeSystemPackages", "includeUnmappedInternalPackages", "internalPackagePatterns", "edgeWeights"] },
+        "projectionRules": { "type": "object", "required": ["directedForDetection", "excludeTests", "excludeUnresolved", "collapseLocalProducerPackages", "includeContractedPaths", "includeProducerEdges", "includeThirdPartyPackages", "includeSystemPackages", "includeUnmappedInternalPackages", "ownershipRule", "contractedPathContextRule", "oppositeEdgeRule", "contextMultiplicityRule"] },
+        "projection": { "$ref": "#/$defs/communityProjection" },
+        "nodeOwnership": { "type": "object", "additionalProperties": { "enum": ["local-project", "local-produced-package", "unmapped-internal-package", "system-package", "third-party-package", "unresolved-external"] } },
         "resolutionProfile": { "type": "array", "items": { "type": "object", "required": ["resolution", "quality", "communityCount", "sizes", "singletonCount", "connected", "winningSeed", "trials", "stability"] } },
-        "communities": { "type": "array", "items": { "type": "object", "required": ["stableKey", "depth", "memberNodeIds", "directChildKeys", "resolution", "quality", "stability", "size", "name", "nameConfidence", "color", "borderColor"] } },
+        "communities": { "type": "array", "items": { "type": "object", "required": ["stableKey", "depth", "memberNodeIds", "directChildKeys", "resolution", "quality", "stability", "size", "detectionVertexCount", "expandedProducerPackageCount", "projectCount", "packageCount", "testProjectCount", "name", "nameConfidence", "representativeNodeIds", "representativeStatus", "color", "borderColor"] } },
         "nodeAssignments": { "type": "object", "additionalProperties": { "type": "object", "required": ["nodeId", "detectedCommunityPath", "assignmentSource", "assignmentEvidence", "assignmentScore", "candidateCommunities"] } },
         "granularityAssignments": { "type": "object", "required": ["coarse", "standard", "fine"] },
         "crossCommunityDependencies": { "type": "array" }, "communityCycles": { "type": "array" },
         "runnableImpactPaths": { "type": "array" }, "diagnostics": { "type": "array", "items": { "$ref": "#/$defs/diagnostic" } }
       }
+    },
+    "communityProjection": {
+      "type": "object",
+      "required": ["policyVersion", "scope", "detectionVertexCount", "detectionNodeCount", "localProjectCount", "localProducedPackageCount", "includedUnmappedInternalPackageCount", "includedSystemPackageCount", "includedThirdPartyPackageCount", "collapsedProducerPairCount", "excludedTestProjectCount", "excludedSystemPackageCount", "excludedThirdPartyPackageCount", "excludedUnresolvedExternalCount", "contractedEdgeCount"]
     }
   }
 }

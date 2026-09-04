@@ -13,7 +13,7 @@ public sealed class CommunityAnalysisTests
     [Fact]
     public void NestedFixtureSplitsOnlyAtSupportedFineLevel()
     {
-        var nodes = Enumerable.Range(0, 12).Select(i => new GraphNode { Id = $"project:Example.{(i < 6 ? "Identity" : "Maintenance")}.{i}", Label = $"Example.{(i < 6 ? "Identity" : "Maintenance")}.{i}", Kind = NodeKind.Project, Classification = "class-library" }).ToArray();
+        var nodes = Enumerable.Range(0, 12).Select(i => new GraphNode { Id = $"project:Example.{(i < 6 ? "Identity" : "Maintenance")}.{i}", Label = $"Example.{(i < 6 ? "Identity" : "Maintenance")}.{i}", Kind = NodeKind.Project, Path = $"Example.{i}.csproj", Classification = "class-library" }).ToArray();
         var edges = new List<GraphEdge>();
         void Add(int a, int b, double marker = 0) => edges.Add(new() { Id = $"e:{a}:{b}:{marker}", Source = nodes[a].Id, Target = nodes[b].Id, Kind = EdgeKind.ProjectReference });
         for (var start = 0; start < 12; start += 3) for (var i = start; i < start + 3; i++) for (var j = i + 1; j < start + 3; j++) Add(i, j);
@@ -38,9 +38,9 @@ public sealed class CommunityAnalysisTests
     [Fact]
     public void TestAssignmentAndRunnableBlastRadiusAreDirectionallyCorrect()
     {
-        var app = new GraphNode { Id = "app", Label = "Example.App", Kind = NodeKind.Project, Classification = "executable" };
-        var feature = new GraphNode { Id = "feature", Label = "Example.Identity", Kind = NodeKind.Project, Classification = "class-library" };
-        var test = new GraphNode { Id = "test", Label = "Example.Identity.Tests", Kind = NodeKind.Project, Classification = "test-project" };
+        var app = new GraphNode { Id = "app", Label = "Example.App", Kind = NodeKind.Project, Path = "App.csproj", Classification = "executable" };
+        var feature = new GraphNode { Id = "feature", Label = "Example.Identity", Kind = NodeKind.Project, Path = "Identity.csproj", Classification = "class-library" };
+        var test = new GraphNode { Id = "test", Label = "Example.Identity.Tests", Kind = NodeKind.Project, Path = "Identity.Tests.csproj", Classification = "test-project" };
         var graph = GraphAnalysis.Analyze(new DependencyGraph
         {
             Root = "/fictional",
@@ -61,10 +61,10 @@ public sealed class CommunityAnalysisTests
     {
         var nodes = new[]
         {
-            new GraphNode { Id = "app", Label = "Example.App", Kind = NodeKind.Project, Classification = "executable" },
-            new GraphNode { Id = "a", Label = "Example.A", Kind = NodeKind.Project, Classification = "class-library" },
-            new GraphNode { Id = "b", Label = "Example.B", Kind = NodeKind.Project, Classification = "class-library" },
-            new GraphNode { Id = "target", Label = "Example.Target", Kind = NodeKind.Project, Classification = "class-library" }
+            new GraphNode { Id = "app", Label = "Example.App", Kind = NodeKind.Project, Path = "App.csproj", Classification = "executable" },
+            new GraphNode { Id = "a", Label = "Example.A", Kind = NodeKind.Project, Path = "A.csproj", Classification = "class-library" },
+            new GraphNode { Id = "b", Label = "Example.B", Kind = NodeKind.Project, Path = "B.csproj", Classification = "class-library" },
+            new GraphNode { Id = "target", Label = "Example.Target", Kind = NodeKind.Project, Path = "Target.csproj", Classification = "class-library" }
         };
         var edges = new[]
         {
@@ -91,6 +91,86 @@ public sealed class CommunityAnalysisTests
     }
 
     [Fact]
+    public void ExternalWebPackagesCannotJoinNameOrRepresentSourceCommunityByDefault()
+    {
+        var web = new GraphNode { Id = "project:web", Label = "Acme.User.Web", Kind = NodeKind.Project, Path = "src/User/Web.csproj", Classification = "web-application" };
+        var swagger = new GraphNode { Id = "package:swashbuckle.aspnetcore", Label = "Swashbuckle.AspNetCore", Kind = NodeKind.Package };
+        var framework = new GraphNode { Id = "package:microsoft.aspnetcore.mvc", Label = "Microsoft.AspNetCore.Mvc", Kind = NodeKind.Package };
+        var rawEdges = new[]
+        {
+            new GraphEdge { Id = "web-swagger", Source = web.Id, Target = swagger.Id, Kind = EdgeKind.PackageReference },
+            new GraphEdge { Id = "swagger-framework", Source = swagger.Id, Target = framework.Id, Kind = EdgeKind.PackageDependency }
+        };
+        var graph = GraphAnalysis.Analyze(new() { Root = "/repo", Nodes = [web, swagger, framework], Edges = rawEdges });
+        var analysis = graph.CommunityAnalysis!; var community = Assert.Single(analysis.Communities);
+        Assert.Equal([web.Id], community.MemberNodeIds);
+        Assert.Equal([web.Id], community.RepresentativeNodeIds);
+        Assert.DoesNotContain(community.NameEvidence.SelectMany(evidence => evidence.Members), id => id == swagger.Id || id == framework.Id);
+        Assert.Empty(analysis.NodeAssignments[swagger.Id].DetectedCommunityPath);
+        Assert.Empty(analysis.NodeAssignments[framework.Id].DetectedCommunityPath);
+        Assert.Equal(CommunityNodeOwnership.ThirdPartyPackage, analysis.NodeOwnership[swagger.Id]);
+        Assert.Equal(CommunityNodeOwnership.SystemPackage, analysis.NodeOwnership[framework.Id]);
+        Assert.Equal(new[] { web.Id, swagger.Id, framework.Id }.Order(StringComparer.Ordinal), graph.Nodes.Select(node => node.Id));
+        Assert.Equal(rawEdges.Select(edge => edge.Id), graph.Edges.Select(edge => edge.Id));
+    }
+
+    [Fact]
+    public void ExternalOnlyPackagesCannotCreateDefaultCommunities()
+    {
+        var left = new GraphNode { Id = "package:serilog", Label = "Serilog", Kind = NodeKind.Package };
+        var right = new GraphNode { Id = "package:skiasharp", Label = "SkiaSharp", Kind = NodeKind.Package };
+        var graph = GraphAnalysis.Analyze(new() { Root = "/repo", Nodes = [left, right], Edges = [new() { Id = "external", Source = left.Id, Target = right.Id, Kind = EdgeKind.PackageDependency }] });
+        Assert.Empty(graph.CommunityAnalysis!.Communities);
+        Assert.Empty(graph.CommunityAnalysis.GranularityAssignments["standard"]);
+        Assert.All(graph.CommunityAnalysis.NodeAssignments.Values, assignment => Assert.Empty(assignment.DetectedCommunityPath));
+    }
+
+    [Fact]
+    public void ProducerExpansionHasDistinctCountsAndDeduplicatedRepresentatives()
+    {
+        var project = new GraphNode { Id = "project:contracts", Label = "Acme.Contracts", Kind = NodeKind.Project, Path = "src/Contracts.csproj", Classification = "packable-library" };
+        var package = new GraphNode { Id = "package:acme.contracts", Label = "Acme.Contracts", Kind = NodeKind.Package };
+        var graph = GraphAnalysis.Analyze(new()
+        {
+            Root = "/repo",
+            Nodes = [project, package],
+            Edges = [new() { Id = "producer", Source = project.Id, Target = package.Id, Kind = EdgeKind.ProducesPackage }]
+        });
+        var analysis = graph.CommunityAnalysis!; var community = Assert.Single(analysis.Communities);
+        Assert.Equal(1, analysis.Projection.DetectionVertexCount);
+        Assert.Equal(1, analysis.Projection.CollapsedProducerPairCount);
+        Assert.Equal(2, community.Size); Assert.Equal(1, community.DetectionVertexCount); Assert.Equal(1, community.ExpandedProducerPackageCount);
+        Assert.Equal([project.Id], community.RepresentativeNodeIds);
+        Assert.Single(community.RepresentativeNodeIds.Select(id => graph.Nodes.Single(node => node.Id == id).Label).Distinct(StringComparer.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void OptedInExternalOnlyCommunityReportsNoEligibleRepresentative()
+    {
+        var package = new GraphNode { Id = "package:third.party", Label = "Third.Party", Kind = NodeKind.Package };
+        var graph = GraphAnalysis.Analyze(new() { Root = "/repo", Nodes = [package], Edges = [] }, communitySettings: new() { IncludeThirdPartyPackages = true });
+        var community = Assert.Single(graph.CommunityAnalysis!.Communities);
+        Assert.Empty(community.RepresentativeNodeIds);
+        Assert.Equal("no-eligible-source-representative", community.RepresentativeStatus);
+        Assert.Equal("No eligible source representative", community.Name);
+        Assert.Contains(graph.CommunityAnalysis.Diagnostics, diagnostic => diagnostic.Code == "community-no-eligible-representative");
+    }
+
+    [Fact]
+    public void SummaryProjectionCountsMatchActualDetectionInputs()
+    {
+        var source = new GraphNode { Id = "project:source", Label = "Source", Kind = NodeKind.Project, Path = "Source.csproj" };
+        var test = new GraphNode { Id = "project:test", Label = "Source.Tests", Kind = NodeKind.Project, Path = "Source.Tests.csproj", Classification = "test-project" };
+        var package = new GraphNode { Id = "package:external", Label = "External", Kind = NodeKind.Package };
+        var graph = GraphAnalysis.Analyze(new() { Root = "/repo", Nodes = [source, test, package], Edges = [new() { Id = "test-source", Source = test.Id, Target = source.Id, Kind = EdgeKind.ProjectReference }] });
+        var analysis = graph.CommunityAnalysis!;
+        Assert.Equal(analysis.Projection.DetectionVertexCount, analysis.ResolutionProfile.Single(candidate => candidate.SelectedStandard).Sizes.Sum());
+        Assert.Equal(analysis.Projection.DetectionNodeCount - analysis.Projection.CollapsedProducerPairCount, analysis.Projection.DetectionVertexCount);
+        Assert.Equal(1, analysis.Projection.ExcludedTestProjectCount); Assert.Equal(1, analysis.Projection.ExcludedThirdPartyPackageCount);
+        Assert.Equal(graph.Nodes.Count, analysis.NodeOwnership.Count);
+    }
+
+    [Fact]
     public void CommunityAnalysisSerializationIsByteDeterministic()
     {
         var nodes = new[] { "a", "b", "c" }.Select(id => new GraphNode { Id = id, Label = id, Kind = NodeKind.Package }).ToArray();
@@ -109,8 +189,8 @@ public sealed class CommunityAnalysisTests
             Root = "/fictional",
             Nodes = [new() { Id = "a", Label = "A", Kind = NodeKind.Package }, new() { Id = "b", Label = "B", Kind = NodeKind.Package }],
             Edges = [new() { Id = "ab", Source = "a", Target = "b", Kind = EdgeKind.PackageDependency }]
-        }, new() { Trials = 1, Levels = 1 }, messages.Add);
-        Assert.Contains(messages, message => message.StartsWith("Community projection:", StringComparison.Ordinal));
+        }, new() { Trials = 1, Levels = 1, IncludeThirdPartyPackages = true }, messages.Add);
+        Assert.Contains(messages, message => message.StartsWith("Community projection (", StringComparison.Ordinal));
         Assert.Contains(messages, message => message.StartsWith("Evaluating CPM resolution", StringComparison.Ordinal));
         Assert.Contains(messages, message => message.StartsWith("Strict hierarchy built:", StringComparison.Ordinal));
         Assert.Contains(messages, message => message.StartsWith("Architecture analysis complete:", StringComparison.Ordinal));

@@ -20,7 +20,7 @@ public static partial class CommunityAnalyzer
         progress?.Invoke($"Community analysis started: Leiden/CPM, seed {settings.Seed}, {settings.Trials} trial(s) × {settings.Levels} resolution level(s).");
         var projection = CommunityProjectionBuilder.Build(graph, settings);
         var vertexIds = projection.Vertices.Select(vertex => vertex.Id).ToArray();
-        progress?.Invoke($"Community projection: {projection.Vertices.Count} vertex/vertices, {projection.Edges.Count} weighted edge(s), {projection.ExcludedTestNodeIds.Count} test node(s) deferred.");
+        progress?.Invoke($"Community projection ({projection.Metadata.Scope}): {projection.Vertices.Count} detection vertex/vertices from {projection.Metadata.DetectionNodeCount} node(s), {projection.Edges.Count} weighted edge(s), {projection.Metadata.ContractedEdgeCount} contracted, {projection.ExcludedTestNodeIds.Count} test node(s) deferred.");
         var gammas = ResolutionValues(settings).ToArray();
         var candidates = new List<Candidate>();
         foreach (var gamma in gammas)
@@ -43,7 +43,7 @@ public static partial class CommunityAnalyzer
         var standard = hierarchy.Granularity["standard"];
         var enrichedNodes = EnrichNodes(graph, assignments, standard);
         var enrichedGraph = graph with { Nodes = enrichedNodes };
-        var communities = BuildCommunityRecords(enrichedGraph, hierarchy, assignments);
+        var communities = BuildCommunityRecords(enrichedGraph, hierarchy, assignments, projection);
         var cross = CrossCommunity(enrichedGraph, standard);
         var cycles = QuotientCycles(cross);
         var paths = RunnablePaths(enrichedGraph);
@@ -73,6 +73,9 @@ public static partial class CommunityAnalyzer
             diagnostics.Add(new("community-no-meaningful-structure", DiagnosticSeverity.Info, "The detection projection has no eligible dependency edges; isolated vertices remain separate."));
         if (communities.Any(community => community.NameConfidence < .35))
             diagnostics.Add(new("community-name-low-confidence", DiagnosticSeverity.Info, "One or more inferred community names have low confidence; representative labels are used."));
+        foreach (var community in communities.Where(community => community.RepresentativeNodeIds.Count == 0))
+            diagnostics.Add(new("community-no-eligible-representative", DiagnosticSeverity.Info,
+                "Community has no eligible non-test local source project or locally produced package representative.", community.StableKey));
         if (settings.TargetSize is int target && profile.All(item => item.Sizes.Count == 0 || Median(item.Sizes) > target * 2))
             diagnostics.Add(new("community-target-size-unsupported", DiagnosticSeverity.Info, $"The requested target size {target} is not supported by a stable topology split in the evaluated resolution profile."));
 
@@ -80,7 +83,16 @@ public static partial class CommunityAnalyzer
         {
             GraphFingerprint = GraphFingerprint.Calculate(graph),
             Settings = settings,
-            ProjectionRules = new() { ExcludeTests = !settings.IncludeTestsInDetection, ExcludeUnresolved = !settings.IncludeUnresolved },
+            ProjectionRules = new()
+            {
+                ExcludeTests = !settings.IncludeTestsInDetection,
+                ExcludeUnresolved = !settings.IncludeUnresolved,
+                IncludeThirdPartyPackages = settings.IncludeThirdPartyPackages,
+                IncludeSystemPackages = settings.IncludeSystemPackages,
+                IncludeUnmappedInternalPackages = settings.IncludeUnmappedInternalPackages
+            },
+            Projection = projection.Metadata,
+            NodeOwnership = projection.Ownership,
             ResolutionProfile = profile,
             Communities = communities,
             NodeAssignments = assignments,
@@ -199,6 +211,7 @@ public static partial class CommunityAnalyzer
         HierarchyResult hierarchy, CommunitySettings settings, List<GraphDiagnostic> diagnostics)
     {
         var result = new Dictionary<string, NodeCommunityAssignment>(StringComparer.Ordinal);
+        var inheritedFrom = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var item in projection.OriginalToVertex.OrderBy(item => item.Key, StringComparer.Ordinal))
         {
             var path = hierarchy.Keys.Select(keys => keys[item.Value]).Distinct(StringComparer.Ordinal).ToArray();
@@ -215,7 +228,7 @@ public static partial class CommunityAnalyzer
                 var (id, depth) = queue.Dequeue(); if (depth >= 4 || !outgoing.TryGetValue(id, out var edges)) continue;
                 foreach (var edge in edges.OrderBy(edge => edge.Target, StringComparer.Ordinal))
                 {
-                    if (result.TryGetValue(edge.Target, out var assignment))
+                    if (result.TryGetValue(edge.Target, out var assignment) && assignment.DetectedCommunityPath.Count > 0)
                     {
                         var community = assignment.DetectedCommunityPath.Last();
                         var weight = EdgeWeight(edge.Kind, settings.EdgeWeights) / (depth + 1);
@@ -228,7 +241,7 @@ public static partial class CommunityAnalyzer
             var ranked = scores.OrderByDescending(item => item.Value).ThenBy(item => item.Key, StringComparer.Ordinal).ToArray();
             if (ranked.Length > 0 && (ranked.Length == 1 || ranked[0].Value > ranked[1].Value + 1e-9))
             {
-                var exemplar = result.Values.First(value => value.DetectedCommunityPath.Last() == ranked[0].Key);
+                var exemplar = result.Values.First(value => value.DetectedCommunityPath.Count > 0 && value.DetectedCommunityPath[^1] == ranked[0].Key);
                 result[testId] = new()
                 {
                     NodeId = testId,
@@ -238,14 +251,14 @@ public static partial class CommunityAnalyzer
                     AssignmentScore = Round(ranked[0].Value),
                     CandidateCommunities = ranked.Select(item => item.Key).ToArray()
                 };
+                inheritedFrom[testId] = exemplar.NodeId;
             }
             else
             {
-                var key = CommunityKey(null, "unassigned-tests:" + graph.Nodes.First(node => node.Id == testId).Component);
                 result[testId] = new()
                 {
                     NodeId = testId,
-                    DetectedCommunityPath = [key],
+                    DetectedCommunityPath = [],
                     AssignmentSource = "inherited-test",
                     AssignmentEvidence = evidence.Order(StringComparer.Ordinal).ToArray(),
                     AssignmentScore = ranked.FirstOrDefault().Value,
@@ -257,11 +270,11 @@ public static partial class CommunityAnalyzer
         }
         foreach (var node in graph.Nodes.Where(node => !result.ContainsKey(node.Id)))
         {
-            var key = CommunityKey(null, "excluded:" + node.Id);
-            result[node.Id] = new() { NodeId = node.Id, DetectedCommunityPath = [key], AssignmentSource = "automatic", AssignmentEvidence = ["excluded from detection projection"] };
+            result[node.Id] = new() { NodeId = node.Id, DetectedCommunityPath = [], AssignmentSource = "excluded", AssignmentEvidence = [$"excluded from detection projection: {projection.Ownership[node.Id].ToString().ToLowerInvariant()}"] };
         }
         foreach (var granularity in hierarchy.Granularity.Values)
-            foreach (var assignment in result.Values) if (!granularity.ContainsKey(assignment.NodeId)) granularity[assignment.NodeId] = assignment.DetectedCommunityPath.Last();
+            foreach (var item in inheritedFrom)
+                granularity[item.Key] = granularity[item.Value];
         return result;
     }
 
@@ -293,8 +306,11 @@ public static partial class CommunityAnalyzer
         {
             var apps = affectedBy[node.Id].Order(StringComparer.Ordinal).ToArray();
             var incident = outgoing[node.Id].Concat(incoming[node.Id]).ToArray();
-            var neighboring = incident.Where(standard.ContainsKey).Select(id => standard[id]).Where(key => key != standard[node.Id]).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
-            var cross = incident.Count(id => standard.TryGetValue(id, out var key) && key != standard[node.Id]);
+            var hasCommunity = standard.TryGetValue(node.Id, out var ownCommunity);
+            var neighboring = hasCommunity
+                ? incident.Where(standard.ContainsKey).Select(id => standard[id]).Where(key => key != ownCommunity).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray()
+                : [];
+            var cross = hasCommunity ? incident.Count(id => standard.TryGetValue(id, out var key) && key != ownCommunity) : 0;
             var degree = incident.Length;
             var evidence = new List<string>(); string role;
             if (CommunityProjectionBuilder.IsTest(node)) role = "test-only";
@@ -312,7 +328,7 @@ public static partial class CommunityAnalyzer
             {
                 RunnableDependentCount = apps.Length,
                 RunnableDependentIds = apps,
-                AffectedCommunityCount = apps.Select(id => standard[id]).Distinct(StringComparer.Ordinal).Count(),
+                AffectedCommunityCount = apps.Where(standard.ContainsKey).Select(id => standard[id]).Distinct(StringComparer.Ordinal).Count(),
                 AffectedComponentCount = apps.Select(id => graph.Nodes.First(n => n.Id == id).Component).Distinct().Count(),
                 BetweennessCentrality = Round(between.GetValueOrDefault(node.Id)),
                 NeighboringCommunityCount = neighboring.Length,
@@ -325,7 +341,8 @@ public static partial class CommunityAnalyzer
         }).OrderBy(node => node.Id, StringComparer.Ordinal).ToArray();
     }
 
-    private static CommunityRecord[] BuildCommunityRecords(DependencyGraph graph, HierarchyResult hierarchy, IReadOnlyDictionary<string, NodeCommunityAssignment> assignments)
+    private static CommunityRecord[] BuildCommunityRecords(DependencyGraph graph, HierarchyResult hierarchy,
+        IReadOnlyDictionary<string, NodeCommunityAssignment> assignments, CommunityProjection projection)
     {
         var nodeById = graph.Nodes.ToDictionary(node => node.Id, StringComparer.Ordinal);
         var allKeys = assignments.Values.SelectMany(assignment => assignment.DetectedCommunityPath).Distinct(StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
@@ -341,7 +358,9 @@ public static partial class CommunityAnalyzer
             var internalEdges = graph.Edges.Where(edge => GraphAnalysis.IsDependency(edge) && !edge.Derived && memberSet.Contains(edge.Source) && memberSet.Contains(edge.Target)).ToArray();
             var outgoing = graph.Edges.Count(edge => GraphAnalysis.IsDependency(edge) && !edge.Derived && memberSet.Contains(edge.Source) && !memberSet.Contains(edge.Target));
             var incoming = graph.Edges.Count(edge => GraphAnalysis.IsDependency(edge) && !edge.Derived && !memberSet.Contains(edge.Source) && memberSet.Contains(edge.Target));
-            var naming = Name(graph, members);
+            var eligibleCandidates = RepresentativeCandidates(graph, members, projection);
+            var representatives = SelectRepresentatives(graph, memberSet, eligibleCandidates, projection);
+            var naming = Name(graph, eligibleCandidates, projection);
             var gamma = hierarchy.Candidates[Math.Min(depth, hierarchy.Candidates.Count - 1)].Gamma;
             var possible = members.Length * (members.Length - 1) / 2d;
             var colors = Colors(key, parent);
@@ -356,8 +375,11 @@ public static partial class CommunityAnalyzer
                 Quality = Round(hierarchy.Candidates[Math.Min(depth, hierarchy.Candidates.Count - 1)].Result.Quality),
                 Stability = Round(hierarchy.Candidates[Math.Min(depth, hierarchy.Candidates.Count - 1)].Stability),
                 Size = members.Length,
+                DetectionVertexCount = projection.Vertices.Count(vertex => vertex.OriginalNodeIds.Any(memberSet.Contains)),
+                ExpandedProducerPackageCount = members.Count(id => projection.ProducedPackageToProject.ContainsKey(id)),
                 ProjectCount = members.Count(id => nodeById[id].Kind == NodeKind.Project),
                 PackageCount = members.Count(id => nodeById[id].Kind == NodeKind.Package),
+                TestProjectCount = members.Count(id => CommunityProjectionBuilder.IsTest(nodeById[id])),
                 RunnableCount = members.Count(id => IsRunnable(nodeById[id])),
                 Name = naming.Name,
                 NameConfidence = naming.Confidence,
@@ -369,7 +391,8 @@ public static partial class CommunityAnalyzer
                 OutgoingEdgeCount = outgoing,
                 IncomingEdgeCount = incoming,
                 CouplingRatio = internalEdges.Length + incoming + outgoing == 0 ? 0 : Round((double)(incoming + outgoing) / (internalEdges.Length + incoming + outgoing)),
-                RepresentativeNodeIds = members.OrderByDescending(id => nodeById[id].Centrality).ThenBy(id => id, StringComparer.Ordinal).Take(5).ToArray(),
+                RepresentativeNodeIds = representatives,
+                RepresentativeStatus = representatives.Length == 0 ? "no-eligible-source-representative" : "eligible-source-nodes",
                 BridgeNodeIds = members.Where(id => nodeById[id].ArchitecturalRole is "cross-community bridge" or "shared infrastructure").Order(StringComparer.Ordinal).ToArray(),
                 InternalCycleCount = members.Count(id => nodeById[id].InCycle),
                 VersionSkewedPackageCount = members.Count(id => nodeById[id].Kind == NodeKind.Package && nodeById[id].VersionSkew)
@@ -440,18 +463,67 @@ public static partial class CommunityAnalyzer
         return paths.ToArray();
     }
 
-    private static (string Name, double Confidence, CommunityNameEvidence[] Evidence) Name(DependencyGraph graph, string[] members)
+    private static string[] RepresentativeCandidates(DependencyGraph graph, string[] members, CommunityProjection projection)
     {
-        var nodes = graph.Nodes.Where(node => members.Contains(node.Id, StringComparer.Ordinal)).ToArray();
-        var globalDocumentFrequency = graph.Nodes.SelectMany(node => Tokens(node).Distinct(StringComparer.OrdinalIgnoreCase)).GroupBy(token => token, StringComparer.OrdinalIgnoreCase).ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+        var memberSet = members.ToHashSet(StringComparer.Ordinal);
+        var projects = graph.Nodes.Where(node => memberSet.Contains(node.Id)
+            && projection.Ownership[node.Id] == CommunityNodeOwnership.LocalProject
+            && !CommunityProjectionBuilder.IsTest(node)).Select(node => node.Id).ToArray();
+        if (projects.Length > 0) return projects;
+        return graph.Nodes.Where(node => memberSet.Contains(node.Id)
+            && projection.Ownership[node.Id] == CommunityNodeOwnership.LocalProducedPackage).Select(node => node.Id).ToArray();
+    }
+
+    private static string[] SelectRepresentatives(DependencyGraph graph, IReadOnlySet<string> members,
+        string[] candidates, CommunityProjection projection)
+    {
+        if (candidates.Length == 0) return [];
+        var nodeById = graph.Nodes.ToDictionary(node => node.Id, StringComparer.Ordinal);
+        var memberVertices = members.Where(projection.OriginalToVertex.ContainsKey).Select(id => projection.OriginalToVertex[id]).ToHashSet(StringComparer.Ordinal);
+        var vertexScore = memberVertices.ToDictionary(vertex => vertex, _ => 0d, StringComparer.Ordinal);
+        foreach (var edge in projection.Edges.Where(edge => memberVertices.Contains(edge.Source) && memberVertices.Contains(edge.Target)))
+        {
+            vertexScore[edge.Source] += edge.Weight; vertexScore[edge.Target] += edge.Weight;
+        }
+        var ranked = candidates.OrderByDescending(id => vertexScore.GetValueOrDefault(projection.OriginalToVertex.GetValueOrDefault(id, "")))
+            .ThenByDescending(id => IsRunnable(nodeById[id]))
+            .ThenBy(id => nodeById[id].Label, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(id => id, StringComparer.Ordinal).ToArray();
+        var result = new List<string>(); var labels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var tokenSets = new List<HashSet<string>>();
+        foreach (var id in ranked)
+        {
+            var node = nodeById[id]; if (!labels.Add(node.Label)) continue;
+            var tokens = Tokens(node).Where(token => !CommonTokens.Contains(token)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var nearlyDuplicate = tokenSets.Any(existing =>
+            {
+                var union = existing.Union(tokens, StringComparer.OrdinalIgnoreCase).Count();
+                return union > 0 && (double)existing.Intersect(tokens, StringComparer.OrdinalIgnoreCase).Count() / union >= .8;
+            });
+            if (nearlyDuplicate) continue;
+            result.Add(id); tokenSets.Add(tokens);
+            if (result.Count == 5) break;
+        }
+        return result.ToArray();
+    }
+
+    private static (string Name, double Confidence, CommunityNameEvidence[] Evidence) Name(
+        DependencyGraph graph, string[] candidateIds, CommunityProjection projection)
+    {
+        var nodeById = graph.Nodes.ToDictionary(node => node.Id, StringComparer.Ordinal);
+        var nodes = candidateIds.Select(id => nodeById[id]).GroupBy(node => node.Label, StringComparer.OrdinalIgnoreCase).Select(group => group.First()).ToArray();
+        if (nodes.Length == 0) return ("No eligible source representative", 0, []);
+        var globalNodes = graph.Nodes.Where(node => projection.Ownership[node.Id] == CommunityNodeOwnership.LocalProject && !CommunityProjectionBuilder.IsTest(node)).ToArray();
+        if (globalNodes.Length == 0) globalNodes = graph.Nodes.Where(node => projection.Ownership[node.Id] == CommunityNodeOwnership.LocalProducedPackage).ToArray();
+        var globalDocumentFrequency = globalNodes.SelectMany(node => Tokens(node).Distinct(StringComparer.OrdinalIgnoreCase)).GroupBy(token => token, StringComparer.OrdinalIgnoreCase).ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
         var scores = nodes.SelectMany(node => Tokens(node).Distinct(StringComparer.OrdinalIgnoreCase).Select(token => (token, node.Id)))
             .Where(item => !CommonTokens.Contains(item.token) && item.token.Length > 2)
             .GroupBy(item => item.token, StringComparer.OrdinalIgnoreCase)
-            .Select(group => new { Token = Capitalize(group.Key), Score = group.Count() * Math.Log((graph.Nodes.Count + 1d) / (globalDocumentFrequency[group.Key] + 1d)), Members = group.Select(item => item.Id).Order(StringComparer.Ordinal).Take(5).ToArray() })
+            .Select(group => new { Token = Capitalize(group.Key), Score = group.Count() * Math.Log((globalNodes.Length + 1d) / (globalDocumentFrequency.GetValueOrDefault(group.Key) + 1d)), Members = group.Select(item => item.Id).Order(StringComparer.Ordinal).Take(5).ToArray() })
             .OrderByDescending(item => item.Score).ThenBy(item => item.Token, StringComparer.OrdinalIgnoreCase).Take(3).ToArray();
         if (scores.Length == 0)
         {
-            var representative = nodes.OrderByDescending(node => node.Centrality).ThenBy(node => node.Label, StringComparer.Ordinal).FirstOrDefault()?.Label ?? "Empty community";
+            var representative = nodes.OrderBy(node => node.Label, StringComparer.Ordinal).First().Label;
             return ($"Community anchored by {representative}", 0, []);
         }
         var confidence = scores[0].Score <= 0 ? .2 : Math.Min(1, scores[0].Score / (scores.Sum(score => Math.Max(0, score.Score)) + .0001) + .25);
@@ -493,7 +565,7 @@ public static partial class CommunityAnalyzer
     }
     private static string CommunityKey(string? parent, string anchor)
         => "community:v1:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes((parent ?? "root") + "\n" + anchor)))[..16].ToLowerInvariant();
-    private static double EdgeWeight(EdgeKind kind, CommunityEdgeWeights weights) => kind switch { EdgeKind.ProjectReference => weights.ProjectReference, EdgeKind.PackageReference => weights.PackageReference, EdgeKind.PackageDependency => weights.PackageDependency, _ => 0 };
+    private static double EdgeWeight(EdgeKind kind, CommunityEdgeWeights weights) => kind switch { EdgeKind.ProjectReference => weights.ProjectReference, EdgeKind.PackageReference => weights.PackageReference, EdgeKind.PackageDependency => weights.PackageDependency, EdgeKind.ContractedPath => weights.ContractedPath, _ => 0 };
     private static bool IsRunnable(GraphNode node) => node.Kind == NodeKind.Project && node.Classification is "executable" or "web-application" or "azure-functions";
     private static HashSet<string> ArticulationPoints(HashSet<string> ids, Dictionary<string, List<string>> directed)
     {

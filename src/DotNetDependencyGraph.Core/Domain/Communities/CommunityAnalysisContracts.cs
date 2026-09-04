@@ -7,6 +7,7 @@ public sealed record CommunityEdgeWeights
     public double ProjectReference { get; init; } = 3.0;
     public double PackageReference { get; init; } = 2.0;
     public double PackageDependency { get; init; } = 1.0;
+    public double ContractedPath { get; init; } = 0.25;
 }
 
 public sealed record CommunitySettings
@@ -20,6 +21,10 @@ public sealed record CommunitySettings
     public int? MinSize { get; init; } = 2;
     public bool IncludeTestsInDetection { get; init; }
     public bool IncludeUnresolved { get; init; }
+    public bool IncludeThirdPartyPackages { get; init; }
+    public bool IncludeSystemPackages { get; init; }
+    public bool IncludeUnmappedInternalPackages { get; init; }
+    public IReadOnlyList<string> InternalPackagePatterns { get; init; } = [];
     public CommunityEdgeWeights EdgeWeights { get; init; } = new();
 
     public void Validate()
@@ -31,9 +36,39 @@ public sealed record CommunitySettings
         if (!double.IsFinite(Resolution) || Resolution <= 0) throw new ArgumentException("Community resolution must be a positive finite number.");
         if (TargetSize is <= 0) throw new ArgumentException("Community target size must be positive.");
         if (MinSize is <= 0) throw new ArgumentException("Community minimum size must be positive.");
-        foreach (var weight in new[] { EdgeWeights.ProjectReference, EdgeWeights.PackageReference, EdgeWeights.PackageDependency })
+        foreach (var weight in new[] { EdgeWeights.ProjectReference, EdgeWeights.PackageReference, EdgeWeights.PackageDependency, EdgeWeights.ContractedPath })
             if (!double.IsFinite(weight) || weight < 0) throw new ArgumentException("Community edge weights must be finite and non-negative.");
+        if (InternalPackagePatterns.Any(string.IsNullOrWhiteSpace)) throw new ArgumentException("Community internal-package patterns cannot be empty.");
     }
+}
+
+public enum CommunityNodeOwnership
+{
+    LocalProject,
+    LocalProducedPackage,
+    UnmappedInternalPackage,
+    SystemPackage,
+    ThirdPartyPackage,
+    UnresolvedExternal
+}
+
+public sealed record CommunityProjectionMetadata
+{
+    public string PolicyVersion { get; init; } = "";
+    public string Scope { get; init; } = "unknown";
+    public int DetectionVertexCount { get; init; }
+    public int DetectionNodeCount { get; init; }
+    public int LocalProjectCount { get; init; }
+    public int LocalProducedPackageCount { get; init; }
+    public int IncludedUnmappedInternalPackageCount { get; init; }
+    public int IncludedSystemPackageCount { get; init; }
+    public int IncludedThirdPartyPackageCount { get; init; }
+    public int CollapsedProducerPairCount { get; init; }
+    public int ExcludedTestProjectCount { get; init; }
+    public int ExcludedSystemPackageCount { get; init; }
+    public int ExcludedThirdPartyPackageCount { get; init; }
+    public int ExcludedUnresolvedExternalCount { get; init; }
+    public int ContractedEdgeCount { get; init; }
 }
 
 public sealed record CommunityProjectionRules
@@ -42,8 +77,13 @@ public sealed record CommunityProjectionRules
     public bool ExcludeTests { get; init; } = true;
     public bool ExcludeUnresolved { get; init; } = true;
     public bool CollapseLocalProducerPackages { get; init; } = true;
-    public bool IncludeContractedPaths { get; init; }
+    public bool IncludeContractedPaths { get; init; } = true;
     public bool IncludeProducerEdges { get; init; }
+    public bool IncludeThirdPartyPackages { get; init; }
+    public bool IncludeSystemPackages { get; init; }
+    public bool IncludeUnmappedInternalPackages { get; init; }
+    public string OwnershipRule { get; init; } = "source-evidence";
+    public string ContractedPathContextRule { get; init; } = "same-owner-compatible-tfm-rid";
     public string OppositeEdgeRule { get; init; } = "sum-distinct-directed-relationships";
     public string ContextMultiplicityRule { get; init; } = "one-logical-edge-one-base-weight";
 }
@@ -76,8 +116,11 @@ public sealed record CommunityRecord
     public double Quality { get; init; }
     public double Stability { get; init; }
     public int Size { get; init; }
+    public int DetectionVertexCount { get; init; }
+    public int ExpandedProducerPackageCount { get; init; }
     public int ProjectCount { get; init; }
     public int PackageCount { get; init; }
+    public int TestProjectCount { get; init; }
     public int RunnableCount { get; init; }
     public required string Name { get; init; }
     public double NameConfidence { get; init; }
@@ -90,6 +133,7 @@ public sealed record CommunityRecord
     public int IncomingEdgeCount { get; init; }
     public double CouplingRatio { get; init; }
     public IReadOnlyList<string> RepresentativeNodeIds { get; init; } = [];
+    public string RepresentativeStatus { get; init; } = "eligible-source-nodes";
     public IReadOnlyList<string> BridgeNodeIds { get; init; } = [];
     public int InternalCycleCount { get; init; }
     public int VersionSkewedPackageCount { get; init; }
@@ -141,6 +185,8 @@ public sealed record CommunityAnalysis
     public required string GraphFingerprint { get; init; }
     public CommunitySettings Settings { get; init; } = new();
     public CommunityProjectionRules ProjectionRules { get; init; } = new();
+    public CommunityProjectionMetadata Projection { get; init; } = new();
+    public IReadOnlyDictionary<string, CommunityNodeOwnership> NodeOwnership { get; init; } = new Dictionary<string, CommunityNodeOwnership>();
     public IReadOnlyList<CommunityResolutionCandidate> ResolutionProfile { get; init; } = [];
     public IReadOnlyList<CommunityRecord> Communities { get; init; } = [];
     public IReadOnlyDictionary<string, NodeCommunityAssignment> NodeAssignments { get; init; } = new Dictionary<string, NodeCommunityAssignment>();

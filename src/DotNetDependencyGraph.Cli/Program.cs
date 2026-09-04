@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using DotNetDependencyGraph.Core.Algorithms.Communities;
 using DotNetDependencyGraph.Core.Application.Analysis;
 using DotNetDependencyGraph.Core.Application.Filtering;
 using DotNetDependencyGraph.Core.Application.Scanning;
@@ -45,6 +46,11 @@ Scan options:
   --community-levels <n>        Precomputed hierarchy depth; default: 3
   --community-target-size <n>   Soft selection/diagnostic hint; default: 20
   --community-min-size <n>      Minimum useful split hint; default: 2
+  --community-contracted-weight <n> Low weight for paths through excluded packages; default: 0.25
+  --community-include-third-party Include third-party packages in detection
+  --community-include-system-packages Include framework/system packages in detection
+  --community-include-unmapped-internal-packages Include configured internal packages without a local producer
+  --community-internal-package <glob> Repeatable internal package ownership pattern
   --community-overrides <json>  Initial versioned manual overrides for the report
   --fail-on-incomplete           Exit 3 when authoritative data is incomplete
   --force                        Allow known report files in a nonempty directory
@@ -161,7 +167,9 @@ case-insensitive for package IDs. Restore/evaluation should only be used on trus
         if (!Directory.Exists(viewer)) throw new IOException($"Bundled viewer assets were not found at {viewer}.");
         var seed = Int(args.One("seed"), 42);
         var communities = CommunityOptions(args, graph.CommunityAnalysis?.Settings ?? new(), seed);
-        if (graph.CommunityAnalysis is null || args.HasAny("community-resolution", "community-seed", "community-trials", "community-levels", "community-target-size", "community-min-size"))
+        if (graph.CommunityAnalysis is null || graph.CommunityAnalysis.Projection.PolicyVersion != CommunityProjectionBuilder.CurrentPolicyVersion
+            || args.HasAny("community-resolution", "community-seed", "community-trials", "community-levels", "community-target-size", "community-min-size", "community-contracted-weight",
+                "community-include-third-party", "community-include-system-packages", "community-include-unmapped-internal-packages", "community-internal-package"))
             graph = GraphAnalysis.Analyze(graph with { CommunityAnalysis = null }, communities.Seed, communities, progress: progress);
         else progress?.Invoke("Reusing compatible embedded community analysis; pass a community option to recompute it.");
         var filterMode = ParseEnum(args.One("filter-mode") ?? "contract", FilterMode.Contract);
@@ -212,7 +220,12 @@ case-insensitive for package IDs. Restore/evaluation should only be used on trus
         Levels = PositiveInt(args.One("community-levels"), configured.Levels, "--community-levels"),
         Resolution = PositiveDouble(args.One("community-resolution"), configured.Resolution, "--community-resolution"),
         TargetSize = OptionalPositiveInt(args.One("community-target-size"), configured.TargetSize, "--community-target-size"),
-        MinSize = OptionalPositiveInt(args.One("community-min-size"), configured.MinSize, "--community-min-size")
+        MinSize = OptionalPositiveInt(args.One("community-min-size"), configured.MinSize, "--community-min-size"),
+        IncludeThirdPartyPackages = args.Flag("community-include-third-party") || configured.IncludeThirdPartyPackages,
+        IncludeSystemPackages = args.Flag("community-include-system-packages") || configured.IncludeSystemPackages,
+        IncludeUnmappedInternalPackages = args.Flag("community-include-unmapped-internal-packages") || configured.IncludeUnmappedInternalPackages,
+        InternalPackagePatterns = args.ManyOr("community-internal-package", configured.InternalPackagePatterns),
+        EdgeWeights = configured.EdgeWeights with { ContractedPath = NonNegativeDouble(args.One("community-contracted-weight"), configured.EdgeWeights.ContractedPath, "--community-contracted-weight") }
     };
     private static CommunityOverrideDocument? ReadOverrides(string? path, DependencyGraph graph)
     {
@@ -245,6 +258,7 @@ case-insensitive for package IDs. Restore/evaluation should only be used on trus
     private static int PositiveInt(string? value, int fallback, string option = "--jobs") { var v = Int(value, fallback); return v > 0 ? v : throw new ArgumentException($"{option} must be positive."); }
     private static int? OptionalPositiveInt(string? value, int? fallback, string option) { if (value is null) return fallback; var parsed = Int(value, 0); return parsed > 0 ? parsed : throw new ArgumentException($"{option} must be positive."); }
     private static double PositiveDouble(string? value, double fallback, string option) => value is null ? fallback : double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed) && double.IsFinite(parsed) && parsed > 0 ? parsed : throw new ArgumentException($"{option} must be a positive number.");
+    private static double NonNegativeDouble(string? value, double fallback, string option) => value is null ? fallback : double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed) && double.IsFinite(parsed) && parsed >= 0 ? parsed : throw new ArgumentException($"{option} must be a non-negative number.");
     private static int Int(string? value, int fallback) => value is null ? fallback : int.TryParse(value, out var v) ? v : throw new ArgumentException($"Expected an integer, got '{value}'.");
     private static string Verbosity(string? value) => (value ?? "normal").ToLowerInvariant() is var parsed && parsed is "quiet" or "normal" or "detailed" ? parsed : throw new ArgumentException("--verbosity must be quiet, normal, or detailed.");
     private static string LastLines(string value, int count) => string.Join(" | ", value.Split('\n', StringSplitOptions.RemoveEmptyEntries).TakeLast(count)).Trim();

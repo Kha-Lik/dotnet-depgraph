@@ -45,7 +45,7 @@ public static class GraphAnalysis
         var withCommunities = CommunityAnalyzer.Analyze(analyzed, communitySettings ?? new CommunitySettings { Seed = seed }, progress);
         var standard = withCommunities.CommunityAnalysis!.GranularityAssignments["standard"];
         var integerIds = standard.Values.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).Select((key, index) => (key, index)).ToDictionary(item => item.key, item => item.index, StringComparer.Ordinal);
-        return withCommunities with { Nodes = withCommunities.Nodes.Select(node => node with { Community = integerIds[standard[node.Id]] }).ToArray() };
+        return withCommunities with { Nodes = withCommunities.Nodes.Select(node => node with { Community = standard.TryGetValue(node.Id, out var key) ? integerIds[key] : -1 }).ToArray() };
     }
 
     public static bool IsDependency(GraphEdge edge) => edge.Kind is EdgeKind.ProjectReference or EdgeKind.PackageReference or EdgeKind.PackageDependency or EdgeKind.ContractedPath;
