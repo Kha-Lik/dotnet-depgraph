@@ -198,7 +198,7 @@ public sealed class RenderingPolicyTests
     {
         Assert.True(new PhysicsDefaults().IsValid());
         Assert.InRange(new PhysicsDefaults().DragThreshold, 0, 30);
-        Assert.EndsWith(".v2", PhysicsDefaults.StorageKey, StringComparison.Ordinal);
+        Assert.EndsWith(".v3", PhysicsDefaults.StorageKey, StringComparison.Ordinal);
     }
 
     private static GraphNode Node(int importance) => new() { Id = $"n{importance}", Label = "N", Kind = NodeKind.Package, TransitiveDependents = importance };

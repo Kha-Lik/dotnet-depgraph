@@ -1,113 +1,29 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "2.0",
   "completeness": {
-    "discoveredProjects": 12,
-    "evaluatedProjects": 12,
-    "projectsWithValidAssets": 7,
-    "missingAssets": 4,
-    "malformedAssets": 1,
+    "discoveredProjects": 4,
+    "evaluatedProjects": 4,
+    "projectsWithValidAssets": 4,
+    "missingAssets": 0,
+    "malformedAssets": 0,
     "mismatchedAssets": 0,
     "failedRestores": 0,
-    "complete": false
+    "complete": true
   },
   "diagnostics": [
     {
-      "code": "ambiguous-package-producer",
-      "severity": "warning",
-      "message": "Multiple local projects produce package ID \u0027Company.Ambiguous\u0027; no mapping was inferred.",
-      "projectId": "project:AmbiguousA/AmbiguousA.csproj",
-      "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousA/AmbiguousA.csproj"
-    },
-    {
-      "code": "ambiguous-package-producer",
-      "severity": "warning",
-      "message": "Multiple local projects produce package ID \u0027Company.Ambiguous\u0027; no mapping was inferred.",
-      "projectId": "project:AmbiguousB/AmbiguousB.csproj",
-      "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousB/AmbiguousB.csproj"
-    },
-    {
-      "code": "assets-malformed",
-      "severity": "error",
-      "message": "NuGet could not parse a package specification and at least one target from the assets file.",
-      "projectId": "project:Malformed/Malformed.csproj",
-      "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Malformed/malformed.assets.json"
-    },
-    {
-      "code": "assets-missing",
-      "severity": "error",
-      "message": "Assets file is missing; run restore or select a restore mode.",
-      "projectId": "project:AmbiguousA/AmbiguousA.csproj",
-      "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousA/obj/project.assets.json"
-    },
-    {
-      "code": "assets-missing",
-      "severity": "error",
-      "message": "Assets file is missing; run restore or select a restore mode.",
-      "projectId": "project:AmbiguousB/AmbiguousB.csproj",
-      "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/AmbiguousB/obj/project.assets.json"
-    },
-    {
-      "code": "assets-missing",
-      "severity": "error",
-      "message": "Assets file is missing; run restore or select a restore mode.",
-      "projectId": "project:Missing/Missing.csproj",
-      "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/Missing/missing.assets.json"
-    },
-    {
-      "code": "assets-missing",
-      "severity": "error",
-      "message": "Assets file is missing; run restore or select a restore mode.",
-      "projectId": "project:OutsideConsumer/OutsideConsumer.csproj",
-      "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Representative/OutsideConsumer/obj/project.assets.json"
-    },
-    {
-      "code": "isolated-node",
+      "code": "community-hierarchy-split-rejected",
       "severity": "info",
-      "message": "Node is isolated because authoritative restore data is missing.",
-      "projectId": "project:AmbiguousA/AmbiguousA.csproj",
-      "path": "AmbiguousA/AmbiguousA.csproj"
+      "message": "A 5-vertex community remained a leaf at resolution 0.5: split lacked stable objective support.",
+      "projectId": null,
+      "path": null
     },
     {
-      "code": "isolated-node",
+      "code": "community-hierarchy-split-rejected",
       "severity": "info",
-      "message": "Node is isolated because authoritative restore data is missing.",
-      "projectId": "project:AmbiguousB/AmbiguousB.csproj",
-      "path": "AmbiguousB/AmbiguousB.csproj"
-    },
-    {
-      "code": "isolated-node",
-      "severity": "info",
-      "message": "Node has no resolved dependencies or dependents.",
-      "projectId": "project:DuplicateB/Foo.csproj",
-      "path": "DuplicateB/Foo.csproj"
-    },
-    {
-      "code": "isolated-node",
-      "severity": "info",
-      "message": "Node has no resolved dependencies or dependents.",
-      "projectId": "project:Isolated/Isolated.csproj",
-      "path": "Isolated/Isolated.csproj"
-    },
-    {
-      "code": "isolated-node",
-      "severity": "info",
-      "message": "Node has no resolved dependencies or dependents.",
-      "projectId": "project:Malformed/Malformed.csproj",
-      "path": "Malformed/Malformed.csproj"
-    },
-    {
-      "code": "isolated-node",
-      "severity": "info",
-      "message": "Node is isolated because authoritative restore data is missing.",
-      "projectId": "project:Missing/Missing.csproj",
-      "path": "Missing/Missing.csproj"
-    },
-    {
-      "code": "outside-root-project-reference",
-      "severity": "warning",
-      "message": "Project reference \u0027/home/khalik/workspace/dotnet-depgraph/fixtures/Outside/External.csproj\u0027 was not among discovered projects.",
-      "projectId": "project:OutsideConsumer/OutsideConsumer.csproj",
-      "path": "/home/khalik/workspace/dotnet-depgraph/fixtures/Outside/External.csproj"
+      "message": "A 4-vertex community remained a leaf at resolution 0.5: split lacked stable objective support.",
+      "projectId": null,
+      "path": null
     }
   ]
 }

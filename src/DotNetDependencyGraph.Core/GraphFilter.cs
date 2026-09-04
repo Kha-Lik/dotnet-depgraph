@@ -33,7 +33,7 @@ public static class GraphFilter
         var retained = raw.Nodes.Where(Retain).Select(x => x.Id).ToHashSet(StringComparer.Ordinal);
         var nodes = raw.Nodes.Where(x => retained.Contains(x.Id)).ToArray();
         var direct = raw.Edges.Where(x => retained.Contains(x.Source) && retained.Contains(x.Target)).ToList();
-        if (mode == FilterMode.Strict) return WithFilterIsolationDiagnostics(raw, GraphAnalysis.Analyze(raw with { Nodes = nodes, Edges = direct.ToArray() }), mode);
+        if (mode == FilterMode.Strict) return WithFilterIsolationDiagnostics(raw, GraphAnalysis.Analyze(raw with { Nodes = nodes, Edges = direct.ToArray() }, computeCommunities: false), mode);
 
         var traversable = raw.Edges.Where(GraphAnalysis.IsDependency).GroupBy(x => x.Source)
             .ToDictionary(x => x.Key, x => x.ToArray(), StringComparer.Ordinal);
@@ -67,7 +67,7 @@ public static class GraphFilter
             }
         }
         direct.AddRange(contracted.OrderBy(x => x.Key.Item1).ThenBy(x => x.Key.Item2).Select(x => x.Value.Build(x.Key.Item1, x.Key.Item2)));
-        return WithFilterIsolationDiagnostics(raw, GraphAnalysis.Analyze(raw with { Nodes = nodes, Edges = direct.OrderBy(x => x.Source).ThenBy(x => x.Target).ThenBy(x => x.Kind).ToArray() }), mode);
+        return WithFilterIsolationDiagnostics(raw, GraphAnalysis.Analyze(raw with { Nodes = nodes, Edges = direct.OrderBy(x => x.Source).ThenBy(x => x.Target).ThenBy(x => x.Kind).ToArray() }, computeCommunities: false), mode);
     }
 
     private static DependencyGraph WithFilterIsolationDiagnostics(DependencyGraph raw, DependencyGraph display, FilterMode mode)

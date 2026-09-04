@@ -28,7 +28,9 @@ public sealed class IntegrationTests
             foreach (var file in new[] { "index.html", "graph.json", "diagnostics.json", "summary.md", "graph.graphml", "viewer.js", "viewer.css", "cytoscape.min.js", "d3-dispatch.min.js", "d3-quadtree.min.js", "d3-timer.min.js", "d3-force.min.js", "THIRD-PARTY-NOTICES.txt" }) Assert.True(File.Exists(Path.Combine(temp, file)), file);
             var html = File.ReadAllText(Path.Combine(temp, "index.html")); Assert.DoesNotContain("</script><script>alert(1)</script>", html); Assert.Contains("id=\"search\"", html); Assert.Contains("id=\"hops\"", html); Assert.Contains("id=\"component\"", html); Assert.Contains("id=\"repulsion\"", html); Assert.DoesNotContain("src=\"http", html, StringComparison.OrdinalIgnoreCase);
             var viewer = File.ReadAllText(Path.Combine(temp, "viewer.js")); Assert.Contains("forceCollide", viewer); Assert.Contains("search-match", viewer); Assert.Contains("\"text-wrap\": \"none\"", viewer); Assert.Contains("drag-threshold", viewer); Assert.Contains(PhysicsDefaults.StorageKey, html); Assert.Contains("id=\"important-label-count\"", html); Assert.Contains("dotnet-depgraph.viewer.v1", html);
-            using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(temp, "graph.json"))); Assert.Equal("1.0", json.RootElement.GetProperty("schemaVersion").GetString());
+            Assert.Contains("id=\"community-legend\"", html); Assert.Contains("id=\"granularity\"", html); Assert.Contains("communityCentroidForce", viewer); Assert.Contains("dotnet-depgraph.communities.v1", html);
+            Assert.Contains("id=\"size-metric\"", html); Assert.Contains("id=\"runnable-min\"", html); Assert.Contains("showCommunityMap", viewer);
+            using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(temp, "graph.json"))); Assert.Equal("2.0", json.RootElement.GetProperty("schemaVersion").GetString()); Assert.True(json.RootElement.TryGetProperty("communityAnalysis", out _));
         }
         finally { if (Directory.Exists(temp)) Directory.Delete(temp, true); }
     }
@@ -42,7 +44,7 @@ public sealed class IntegrationTests
             var graphPath = Path.Combine(temp, "input.json"); var output = Path.Combine(temp, "report");
             var hiddenProject = new GraphNode { Id = "project:hidden/Generator.csproj", Label = "Generator", Kind = NodeKind.Project, Path = "hidden/Generator.csproj" };
             var producedPackage = new GraphNode { Id = "package:generated", Label = "Generated", Kind = NodeKind.Package };
-            var graph = new DependencyGraph { Root = "/path/that/does/not/exist", Nodes = [hiddenProject, producedPackage], Edges = [new() { Id = "producer", Source = hiddenProject.Id, Target = producedPackage.Id, Kind = EdgeKind.ProducesPackage }], Completeness = new() { Complete = true } };
+            var graph = GraphAnalysis.Analyze(new DependencyGraph { Root = "/path/that/does/not/exist", Nodes = [hiddenProject, producedPackage], Edges = [new() { Id = "producer", Source = hiddenProject.Id, Target = producedPackage.Id, Kind = EdgeKind.ProducesPackage }], Completeness = new() { Complete = true } });
             await File.WriteAllTextAsync(graphPath, JsonSerializer.Serialize(graph, OutputWriter.JsonOptions), TestContext.Current.CancellationToken);
             Assert.Equal(0, await ProgramEntry.RunAsync(["render", "--graph", graphPath, "--output", output, "--exclude-project", "hidden/*", "--collapse-local-packages"]));
             Assert.True(File.Exists(Path.Combine(output, "index.html")));

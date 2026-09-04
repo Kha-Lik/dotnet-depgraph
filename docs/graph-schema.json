@@ -1,27 +1,32 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/dotnet-depgraph/graph-1.0.schema.json",
-  "title": "dotnet-depgraph canonical graph",
+  "$id": "https://example.invalid/dotnet-depgraph/graph-2.0.schema.json",
+  "title": "dotnet-depgraph canonical graph and derived analysis",
   "type": "object",
-  "required": ["schemaVersion", "root", "nodes", "edges", "diagnostics", "completeness"],
+  "required": ["schemaVersion", "root", "nodes", "edges", "diagnostics", "completeness", "communityAnalysis"],
   "properties": {
-    "schemaVersion": { "const": "1.0" },
+    "schemaVersion": { "const": "2.0" },
     "root": { "type": "string" },
     "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
     "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
-    "diagnostics": { "type": "array", "items": { "type": "object", "required": ["code", "severity", "message"] } },
+    "diagnostics": { "type": "array", "items": { "$ref": "#/$defs/diagnostic" } },
     "completeness": { "type": "object", "required": ["discoveredProjects", "evaluatedProjects", "projectsWithValidAssets", "complete"] },
     "targetFrameworks": { "type": "array", "items": { "type": "string" } },
-    "runtimeIdentifiers": { "type": "array", "items": { "type": "string" } }
+    "runtimeIdentifiers": { "type": "array", "items": { "type": "string" } },
+    "communityAnalysis": { "$ref": "#/$defs/communityAnalysis" }
   },
   "$defs": {
+    "diagnostic": { "type": "object", "required": ["code", "severity", "message"] },
     "node": {
       "type": "object",
-      "required": ["id", "label", "kind", "versions", "targetFrameworks", "runtimeIdentifiers"],
+      "required": ["id", "label", "kind", "versions", "targetFrameworks", "runtimeIdentifiers", "runnableDependentIds", "architecturalRole", "roleEvidence"],
       "properties": {
         "id": { "type": "string" }, "label": { "type": "string" },
         "kind": { "enum": ["project", "package", "unresolved-project", "unresolved-library"] },
-        "versions": { "type": "array", "items": { "type": "string" } }, "versionSkew": { "type": "boolean" }
+        "versions": { "type": "array", "items": { "type": "string" } }, "versionSkew": { "type": "boolean" },
+        "runnableDependentCount": { "type": "integer", "minimum": 0 },
+        "runnableDependentIds": { "type": "array", "items": { "type": "string" } },
+        "architecturalRole": { "type": "string" }, "roleEvidence": { "type": "array", "items": { "type": "string" } }
       }
     },
     "edge": {
@@ -33,6 +38,23 @@
         "derived": { "type": "boolean" }, "minimumHiddenHops": { "type": ["integer", "null"] },
         "pathCount": { "type": ["integer", "null"] }, "pathCountLimited": { "type": "boolean" },
         "contexts": { "type": "array", "items": { "type": "object", "required": ["ownerProjectId", "assetsFile", "targetFramework", "direct", "observationCount"] } }
+      }
+    },
+    "communityAnalysis": {
+      "type": "object",
+      "required": ["version", "algorithm", "algorithmVersion", "keyDerivationVersion", "graphFingerprint", "settings", "projectionRules", "resolutionProfile", "communities", "nodeAssignments", "granularityAssignments", "crossCommunityDependencies", "communityCycles", "runnableImpactPaths", "diagnostics"],
+      "properties": {
+        "version": { "const": "1.0" }, "algorithm": { "const": "leiden-cpm" },
+        "algorithmVersion": { "type": "string" }, "keyDerivationVersion": { "type": "string" },
+        "graphFingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "settings": { "type": "object", "required": ["algorithm", "seed", "trials", "levels", "resolution", "edgeWeights"] },
+        "projectionRules": { "type": "object", "required": ["directedForDetection", "excludeTests", "excludeUnresolved", "collapseLocalProducerPackages", "includeContractedPaths", "includeProducerEdges", "oppositeEdgeRule", "contextMultiplicityRule"] },
+        "resolutionProfile": { "type": "array", "items": { "type": "object", "required": ["resolution", "quality", "communityCount", "sizes", "singletonCount", "connected", "winningSeed", "trials", "stability"] } },
+        "communities": { "type": "array", "items": { "type": "object", "required": ["stableKey", "depth", "memberNodeIds", "directChildKeys", "resolution", "quality", "stability", "size", "name", "nameConfidence", "color", "borderColor"] } },
+        "nodeAssignments": { "type": "object", "additionalProperties": { "type": "object", "required": ["nodeId", "detectedCommunityPath", "assignmentSource", "assignmentEvidence", "assignmentScore", "candidateCommunities"] } },
+        "granularityAssignments": { "type": "object", "required": ["coarse", "standard", "fine"] },
+        "crossCommunityDependencies": { "type": "array" }, "communityCycles": { "type": "array" },
+        "runnableImpactPaths": { "type": "array" }, "diagnostics": { "type": "array", "items": { "$ref": "#/$defs/diagnostic" } }
       }
     }
   }

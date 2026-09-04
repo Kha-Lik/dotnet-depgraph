@@ -9,6 +9,21 @@
   "properties": { "Configuration": "Release" },
   "collapseLocalPackages": true,
   "seed": 42,
+  "communities": {
+    "algorithm": "leiden-cpm",
+    "seed": 42,
+    "trials": 10,
+    "levels": 3,
+    "resolution": 0.5,
+    "targetSize": 20,
+    "minSize": 2,
+    "includeTestsInDetection": false,
+    "edgeWeights": {
+      "projectReference": 3.0,
+      "packageReference": 2.0,
+      "packageDependency": 1.0
+    }
+  },
   "projectRules": [
     { "pathGlob": "src/Gateway/*", "category": "web-application", "label": "Public gateway", "tag": "edge", "colorHint": "#4cc9f0" }
   ],

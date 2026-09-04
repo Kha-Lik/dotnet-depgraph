@@ -28,7 +28,18 @@ public sealed record GraphNode
     public int TransitiveDependencies { get; init; }
     public int DirectDependents { get; init; }
     public int TransitiveDependents { get; init; }
+    public int RunnableDependentCount { get; init; }
+    public IReadOnlyList<string> RunnableDependentIds { get; init; } = [];
+    public int AffectedCommunityCount { get; init; }
+    public int AffectedComponentCount { get; init; }
     public double Centrality { get; init; }
+    public double BetweennessCentrality { get; init; }
+    public int NeighboringCommunityCount { get; init; }
+    public int CrossCommunityEdgeCount { get; init; }
+    public double CrossCommunityEdgeRatio { get; init; }
+    public bool ArticulationPoint { get; init; }
+    public string ArchitecturalRole { get; init; } = "feature-local";
+    public IReadOnlyList<string> RoleEvidence { get; init; } = [];
     public bool InCycle { get; init; }
     public IReadOnlyList<string> Tags { get; init; } = [];
     public string? ColorHint { get; init; }
@@ -65,7 +76,7 @@ public sealed record GraphCompleteness
 
 public sealed record DependencyGraph
 {
-    public string SchemaVersion { get; init; } = "1.0";
+    public string SchemaVersion { get; init; } = "2.0";
     public required string Root { get; init; }
     public required IReadOnlyList<GraphNode> Nodes { get; init; }
     public required IReadOnlyList<GraphEdge> Edges { get; init; }
@@ -73,6 +84,7 @@ public sealed record DependencyGraph
     public GraphCompleteness Completeness { get; init; } = new();
     public IReadOnlyList<string> TargetFrameworks { get; init; } = [];
     public IReadOnlyList<string> RuntimeIdentifiers { get; init; } = [];
+    public CommunityAnalysis? CommunityAnalysis { get; init; }
 }
 
 public sealed record ProjectMetadata
@@ -101,4 +113,8 @@ public sealed record ScanOptions
     public IReadOnlyList<string> TargetFrameworks { get; init; } = ["all"];
     public IReadOnlyList<string> RuntimeIdentifiers { get; init; } = [];
     public IReadOnlyDictionary<string, string> GlobalProperties { get; init; } = new Dictionary<string, string>();
+    public Action<string>? Progress { get; init; }
+    public bool DetailedProgress { get; init; }
+    public bool ComputeCommunities { get; init; } = true;
+    public CommunitySettings? CommunitySettings { get; init; }
 }

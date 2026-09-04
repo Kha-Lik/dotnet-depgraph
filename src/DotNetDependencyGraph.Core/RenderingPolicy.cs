@@ -7,10 +7,11 @@ public sealed record PhysicsDefaults(
     int CollisionPadding = 12,
     int DragThreshold = 8,
     double Gravity = 0.035,
+    double CommunityAttraction = 0.018,
     double AlphaDecay = 0.035,
     double AlphaMin = 0.002)
 {
-    public const string StorageKey = "dotnet-depgraph.physics.v2";
+    public const string StorageKey = "dotnet-depgraph.physics.v3";
 
     public bool IsValid() =>
         Repulsion is >= 100 and <= 5000
@@ -19,6 +20,7 @@ public sealed record PhysicsDefaults(
         && CollisionPadding is >= 2 and <= 50
         && DragThreshold is >= 0 and <= 30
         && Gravity is >= 0 and <= 0.2
+        && CommunityAttraction is >= 0 and <= 0.08
         && AlphaDecay is >= 0.01 and <= 0.1
         && AlphaMin is >= 0.0001 and <= 0.02;
 }

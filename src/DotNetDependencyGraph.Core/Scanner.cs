@@ -8,6 +8,7 @@ public sealed class Scanner
     {
         var root = Path.GetFullPath(options.Root);
         var discovery = new ProjectDiscovery().Discover(root, options.IncludePaths, options.ExcludePaths, options.OutputDirectory, cancellationToken);
+        options.Progress?.Invoke($"Discovery found {discovery.Projects.Count} project(s) and {discovery.Diagnostics.Count} diagnostic(s).");
         var builder = new GraphBuilder(root);
         foreach (var diagnostic in discovery.Diagnostics) builder.Diagnostic(diagnostic);
         var evaluator = new ProjectEvaluator(); var projects = new List<ProjectMetadata>(); var evaluated = 0;
@@ -17,6 +18,7 @@ public sealed class Scanner
             try
             {
                 var metadata = evaluator.Evaluate(path, root, options.GlobalProperties, cancellationToken); projects.Add(metadata); evaluated++;
+                if (options.DetailedProgress) options.Progress?.Invoke($"Evaluated project {evaluated}/{discovery.Projects.Count}: {metadata.RelativePath}");
                 builder.AddNode(new()
                 {
                     Id = metadata.Id,
@@ -30,6 +32,7 @@ public sealed class Scanner
             }
             catch (Exception ex) { builder.Diagnostic(new("project-evaluation-failed", DiagnosticSeverity.Error, ex.Message, Path: path)); }
         }
+        options.Progress?.Invoke($"MSBuild evaluation completed for {evaluated}/{discovery.Projects.Count} project(s); resolving project references.");
         var byPath = projects.ToDictionary(x => x.FullPath, ProjectDiscovery.PathComparer);
         foreach (var project in projects)
         {
@@ -55,6 +58,7 @@ public sealed class Scanner
         }
 
         AddProducerMappings(projects, builder);
+        options.Progress?.Invoke("Project references and local package producers resolved; reading assets files.");
         var extractor = new LockFileExtractor(); var validAssets = 0; var missing = 0; var malformed = 0;
         foreach (var project in projects)
         {
@@ -62,9 +66,11 @@ public sealed class Scanner
             if (!File.Exists(project.AssetsFile))
             { missing++; builder.Diagnostic(new("assets-missing", DiagnosticSeverity.Error, "Assets file is missing; run restore or select a restore mode.", project.Id, project.AssetsFile)); continue; }
             if (extractor.Extract(project, byPath, builder, options.TargetFrameworks, options.RuntimeIdentifiers)) validAssets++; else malformed++;
+            if (options.DetailedProgress) options.Progress?.Invoke($"Read assets {validAssets + missing + malformed}/{projects.Count}: {project.RelativePath}");
         }
         var mismatched = builder.DiagnosticCount("assets-owner-mismatch");
         var complete = evaluated == discovery.Projects.Count && validAssets == projects.Count && !builder.HasErrors;
+        options.Progress?.Invoke($"Assets processing completed: {validAssets} valid, {missing} missing, {malformed} malformed; building canonical graph.");
         var graph = builder.Build(new()
         {
             DiscoveredProjects = discovery.Projects.Count,
@@ -74,7 +80,7 @@ public sealed class Scanner
             MalformedAssets = malformed,
             MismatchedAssets = mismatched,
             Complete = complete
-        });
+        }, options.Progress, options.ComputeCommunities, options.CommunitySettings);
         var diagnostics = graph.Diagnostics.ToList();
         foreach (var node in graph.Nodes.Where(x => graph.Edges.All(e => e.Source != x.Id && e.Target != x.Id)))
         {

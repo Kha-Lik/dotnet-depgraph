@@ -172,6 +172,87 @@ h2 {
   text-align: left;
   margin: 5px 0;
 }
+.community-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 8px;
+}
+.community-row {
+  display: grid;
+  grid-template-columns: 14px 1fr auto auto;
+  gap: 4px;
+  align-items: center;
+  margin: 5px 0;
+  border-radius: 5px;
+}
+.community-row.selected {
+  outline: 1px solid var(--accent);
+}
+.community-swatch {
+  width: 12px;
+  height: 12px;
+  border: 3px solid #f0f6fc;
+  border-radius: 3px;
+}
+.community-name,
+.matrix-row {
+  border: 0;
+  padding: 4px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.community-row > button:not(.community-name) {
+  padding: 3px 5px;
+}
+.community-members {
+  grid-column: 2/5;
+  margin: 0;
+  padding: 2px 0 4px;
+  border: 0;
+  font-size: 11px;
+}
+.community-members summary {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 400;
+}
+.community-members button {
+  display: block;
+  width: 100%;
+  border: 0;
+  padding: 2px;
+  text-align: left;
+}
+#community-search {
+  width: 100%;
+  margin-bottom: 6px;
+}
+.legend-help {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.matrix-row {
+  display: block;
+  width: 100%;
+  margin: 3px 0;
+}
+.detail select,
+.detail button {
+  width: 100%;
+  margin-top: 5px;
+}
+.community-map {
+  width: 100%;
+  min-height: 260px;
+  background: #0d1117;
+  border: 1px solid var(--line);
+}
+.community-map text {
+  fill: var(--text);
+  font-size: 7px;
+}
 a {
   color: var(--accent);
 }

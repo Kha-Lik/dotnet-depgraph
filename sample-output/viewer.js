@@ -4,6 +4,12 @@
 
   const payload = JSON.parse(document.getElementById("graph-data").textContent);
   const $ = (id) => document.getElementById(id);
+  const analysis = payload.raw.communityAnalysis;
+  if (!analysis) throw new Error("Schema 2.0 report is missing communityAnalysis.");
+  const automaticCommunities = new Map(
+    analysis.communities.map((community) => [community.stableKey, community]),
+  );
+  $("color-mode").parentElement.after($("community-legend"));
   const state = {
     view: payload.defaults.filterMode || "contract",
     selected: null,
@@ -16,26 +22,18 @@
     dragGesture: null,
     run: 0,
     fitted: false,
+    granularity: "standard",
+    colorMode: "community",
+    sizeMetric: "transitive",
+    selectedCommunities: new Set(),
   };
-  const palette = [
-    "#58a6ff",
-    "#f0883e",
-    "#3fb950",
-    "#a371f7",
-    "#f85149",
-    "#d29922",
-    "#39c5cf",
-    "#db61a2",
-    "#7ee787",
-    "#79c0ff",
-    "#ffa657",
-    "#bc8cff",
-  ];
+  const borderPalette = ["#79C0FF", "#FFB77C", "#7EE787", "#D2A8FF", "#FF9492", "#E3B341", "#76E3EA", "#F778BA", "#B1BAC4", "#1F6FEB", "#A40E26", "#238636"];
   const physicsDefaults = Object.freeze({ ...payload.defaults.physics });
   const storageKey = payload.defaults.physicsStorageKey ||
     "dotnet-depgraph.physics.v2";
   const viewerStorageKey = payload.defaults.viewerStorageKey ||
     "dotnet-depgraph.viewer.v1";
+  const overrideStorageKey = `${payload.defaults.communityOverrideStoragePrefix || "dotnet-depgraph.communities.v1"}:${analysis.graphFingerprint}`;
   const defaultImportantLabelCount = payload.defaults.importantLabelCount ?? 12;
   const bounds = {
     repulsion: [100, 5000],
@@ -44,6 +42,7 @@
     collisionPadding: [2, 50],
     dragThreshold: [0, 30],
     gravity: [0, .2],
+    communityAttraction: [0, .08],
   };
   const clamp = (value, min, max) =>
     Math.max(min, Math.min(max, Number(value)));
@@ -59,8 +58,10 @@
       18 +
         6 *
           Math.log2(
-            Math.max(0, d.transitiveDependents || 0) +
-              Math.max(0, d.inDegree || 0) + 1,
+            (state.sizeMetric === "runnable"
+              ? Math.max(0, d.runnableDependentCount || 0)
+              : Math.max(0, d.transitiveDependents || 0) +
+                Math.max(0, d.inDegree || 0)) + 1,
           ),
       18,
       52,
@@ -97,7 +98,9 @@
   }
   function loadPhysics() {
     try {
-      return validatedPhysics(JSON.parse(localStorage.getItem(storageKey)));
+      const current = localStorage.getItem(storageKey);
+      const migrated = current || localStorage.getItem("dotnet-depgraph.physics.v2");
+      return validatedPhysics(JSON.parse(migrated));
     } catch {
       return validatedPhysics();
     }
@@ -118,6 +121,84 @@
     }
   }
   let viewerPreferences = loadViewerPreferences();
+
+  function emptyOverrides() {
+    return {
+      version: 1,
+      graphFingerprint: analysis.graphFingerprint,
+      communityOverrides: [],
+      manualCommunities: [],
+      nodeAssignments: {},
+    };
+  }
+  function validateOverrides(candidate) {
+    if (!candidate || candidate.version !== 1) {
+      throw new Error("Override document must have version 1.");
+    }
+    if (candidate.graphFingerprint !== analysis.graphFingerprint) {
+      throw new Error("Override graphFingerprint does not match this graph.");
+    }
+    if (!Array.isArray(candidate.communityOverrides) ||
+      !Array.isArray(candidate.manualCommunities) ||
+      !candidate.nodeAssignments || typeof candidate.nodeAssignments !== "object") {
+      throw new Error("Override document has an invalid shape.");
+    }
+    const nodeIds = new Set(payload.raw.nodes.map((node) => node.id));
+    const manualIds = new Set();
+    candidate.manualCommunities.forEach((community) => {
+      if (!community.id?.startsWith("manual:") || manualIds.has(community.id) ||
+        typeof community.name !== "string" || !validColor(community.color)) {
+        throw new Error("Manual communities require unique manual: IDs, names, and #RRGGBB colors.");
+      }
+      manualIds.add(community.id);
+    });
+    const known = new Set([...automaticCommunities.keys(), ...manualIds]);
+    for (const [nodeId, community] of Object.entries(candidate.nodeAssignments)) {
+      if (!nodeIds.has(nodeId) || !known.has(community)) {
+        throw new Error(`Unknown node/community assignment: ${nodeId} → ${community}`);
+      }
+    }
+    return {
+      ...emptyOverrides(),
+      ...candidate,
+      communityOverrides: candidate.communityOverrides.map((item) => ({ ...item })),
+      manualCommunities: candidate.manualCommunities.map((item) => ({ ...item })),
+      nodeAssignments: { ...candidate.nodeAssignments },
+    };
+  }
+  function loadOverrides() {
+    try {
+      const local = localStorage.getItem(overrideStorageKey);
+      return validateOverrides(local ? JSON.parse(local) : (payload.communityOverrides || emptyOverrides()));
+    } catch (error) {
+      queueMicrotask(() => showNotice(`Community overrides were ignored: ${error.message}`));
+      return emptyOverrides();
+    }
+  }
+  let overrides = loadOverrides();
+  if (overrides.overrideDiagnostics?.length) queueMicrotask(() => showNotice(`${overrides.overrideDiagnostics.length} stale community override entries were not applied; export overrides to inspect diagnostics.`));
+  function saveOverrides() {
+    try { localStorage.setItem(overrideStorageKey, JSON.stringify(overrides)); } catch { /* storage may be disabled */ }
+  }
+  function validColor(value) { return /^#[0-9a-f]{6}$/i.test(value || ""); }
+  function manualMap() { return new Map(overrides.manualCommunities.map((community) => [community.id, community])); }
+  function automaticKey(nodeId) {
+    return analysis.granularityAssignments[state.granularity]?.[nodeId] ||
+      analysis.nodeAssignments[nodeId]?.detectedCommunityPath?.at(-1);
+  }
+  function effectiveKey(nodeId) { return overrides.nodeAssignments[nodeId] || automaticKey(nodeId); }
+  function generatedBorder(key) { return borderPalette[hash(key, 0x6d2b79f5) % borderPalette.length]; }
+  function communityInfo(key) {
+    const manual = manualMap().get(key);
+    if (manual) return { stableKey: key, borderColor: generatedBorder(key), ...manual, manual: true };
+    const automatic = automaticCommunities.get(key) || { stableKey: key, name: key, color: "#8B949E", borderColor: generatedBorder(key), memberNodeIds: [] };
+    const style = overrides.communityOverrides.find((item) => item.communityKey === key ||
+      automatic.memberNodeIds?.includes(item.detectedAnchorNodeId));
+    return { ...automatic, name: style?.name || automatic.name, color: style?.color || automatic.color, manual: !!style };
+  }
+  function showNotice(message) {
+    const warning = $("warning"); warning.hidden = false; warning.textContent = message;
+  }
 
   function savePhysics() {
     try {
@@ -198,15 +279,28 @@
     );
     const ranks = new Map(ranked.map((n, i) => [n.id, i]));
     return [
-      ...visibleNodes.map((n) => ({
-        data: {
-          ...n,
-          size: nodeDiameter(n),
-          rank: ranks.get(n.id),
-          color: n.colorHint ||
-            palette[(n.community < 0 ? 0 : n.community) % palette.length],
-        },
-      })),
+      ...visibleNodes.map((n) => {
+        const detected = analysis.nodeAssignments[n.id]?.detectedCommunityPath || [],
+          effective = effectiveKey(n.id),
+          info = communityInfo(effective),
+          effectivePath = overrides.nodeAssignments[n.id] ? [effective] : detected.slice(0, Math.max(0, detected.indexOf(effective)) + 1),
+          kindColor = n.kind === "project" ? "#58A6FF" : n.kind === "package" ? "#8B949E" : "#F0883E";
+        return {
+          data: {
+            ...n,
+            size: nodeDiameter(n),
+            rank: ranks.get(n.id),
+            detectedCommunityPath: detected,
+            effectiveCommunityPath: effectivePath,
+            effectiveCommunity: effective,
+            assignmentSource: overrides.nodeAssignments[n.id] ? "manual" :
+              (analysis.nodeAssignments[n.id]?.assignmentSource || "automatic"),
+            communityName: info.name,
+            color: state.colorMode === "community" ? info.color : kindColor,
+            borderColor: state.colorMode === "community" ? (info.borderColor || generatedBorder(effective)) : "#F0F6FC",
+          },
+        };
+      }),
       ...edges,
     ];
   }
@@ -228,8 +322,8 @@
           "background-color": "data(color)",
           "width": "data(size)",
           "height": "data(size)",
-          "border-width": 1,
-          "border-color": "#0d1117",
+          "border-width": 3,
+          "border-color": "data(borderColor)",
           "label": "",
           "font-size": 10,
           "color": "#e6edf3",
@@ -244,8 +338,6 @@
         selector: 'node[kind="project"]',
         style: {
           shape: "round-rectangle",
-          "border-color": "#f0f6fc",
-          "border-width": 1.5,
         },
       },
       {
@@ -258,8 +350,8 @@
         style: { shape: "hexagon" },
       },
       {
-        selector: "node[versionSkew]",
-        style: { "border-color": "#f85149", "border-width": 2.5 },
+        selector: "node[versionSkew = true]",
+        style: { "underlay-color": "#F85149", "underlay-opacity": .24, "underlay-padding": 2 },
       },
       {
         selector: "node.show-label,node:selected",
@@ -284,6 +376,18 @@
           "overlay-opacity": .2,
           "overlay-padding": 6,
         },
+      },
+      {
+        selector: 'node[assignmentSource="manual"]',
+        style: { "border-style": "dashed", "border-width": 3 },
+      },
+      {
+        selector: 'node[architecturalRole="cross-community bridge"],node[architecturalRole="shared infrastructure"]',
+        style: { "border-width": 4.5 },
+      },
+      {
+        selector: "node.community-highlight",
+        style: { "overlay-color": "#F0F6FC", "overlay-opacity": .18, "overlay-padding": 7 },
       },
       {
         selector: "edge",
@@ -410,6 +514,26 @@
     node.fx = null;
     node.fy = null;
   }
+  function communityCentroidForce(strength) {
+    let nodes = [];
+    function force(alpha) {
+      if (!strength) return;
+      const groups = new Map();
+      nodes.forEach((node) => {
+        const key = `${node.component}|${node.community}`;
+        const group = groups.get(key) || { x: 0, y: 0, count: 0 };
+        group.x += node.x; group.y += node.y; group.count++; groups.set(key, group);
+      });
+      nodes.forEach((node) => {
+        const group = groups.get(`${node.component}|${node.community}`);
+        if (!group || group.count < 2) return;
+        node.vx += (group.x / group.count - node.x) * strength * alpha;
+        node.vy += (group.y / group.count - node.y) * strength * alpha;
+      });
+    }
+    force.initialize = (value) => { nodes = value; };
+    return force;
+  }
   function forceOptions(simulation) {
     const byId = state.forceById,
       links = cy.edges().map((e) => ({
@@ -457,7 +581,7 @@
       .force("x", d3.forceX((d) => d.cx).strength(physics.gravity)).force(
         "y",
         d3.forceY((d) => d.cy).strength(physics.gravity),
-      );
+      ).force("community", communityCentroidForce(physics.communityAttraction));
   }
   function refreshPositions() {
     cy.batch(() =>
@@ -491,6 +615,7 @@
       component: n.data("component"),
       size: n.data("size"),
       degree: n.degree(),
+      community: n.data("effectiveCommunity"),
       x: n.position("x"),
       y: n.position("y"),
     }));
@@ -499,6 +624,8 @@
     componentCenters(nodes);
     nodes.forEach((n, i) => initialPosition(n, i, randomize));
     refreshPositions();
+    cy.fit(cy.elements(":visible"), 55);
+    updateLabels();
     state.fitted = false;
     state.paused = false;
     $("pause").textContent = "Pause physics";
@@ -552,6 +679,7 @@
     cy.elements().remove();
     cy.add(elements());
     populateFilters();
+    renderCommunityLegend();
     startSimulation(false);
     applyFilters();
   }
@@ -569,7 +697,10 @@
     populate("kind", new Set(g.nodes.map((n) => n.kind)));
     populate("edgeKind", new Set(g.edges.map((e) => e.kind)));
     populate("component", new Set(g.nodes.map((n) => n.component)));
-    populate("community", new Set(g.nodes.map((n) => n.community)));
+    populate("community", new Set(g.nodes.map((n) => effectiveKey(n.id))));
+    [...$("community").options].slice(1).forEach((option) => {
+      option.textContent = communityInfo(option.value).name;
+    });
     populate("tfm", new Set(g.nodes.flatMap((n) => n.targetFrameworks || [])));
     populate(
       "rid",
@@ -602,6 +733,137 @@
       },
     );
   }
+  function downloadJson(name, value) {
+    const a = document.createElement("a");
+    a.download = name;
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }));
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  function effectiveGroups() {
+    const groups = new Map();
+    graph().nodes.forEach((node) => {
+      const key = effectiveKey(node.id), values = groups.get(key) || [];
+      values.push(node); groups.set(key, values);
+    });
+    return groups;
+  }
+  function renderCommunityLegend() {
+    const container = $("community-legend-rows"), query = $("community-search").value.trim().toLowerCase();
+    container.replaceChildren();
+    if (state.colorMode !== "community") {
+      const message = document.createElement("p"); message.textContent = "Colors currently represent node kind: project, package, or unresolved."; container.appendChild(message); return;
+    }
+    const groups = [...effectiveGroups().entries()].map(([key, nodes]) => ({ key, nodes, info: communityInfo(key) }))
+      .filter(item => !query || item.info.name.toLowerCase().includes(query) || item.nodes.some(node => node.label.toLowerCase().includes(query)))
+      .sort((a, b) => {
+        const aPath = analysis.nodeAssignments[a.nodes[0].id]?.detectedCommunityPath?.join("/") || a.key,
+          bPath = analysis.nodeAssignments[b.nodes[0].id]?.detectedCommunityPath?.join("/") || b.key;
+        return aPath.localeCompare(bPath) || b.nodes.length - a.nodes.length || a.info.name.localeCompare(b.info.name);
+      });
+    groups.forEach(({ key, nodes, info }) => {
+      const row = document.createElement("div"); row.className = "community-row"; row.dataset.community = key;
+      if (state.selectedCommunities.has(key)) row.classList.add("selected");
+      const swatch = document.createElement("span"); swatch.className = "community-swatch"; swatch.style.backgroundColor = info.color; swatch.style.borderColor = info.borderColor || generatedBorder(key);
+      row.style.marginLeft = `${Math.min(2, info.depth || 0) * 9}px`;
+      const label = document.createElement("button"); label.className = "community-name";
+      const projects = nodes.filter(node => node.kind === "project").length,
+        packages = nodes.filter(node => node.kind === "package").length,
+        runnable = nodes.filter(node => ["executable", "web-application", "azure-functions"].includes(node.classification)).length;
+      label.textContent = `${info.name} — ${nodes.length}`;
+      label.title = `${projects} projects · ${packages} packages · ${runnable} runnable${info.manual ? " · manual changes" : ""}`;
+      label.onclick = (event) => {
+        if (!event.ctrlKey && !event.metaKey) state.selectedCommunities.clear();
+        state.selectedCommunities.has(key) ? state.selectedCommunities.delete(key) : state.selectedCommunities.add(key);
+        showCommunityDetails(key); renderCommunityLegend(); applyFilters();
+      };
+      row.onmouseenter = () => highlightCommunity(key);
+      row.onmouseleave = () => { cy.nodes().removeClass("community-highlight"); if (!state.selected) clearFocus(); };
+      const edit = document.createElement("button"); edit.textContent = "Edit"; edit.title = "Rename or recolor"; edit.onclick = () => editCommunity(key);
+      const restore = document.createElement("button"); restore.textContent = "↶"; restore.title = "Restore automatic community values and membership"; restore.onclick = () => restoreCommunity(key);
+      const members = document.createElement("details"); members.className = "community-members";
+      const memberSummary = document.createElement("summary"); memberSummary.textContent = "Members / children"; members.appendChild(memberSummary);
+      (info.directChildKeys || []).forEach(childKey => { const child = document.createElement("div"); child.textContent = `↳ ${communityInfo(childKey).name}`; members.appendChild(child); });
+      nodes.sort((a, b) => (b.centrality || 0) - (a.centrality || 0) || a.label.localeCompare(b.label)).slice(0, 5).forEach(node => { const member = document.createElement("button"); member.textContent = node.label; member.onclick = () => { const target = cy.$id(node.id); if (target.length) { target.select(); detail(target); cy.fit(target, 100); } }; members.appendChild(member); });
+      row.append(swatch, label, edit, restore, members); container.appendChild(row);
+    });
+  }
+  function highlightCommunity(key) {
+    cy.nodes().removeClass("community-highlight");
+    cy.nodes().filter(node => node.data("effectiveCommunity") === key).addClass("community-highlight");
+  }
+  function editCommunity(key) {
+    const info = communityInfo(key), name = prompt("Community name", info.name); if (name === null || !name.trim()) return;
+    const color = prompt("Community color (#RRGGBB)", info.color); if (color === null) return;
+    if (!validColor(color)) { showNotice("Community color must use #RRGGBB format."); return; }
+    const manual = overrides.manualCommunities.find(community => community.id === key);
+    if (manual) { manual.name = name.trim(); manual.color = color.toUpperCase(); }
+    else {
+      let style = overrides.communityOverrides.find(item => item.communityKey === key);
+      if (!style) { style = { communityKey: key, detectedAnchorNodeId: automaticCommunities.get(key)?.memberNodeIds?.[0] || "", name: null, color: null }; overrides.communityOverrides.push(style); }
+      style.name = name.trim(); style.color = color.toUpperCase();
+    }
+    saveOverrides(); replace();
+  }
+  function restoreCommunity(key) {
+    overrides.communityOverrides = overrides.communityOverrides.filter(item => item.communityKey !== key && !automaticCommunities.get(key)?.memberNodeIds?.includes(item.detectedAnchorNodeId));
+    for (const [nodeId, assigned] of Object.entries(overrides.nodeAssignments)) if (assigned === key) delete overrides.nodeAssignments[nodeId];
+    const manual = overrides.manualCommunities.find(community => community.id === key);
+    if (manual) { for (const [nodeId, assigned] of Object.entries(overrides.nodeAssignments)) if (assigned === key) delete overrides.nodeAssignments[nodeId]; overrides.manualCommunities = overrides.manualCommunities.filter(community => community.id !== key); }
+    state.selectedCommunities.delete(key); saveOverrides(); replace();
+  }
+  function createManual(name, color) {
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "community";
+    let id = `manual:${slug}`, suffix = 2; const known = new Set(overrides.manualCommunities.map(item => item.id));
+    while (known.has(id)) id = `manual:${slug}-${suffix++}`;
+    overrides.manualCommunities.push({ id, name, color }); return id;
+  }
+  function selectedNodeIds() { return cy.nodes(":selected").map(node => node.id()); }
+  function createFromSelection() {
+    const nodes = selectedNodeIds(); if (!nodes.length && state.selected) nodes.push(state.selected);
+    if (!nodes.length) { showNotice("Select one or more nodes first."); return; }
+    const name = prompt("New manual community name", "Manual community"); if (!name?.trim()) return;
+    const color = prompt("Community color (#RRGGBB)", "#F0883E"); if (!validColor(color)) { showNotice("Community color must use #RRGGBB format."); return; }
+    const id = createManual(name.trim(), color.toUpperCase()); nodes.forEach(nodeId => overrides.nodeAssignments[nodeId] = id); saveOverrides(); replace();
+  }
+  function mergeSelectedCommunities() {
+    if (state.selectedCommunities.size < 2) { showNotice("Select at least two legend communities with Ctrl/Cmd-click."); return; }
+    const name = prompt("Merged effective community name", "Merged community"); if (!name?.trim()) return;
+    const color = prompt("Community color (#RRGGBB)", "#BC8CFF"); if (!validColor(color)) { showNotice("Community color must use #RRGGBB format."); return; }
+    const selected = new Set(state.selectedCommunities), id = createManual(name.trim(), color.toUpperCase());
+    graph().nodes.forEach(node => { if (selected.has(effectiveKey(node.id))) overrides.nodeAssignments[node.id] = id; });
+    state.selectedCommunities.clear(); saveOverrides(); replace();
+  }
+  function effectiveMatrix() {
+    const rows = new Map();
+    cy.edges().forEach(edge => {
+      if (edge.data("kind") === "produces-package") return;
+      const source = effectiveKey(edge.source().id()), target = effectiveKey(edge.target().id()); if (source === target) return;
+      const key = `${source}\n${target}`, row = rows.get(key) || { sourceCommunity: source, targetCommunity: target, edgeCount: 0, edgeKinds: {} };
+      row.edgeCount++; row.edgeKinds[edge.data("kind")] = (row.edgeKinds[edge.data("kind")] || 0) + 1; rows.set(key, row);
+    });
+    return [...rows.values()].sort((a, b) => b.edgeCount - a.edgeCount || a.sourceCommunity.localeCompare(b.sourceCommunity));
+  }
+  function showCommunityDetails(key) {
+    const info = communityInfo(key), nodes = graph().nodes.filter(node => effectiveKey(node.id) === key), panel = $("details"); panel.replaceChildren();
+    const title = document.createElement("h2"); title.textContent = info.name; panel.appendChild(title);
+    const detected = automaticCommunities.get(key);
+    const values = { "Effective nodes": nodes.length, Projects: nodes.filter(n => n.kind === "project").length, Packages: nodes.filter(n => n.kind === "package").length,
+      "Detected quality": detected?.quality ?? "manual/effective partition", Stability: detected?.stability ?? "—", "Manual assignments": nodes.filter(n => overrides.nodeAssignments[n.id]).length };
+    Object.entries(values).forEach(([name, value]) => { const row = document.createElement("div"); row.className = "detail"; const b = document.createElement("b"); b.textContent = name; const span = document.createElement("span"); span.textContent = String(value); row.append(b, span); panel.appendChild(row); });
+    const matrix = document.createElement("div"); matrix.className = "detail"; const heading = document.createElement("b"); heading.textContent = "Cross-community dependencies (effective view)"; matrix.appendChild(heading);
+    effectiveMatrix().filter(row => row.sourceCommunity === key || row.targetCommunity === key).slice(0, 20).forEach(row => { const line = document.createElement("button"); line.className = "matrix-row"; line.textContent = `${communityInfo(row.sourceCommunity).name} → ${communityInfo(row.targetCommunity).name}: ${row.edgeCount}`; line.onclick = () => { cy.edges().addClass("faded"); cy.edges().filter(edge => effectiveKey(edge.source().id()) === row.sourceCommunity && effectiveKey(edge.target().id()) === row.targetCommunity).removeClass("faded"); }; matrix.appendChild(line); }); panel.appendChild(matrix);
+  }
+  function showCommunityMap() {
+    const panel = $("details"); panel.replaceChildren(); const title = document.createElement("h2"); title.textContent = "Effective community graph"; panel.appendChild(title);
+    const groups = [...effectiveGroups().keys()].sort((a, b) => communityInfo(a).name.localeCompare(communityInfo(b).name)), size = 270, center = size / 2, radius = 100;
+    const positions = new Map(groups.map((key, index) => [key, { x: center + Math.cos(index / Math.max(1, groups.length) * Math.PI * 2) * radius, y: center + Math.sin(index / Math.max(1, groups.length) * Math.PI * 2) * radius }]));
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.setAttribute("viewBox", `0 0 ${size} ${size}`); svg.classList.add("community-map");
+    const defs = document.createElementNS(svg.namespaceURI, "defs"), marker = document.createElementNS(svg.namespaceURI, "marker"); marker.setAttribute("id", "community-arrow"); marker.setAttribute("viewBox", "0 0 10 10"); marker.setAttribute("refX", "8"); marker.setAttribute("refY", "5"); marker.setAttribute("markerWidth", "5"); marker.setAttribute("markerHeight", "5"); marker.setAttribute("orient", "auto-start-reverse"); const arrow = document.createElementNS(svg.namespaceURI, "path"); arrow.setAttribute("d", "M 0 0 L 10 5 L 0 10 z"); arrow.setAttribute("fill", "#8B949E"); marker.appendChild(arrow); defs.appendChild(marker); svg.appendChild(defs);
+    effectiveMatrix().forEach(edge => { const a = positions.get(edge.sourceCommunity), b = positions.get(edge.targetCommunity); if (!a || !b) return; const line = document.createElementNS(svg.namespaceURI, "line"); line.setAttribute("x1", a.x); line.setAttribute("y1", a.y); line.setAttribute("x2", b.x); line.setAttribute("y2", b.y); line.setAttribute("stroke", "#8B949E"); line.setAttribute("stroke-width", String(Math.min(4, 1 + Math.log2(edge.edgeCount)))); line.setAttribute("marker-end", "url(#community-arrow)"); svg.appendChild(line); });
+    groups.forEach(key => { const p = positions.get(key), info = communityInfo(key); const circle = document.createElementNS(svg.namespaceURI, "circle"); circle.setAttribute("cx", p.x); circle.setAttribute("cy", p.y); circle.setAttribute("r", "8"); circle.setAttribute("fill", info.color); circle.setAttribute("stroke", info.borderColor || generatedBorder(key)); circle.setAttribute("stroke-width", "3"); circle.onclick = () => showCommunityDetails(key); const label = document.createElementNS(svg.namespaceURI, "text"); label.setAttribute("x", p.x + 10); label.setAttribute("y", p.y + 4); label.textContent = info.name.length > 18 ? `${info.name.slice(0, 17)}…` : info.name; svg.append(circle, label); });
+    panel.appendChild(svg); const heading = document.createElement("h2"); heading.textContent = "Directed coupling matrix"; panel.appendChild(heading);
+    effectiveMatrix().forEach(row => { const line = document.createElement("button"); line.className = "matrix-row"; line.textContent = `${communityInfo(row.sourceCommunity).name} → ${communityInfo(row.targetCommunity).name}: ${row.edgeCount}`; line.onclick = () => showCommunityDetails(row.sourceCommunity); panel.appendChild(line); });
+  }
   function applyFilters() {
     cy.elements().removeClass("faded search-match").style("display", "element");
     const kind = $("kind").value,
@@ -611,14 +873,17 @@
       tfm = $("tfm").value,
       rid = $("rid").value,
       skew = $("skew").checked,
+      runnableMin = Math.max(0, Number($("runnable-min").value) || 0),
       q = $("search").value.trim().toLowerCase();
     cy.nodes().forEach((n) => {
       const d = n.data(),
         match = (!kind || d.kind === kind) &&
           (!component || String(d.component) === component) &&
-          (!community || String(d.community) === community) &&
+          (!community || d.effectiveCommunity === community) &&
+          (!state.selectedCommunities.size || state.selectedCommunities.has(d.effectiveCommunity)) &&
           (!tfm || (d.targetFrameworks || []).includes(tfm)) &&
           (!rid || (d.runtimeIdentifiers || []).includes(rid)) &&
+          (d.runnableDependentCount || 0) >= runnableMin &&
           (!skew || d.versionSkew);
       if (!match) n.style("display", "none");
       if (
@@ -751,11 +1016,18 @@
       Frameworks: (d.targetFrameworks || []).join(", ") || "—",
       RIDs: (d.runtimeIdentifiers || []).join(", ") || "—",
       Component: d.component,
-      Community: d.community,
+      "Detected community path": (d.detectedCommunityPath || []).map(key => communityInfo(key).name).join(" → ") || "—",
+      "Effective community": d.communityName,
+      "Assignment source": d.assignmentSource,
       "Direct dependencies": d.directDependencies,
       "Transitive dependencies": d.transitiveDependencies,
       "Direct dependents": d.directDependents,
       "Transitive dependents": d.transitiveDependents,
+      "Runnable dependents": `${d.runnableDependentCount || 0}: ${(d.runnableDependentIds || []).join(", ")}`,
+      "Affected communities": d.affectedCommunityCount || 0,
+      "Architectural role": d.architecturalRole || "feature-local",
+      "Role evidence": (d.roleEvidence || []).join("; ") || "—",
+      "Betweenness centrality": d.betweennessCentrality || 0,
       "Version skew": d.versionSkew ? "yes" : "no",
       "Cycle member": d.inCycle ? "yes" : "no",
     };
@@ -783,6 +1055,14 @@
       rel.appendChild(p);
     });
     panel.appendChild(rel);
+    const assignment = document.createElement("div"); assignment.className = "detail";
+    const assignmentHeading = document.createElement("b"); assignmentHeading.textContent = "Effective assignment";
+    const select = document.createElement("select");
+    [...effectiveGroups().keys()].sort((a, b) => communityInfo(a).name.localeCompare(communityInfo(b).name)).forEach(key => select.add(new Option(communityInfo(key).name, key)));
+    select.value = d.effectiveCommunity;
+    const move = document.createElement("button"); move.textContent = "Assign selected"; move.onclick = () => { const ids = selectedNodeIds(); if (!ids.length) ids.push(d.id); ids.forEach(id => overrides.nodeAssignments[id] = select.value); saveOverrides(); replace(); };
+    const restore = document.createElement("button"); restore.textContent = "Restore node"; restore.onclick = () => { delete overrides.nodeAssignments[d.id]; saveOverrides(); replace(); };
+    assignment.append(assignmentHeading, select, move, restore); panel.appendChild(assignment);
     const diagnostics = (graph().diagnostics || []).filter((x) =>
       x.projectId === d.id
     );
@@ -800,6 +1080,24 @@
       panel.appendChild(warnings);
     }
   }
+  function explainSelectedPath() {
+    const selected = selectedNodeIds();
+    if (selected.length !== 2) { showNotice("Select exactly two nodes (Ctrl/Cmd-click) to explain a directed dependency path."); return; }
+    const [source, target] = selected, queue = [source], previous = new Map([[source, null]]);
+    while (queue.length && !previous.has(target)) {
+      const current = queue.shift();
+      cy.$id(current).outgoers("edge:visible").sort((a, b) => a.id().localeCompare(b.id())).forEach(edge => {
+        if (edge.data("kind") === "produces-package") return;
+        const next = edge.target().id(); if (!previous.has(next)) { previous.set(next, edge); queue.push(next); }
+      });
+    }
+    const panel = $("details"); panel.replaceChildren(); const title = document.createElement("h2"); title.textContent = "Shortest dependency path"; panel.appendChild(title);
+    if (!previous.has(target)) { const p = document.createElement("p"); p.textContent = "No directed dependency path exists in the active view. Try reversing the selection order or switching view."; panel.appendChild(p); return; }
+    const path = []; let cursor = target; while (cursor !== source) { const edge = previous.get(cursor); path.push({ node: cursor, edge }); cursor = edge.source().id(); } path.push({ node: source, edge: null }); path.reverse();
+    path.forEach((step, index) => { const row = document.createElement("div"); row.className = "detail"; const node = cy.$id(step.node); row.textContent = index === 0 ? node.data("label") : `${step.edge.data("kind")} → ${node.data("label")}${step.edge.data("derived") ? " (contracted/derived)" : ""}`; panel.appendChild(row); });
+    const persisted = analysis.runnableImpactPaths.find(item => item.source === source && item.target === target);
+    const note = document.createElement("p"); note.className = "legend-help"; note.textContent = persisted ? "This runnable-impact path was computed and persisted by the .NET analysis." : "This active-view path was resolved from persisted canonical edges; alternatives are intentionally bounded."; panel.appendChild(note);
+  }
   function syncControls() {
     const importantLabelCount = $("important-label-count");
     importantLabelCount.value = viewerPreferences.importantLabelCount;
@@ -813,6 +1111,7 @@
       collisionPadding: "collision-padding",
       dragThreshold: "drag-threshold",
       gravity: "gravity",
+      communityAttraction: "community-attraction",
     };
     for (const [key, id] of Object.entries(controls)) {
       const input = $(id);
@@ -910,6 +1209,7 @@
     "tfm",
     "rid",
     "skew",
+    "runnable-min",
     "hops",
   ].forEach((id) =>
     $(id).addEventListener(id === "search" ? "input" : "change", applyFilters)
@@ -924,6 +1224,29 @@
     state.collapsed = e.target.checked;
     replace();
   };
+  $("granularity").value = state.granularity;
+  $("granularity").onchange = (e) => { state.granularity = e.target.value; state.selectedCommunities.clear(); replace(); };
+  $("color-mode").value = state.colorMode;
+  $("color-mode").onchange = (e) => { state.colorMode = e.target.value; replace(); };
+  $("size-metric").value = state.sizeMetric;
+  $("size-metric").onchange = (e) => { state.sizeMetric = e.target.value; replace(); };
+  $("community-search").addEventListener("input", renderCommunityLegend);
+  $("community-create").onclick = createFromSelection;
+  $("community-merge").onclick = mergeSelectedCommunities;
+  $("community-export").onclick = () => downloadJson("community-overrides.json", overrides);
+  $("community-effective").onclick = () => downloadJson("effective-community-mapping.json", {
+    version: 1, graphFingerprint: analysis.graphFingerprint, granularity: state.granularity,
+    assignments: Object.fromEntries(payload.raw.nodes.map(node => { const detected = analysis.nodeAssignments[node.id]?.detectedCommunityPath || [], effective = effectiveKey(node.id); return [node.id, { detectedCommunityPath: detected, effectiveCommunityPath: overrides.nodeAssignments[node.id] ? [effective] : detected.slice(0, Math.max(0, detected.indexOf(effective)) + 1), assignmentSource: overrides.nodeAssignments[node.id] ? "manual" : (analysis.nodeAssignments[node.id]?.assignmentSource || "automatic") }]; }))
+  });
+  const communityMapButton = document.createElement("button"); communityMapButton.id = "community-map"; communityMapButton.textContent = "Community graph"; communityMapButton.onclick = showCommunityMap; $("community-reset").before(communityMapButton);
+  $("community-import").onclick = () => $("community-import-file").click();
+  $("community-import-file").onchange = (event) => {
+    const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader();
+    reader.onload = () => { try { overrides = validateOverrides(JSON.parse(String(reader.result))); saveOverrides(); replace(); } catch (error) { showNotice(`Community override import failed: ${error.message}`); } };
+    reader.readAsText(file); event.target.value = "";
+  };
+  $("community-reset").onclick = () => { if (!confirm("Reset every community override for this graph?")) return; overrides = emptyOverrides(); try { localStorage.removeItem(overrideStorageKey); } catch {} state.selectedCommunities.clear(); replace(); };
+  $("explain-path").onclick = explainSelectedPath;
   $("fit").onclick = () => cy.fit(cy.elements(":visible"), 55);
   $("reset").onclick = () => {
     state.selected = null;
@@ -991,6 +1314,7 @@
     ["linkStrength", "link-strength"],
     ["collisionPadding", "collision-padding"],
     ["gravity", "gravity"],
+    ["communityAttraction", "community-attraction"],
   ].forEach(([key, id]) =>
     $(id).addEventListener("input", () => sliderChanged(key, id))
   );
@@ -1007,7 +1331,8 @@
         return { ...raw, id: d.id, source: d.source, target: d.target };
       });
     const shown = {
-      schemaVersion: "display-1.0",
+      schemaVersion: "display-2.0",
+      projection: { view: state.view, collapseLocalPackages: state.collapsed, communityGranularity: state.granularity, effectiveOverrides: Object.keys(overrides.nodeAssignments).length > 0 },
       nodes: cy.nodes(":visible").map((n) => n.data()),
       edges,
     };
@@ -1042,9 +1367,14 @@
     overlapCount,
     physics: () => ({ ...physics }),
     viewerPreferences: () => ({ ...viewerPreferences }),
+    communityOverrides: () => structuredClone(overrides),
+    effectiveMatrix,
+    effectiveKey,
+    overrideStorageKey,
   };
   syncControls();
   populateFilters();
+  renderCommunityLegend();
   startSimulation(false);
   updateLabels();
 })();

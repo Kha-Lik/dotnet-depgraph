@@ -2,8 +2,9 @@ namespace DotNetDependencyGraph.Core;
 
 public static class GraphAnalysis
 {
-    public static DependencyGraph Analyze(DependencyGraph graph, int seed = 42)
+    public static DependencyGraph Analyze(DependencyGraph graph, int seed = 42, CommunitySettings? communitySettings = null, bool computeCommunities = true, Action<string>? progress = null)
     {
+        if (computeCommunities) progress?.Invoke($"Computing graph metrics for {graph.Nodes.Count} node(s) and {graph.Edges.Count} edge(s).");
         var dependencyEdges = graph.Edges.Where(IsDependency).ToArray();
         var ids = graph.Nodes.Select(x => x.Id).ToHashSet(StringComparer.Ordinal);
         var outgoing = ids.ToDictionary(x => x, _ => new HashSet<string>(StringComparer.Ordinal), StringComparer.Ordinal);
@@ -17,7 +18,6 @@ public static class GraphAnalysis
         var components = WeakComponents(ids, componentOutgoing, componentIncoming);
         var componentMap = components.SelectMany((c, i) => c.Select(n => (n, i))).ToDictionary(x => x.n, x => x.i, StringComparer.Ordinal);
         var cycleNodes = CyclicNodes(ids, outgoing);
-        var communities = LabelCommunities(ids, outgoing, incoming, seed);
         var nodes = graph.Nodes.Select(node =>
         {
             var down = Reach(node.Id, outgoing); down.Remove(node.Id);
@@ -26,7 +26,6 @@ public static class GraphAnalysis
             return node with
             {
                 Component = componentMap[node.Id],
-                Community = communities[node.Id],
                 InDegree = incoming[node.Id].Count,
                 OutDegree = outgoing[node.Id].Count,
                 DirectDependencies = outgoing[node.Id].Count,
@@ -37,7 +36,13 @@ public static class GraphAnalysis
                 InCycle = cycleNodes.Contains(node.Id)
             };
         }).OrderBy(x => x.Id, StringComparer.Ordinal).ToArray();
-        return graph with { Nodes = nodes };
+        var analyzed = graph with { SchemaVersion = "2.0", Nodes = nodes };
+        if (!computeCommunities) return analyzed;
+        progress?.Invoke($"Graph metrics complete: {components.Count} weak component(s), {cycleNodes.Count} node(s) in dependency cycles.");
+        var withCommunities = CommunityAnalyzer.Analyze(analyzed, communitySettings ?? new CommunitySettings { Seed = seed }, progress);
+        var standard = withCommunities.CommunityAnalysis!.GranularityAssignments["standard"];
+        var integerIds = standard.Values.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).Select((key, index) => (key, index)).ToDictionary(item => item.key, item => item.index, StringComparer.Ordinal);
+        return withCommunities with { Nodes = withCommunities.Nodes.Select(node => node with { Community = integerIds[standard[node.Id]] }).ToArray() };
     }
 
     public static bool IsDependency(GraphEdge edge) => edge.Kind is EdgeKind.ProjectReference or EdgeKind.PackageReference or EdgeKind.PackageDependency or EdgeKind.ContractedPath;
@@ -76,25 +81,4 @@ public static class GraphAnalysis
         return cyclic;
     }
 
-    private static Dictionary<string, int> LabelCommunities(HashSet<string> ids, Dictionary<string, HashSet<string>> outgoing, Dictionary<string, HashSet<string>> incoming, int seed)
-    {
-        var labels = ids.Order(StringComparer.Ordinal).Select((id, i) => (id, i)).ToDictionary(x => x.id, x => x.i, StringComparer.Ordinal);
-        var order = ids.OrderBy(x => StableHash(x, seed)).ThenBy(x => x, StringComparer.Ordinal).ToArray();
-        for (var iteration = 0; iteration < 20; iteration++)
-        {
-            var changed = false;
-            foreach (var id in order)
-            {
-                var neighbors = outgoing[id].Concat(incoming[id]).Distinct().ToArray(); if (neighbors.Length == 0) continue;
-                var best = neighbors.GroupBy(x => labels[x]).OrderByDescending(x => x.Count()).ThenBy(x => x.Key).First().Key;
-                if (best != labels[id]) { labels[id] = best; changed = true; }
-            }
-            if (!changed) break;
-        }
-        var normalized = labels.Values.Distinct().Order().Select((x, i) => (x, i)).ToDictionary(x => x.x, x => x.i);
-        return labels.ToDictionary(x => x.Key, x => normalized[x.Value], StringComparer.Ordinal);
-    }
-
-    private static int StableHash(string value, int seed)
-    { unchecked { var h = (uint)seed; foreach (var c in value) h = (h ^ c) * 16777619; return (int)h; } }
 }

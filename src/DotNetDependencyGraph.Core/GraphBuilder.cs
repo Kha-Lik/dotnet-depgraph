@@ -23,7 +23,8 @@ public sealed class GraphBuilder(string root)
     public int DiagnosticCount(string code) => _diagnostics.Count(x => x.Code == code);
     public bool HasErrors => _diagnostics.Any(x => x.Severity == DiagnosticSeverity.Error);
 
-    public DependencyGraph Build(GraphCompleteness completeness)
+    public DependencyGraph Build(GraphCompleteness completeness, Action<string>? progress = null,
+        bool computeCommunities = true, CommunitySettings? communitySettings = null)
     {
         var edges = _edges.Values.Select(x => x.Build()).OrderBy(x => x.Source, StringComparer.Ordinal)
             .ThenBy(x => x.Target, StringComparer.Ordinal).ThenBy(x => x.Kind).ToArray();
@@ -38,7 +39,7 @@ public sealed class GraphBuilder(string root)
             TargetFrameworks = edges.SelectMany(x => x.Contexts).Select(x => x.TargetFramework).Where(x => x.Length > 0).Distinct().Order().ToArray(),
             RuntimeIdentifiers = edges.SelectMany(x => x.Contexts).Select(x => x.RuntimeIdentifier).Where(x => x is not null).Cast<string>().Distinct().Order().ToArray()
         };
-        return GraphAnalysis.Analyze(graph);
+        return GraphAnalysis.Analyze(graph, communitySettings: communitySettings, computeCommunities: computeCommunities, progress: progress);
     }
 
     private sealed class NodeState(GraphNode node)
