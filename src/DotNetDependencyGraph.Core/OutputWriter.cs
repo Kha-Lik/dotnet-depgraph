@@ -1,4 +1,5 @@
 using System.Security;
+using System.Globalization;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -34,7 +35,7 @@ public static class OutputWriter
         WriteJson(Path.Combine(output, "graph.json"), raw);
         WriteJson(Path.Combine(output, "diagnostics.json"), new { schemaVersion = "2.0", completeness = raw.Completeness, diagnostics = raw.Diagnostics.Concat(raw.CommunityAnalysis?.Diagnostics ?? []) });
         File.WriteAllText(Path.Combine(output, "graph.graphml"), GraphMl(raw), new UTF8Encoding(false));
-        File.WriteAllText(Path.Combine(output, "summary.md"), Summary(raw, options.FilterMode == FilterMode.Strict ? strict : contract), new UTF8Encoding(false));
+        File.WriteAllText(Path.Combine(output, "summary.md"), Summary(raw, options.FilterMode == FilterMode.Strict ? strict : contract, viewerDirectory), new UTF8Encoding(false));
         CopyAsset(viewerDirectory, output, "viewer.js"); CopyAsset(viewerDirectory, output, "viewer.css");
         CopyAsset(viewerDirectory, output, "cytoscape.min.js");
         foreach (var asset in new[] { "d3-dispatch.min.js", "d3-quadtree.min.js", "d3-timer.min.js", "d3-force.min.js" }) CopyAsset(viewerDirectory, output, asset);
@@ -66,28 +67,71 @@ public static class OutputWriter
         return b.Append("</graph></graphml>\n").ToString();
     }
 
-    private static string Summary(DependencyGraph raw, DependencyGraph display)
+    private static string Summary(DependencyGraph raw, DependencyGraph display, string viewerDirectory)
     {
-        var components = display.Nodes.GroupBy(x => x.Component).OrderByDescending(x => x.Count());
-        var b = new StringBuilder("# Dependency graph summary\n\n");
-        if (!raw.Completeness.Complete) b.Append("> **Incomplete:** some projects could not be represented authoritatively. See `diagnostics.json`.\n\n");
-        b.AppendLine($"- Raw graph: {raw.Nodes.Count} nodes, {raw.Edges.Count} edges");
-        b.AppendLine($"- Display graph: {display.Nodes.Count} nodes, {display.Edges.Count} edges ({display.Edges.Count(x => x.Derived)} contracted)");
-        b.AppendLine($"- Projects discovered/evaluated/with assets: {raw.Completeness.DiscoveredProjects}/{raw.Completeness.EvaluatedProjects}/{raw.Completeness.ProjectsWithValidAssets}");
-        b.AppendLine($"- Components: {components.Count()}; isolated display nodes: {display.Nodes.Count(x => x.InDegree == 0 && x.OutDegree == 0)}");
-        b.AppendLine($"- Warnings/errors: {raw.Diagnostics.Count(x => x.Severity == DiagnosticSeverity.Warning)}/{raw.Diagnostics.Count(x => x.Severity == DiagnosticSeverity.Error)}");
-        b.AppendLine($"- Frameworks:{(raw.TargetFrameworks.Count > 0 ? " " + string.Join(", ", raw.TargetFrameworks) : "")}");
-        b.AppendLine($"- RIDs:{(raw.RuntimeIdentifiers.Count > 0 ? " " + string.Join(", ", raw.RuntimeIdentifiers) : "")}");
-        if (raw.CommunityAnalysis is { } analysis)
+        static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
+        static string DecimalNumber(double value, string format) => value.ToString(format, CultureInfo.InvariantCulture);
+        var templatePath = Path.Combine(viewerDirectory, "summary-template.md");
+        if (!File.Exists(templatePath)) throw new IOException($"Bundled summary template was not found at {templatePath}.");
+        var template = File.ReadAllText(templatePath).Replace("\r\n", "\n", StringComparison.Ordinal);
+        var components = display.Nodes.GroupBy(x => x.Component).OrderByDescending(x => x.Count()).ToArray();
+        var analysis = raw.CommunityAnalysis ?? throw new InvalidDataException("Community analysis is required to generate the summary.");
+        var selected = analysis.ResolutionProfile.SingleOrDefault(candidate => candidate.SelectedStandard);
+        var nodesById = raw.Nodes.ToDictionary(node => node.Id, StringComparer.Ordinal);
+        var standardCommunityKeys = analysis.GranularityAssignments["standard"].Values.Distinct(StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
+        var standardCommunities = analysis.Communities
+            .Where(community => standardCommunityKeys.Contains(community.StableKey))
+            .OrderByDescending(community => community.Size)
+            .ThenBy(community => community.Name, StringComparer.Ordinal)
+            .ThenBy(community => community.StableKey, StringComparer.Ordinal)
+            .ToArray();
+        static string MarkdownCell(string value)
         {
-            var selected = analysis.ResolutionProfile.SingleOrDefault(candidate => candidate.SelectedStandard);
-            var standardCount = analysis.GranularityAssignments["standard"].Values.Distinct(StringComparer.Ordinal).Count();
-            b.AppendLine($"- Communities: Leiden/CPM; standard resolution {selected?.Resolution}; {standardCount} strict-hierarchy groups; trial stability {selected?.Stability:0.###}");
-            b.AppendLine($"- Community projection: project/package weights {analysis.Settings.EdgeWeights.ProjectReference:0.###}/{analysis.Settings.EdgeWeights.PackageReference:0.###}/{analysis.Settings.EdgeWeights.PackageDependency:0.###}; tests excluded: {analysis.ProjectionRules.ExcludeTests}; producer pairs collapsed: {analysis.ProjectionRules.CollapseLocalProducerPackages}");
+            var escaped = SecurityElement.Escape(value) ?? "";
+            return escaped.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("|", "\\|", StringComparison.Ordinal).Replace("\r", " ", StringComparison.Ordinal).Replace("\n", " ", StringComparison.Ordinal);
         }
-        b.AppendLine();
-        b.AppendLine("## Components\n");
-        foreach (var c in components) b.AppendLine($"- Component {c.Key}: {c.Count()} nodes; representative: {string.Join(", ", c.OrderByDescending(x => x.Centrality).ThenBy(x => x.Label).Take(3).Select(x => x.Label))}");
-        return b.ToString();
+        var values = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["COMPLETENESS_NOTICE"] = raw.Completeness.Complete ? "" : "> **Incomplete:** some projects could not be represented authoritatively. See `diagnostics.json`.\n\n",
+            ["RAW_NODE_COUNT"] = Number(raw.Nodes.Count),
+            ["RAW_EDGE_COUNT"] = Number(raw.Edges.Count),
+            ["DISPLAY_NODE_COUNT"] = Number(display.Nodes.Count),
+            ["DISPLAY_EDGE_COUNT"] = Number(display.Edges.Count),
+            ["CONTRACTED_EDGE_COUNT"] = Number(display.Edges.Count(edge => edge.Derived)),
+            ["DISCOVERED_PROJECT_COUNT"] = Number(raw.Completeness.DiscoveredProjects),
+            ["EVALUATED_PROJECT_COUNT"] = Number(raw.Completeness.EvaluatedProjects),
+            ["VALID_ASSETS_PROJECT_COUNT"] = Number(raw.Completeness.ProjectsWithValidAssets),
+            ["COMPONENT_COUNT"] = Number(components.Count()),
+            ["ISOLATED_NODE_COUNT"] = Number(display.Nodes.Count(node => node.InDegree == 0 && node.OutDegree == 0)),
+            ["WARNING_COUNT"] = Number(raw.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning)),
+            ["ERROR_COUNT"] = Number(raw.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)),
+            ["FRAMEWORKS"] = raw.TargetFrameworks.Count == 0 ? "none" : string.Join(", ", raw.TargetFrameworks),
+            ["RIDS"] = raw.RuntimeIdentifiers.Count == 0 ? "none" : string.Join(", ", raw.RuntimeIdentifiers),
+            ["STANDARD_RESOLUTION"] = selected is null ? "unknown" : DecimalNumber(selected.Resolution, "0.########"),
+            ["STANDARD_COMMUNITY_COUNT"] = Number(analysis.GranularityAssignments["standard"].Values.Distinct(StringComparer.Ordinal).Count()),
+            ["STANDARD_STABILITY"] = selected is null ? "unknown" : DecimalNumber(selected.Stability, "0.###"),
+            ["PROJECT_REFERENCE_WEIGHT"] = DecimalNumber(analysis.Settings.EdgeWeights.ProjectReference, "0.###"),
+            ["PACKAGE_REFERENCE_WEIGHT"] = DecimalNumber(analysis.Settings.EdgeWeights.PackageReference, "0.###"),
+            ["PACKAGE_DEPENDENCY_WEIGHT"] = DecimalNumber(analysis.Settings.EdgeWeights.PackageDependency, "0.###"),
+            ["TESTS_EXCLUDED"] = analysis.ProjectionRules.ExcludeTests.ToString(),
+            ["PRODUCER_PAIRS_COLLAPSED"] = analysis.ProjectionRules.CollapseLocalProducerPackages.ToString(),
+            ["COMMUNITY_ROWS"] = string.Join("\n", standardCommunities.Select(community => $"| {MarkdownCell(community.Name)} | `{community.StableKey}` | {Number(community.Size)} | {Number(community.ProjectCount)} | {Number(community.PackageCount)} | {Number(community.RunnableCount)} | {MarkdownCell(string.Join(", ", community.RepresentativeNodeIds.Select(id => nodesById.GetValueOrDefault(id)?.Label ?? id)))} |")),
+            ["COMPONENT_ROWS"] = string.Join("\n", components.Select(component => $"- Component {component.Key}: {component.Count()} nodes; representative: {MarkdownCell(string.Join(", ", component.OrderByDescending(node => node.Centrality).ThenBy(node => node.Label).Take(3).Select(node => node.Label)))}"))
+        };
+        foreach (var value in values)
+        {
+            var marker = "{{" + value.Key + "}}";
+            if (template.CountOccurrences(marker) != 1) throw new InvalidDataException($"Summary template must contain exactly one {marker} marker.");
+            template = template.Replace(marker, value.Value, StringComparison.Ordinal);
+        }
+        if (template.Contains("{{", StringComparison.Ordinal)) throw new InvalidDataException("Summary template contains an unknown marker.");
+        return template.TrimEnd() + "\n";
+    }
+
+    private static int CountOccurrences(this string value, string needle)
+    {
+        var count = 0; var offset = 0;
+        while ((offset = value.IndexOf(needle, offset, StringComparison.Ordinal)) >= 0) { count++; offset += needle.Length; }
+        return count;
     }
 }

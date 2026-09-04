@@ -116,7 +116,7 @@ Node diameter defaults to `clamp(18 + 6 × log2(transitiveDependents + inDegree 
 - `index.html`: offline entry point with safely JSON-escaped embedded data.
 - `graph.json`: deterministic canonical raw graph plus derived `communityAnalysis`, schema version `2.0`.
 - `diagnostics.json`: completeness counters and ordered diagnostics.
-- `summary.md`: raw/display counts and component representatives.
+- `summary.md`: a bundled quick-start/viewer guide enriched with generated raw/display counts, completeness, community settings, and component representatives.
 - `graph.graphml`: interoperable directed raw graph export.
 
 The schema is documented formally in [`docs/graph-schema.json`](docs/graph-schema.json). `communityAnalysis` records its version, implementation, settings, projection rules, graph fingerprint, resolution profile, strict hierarchy, stable records, automatic node paths, granularity mappings, cross-community dependencies, quotient cycles, runnable paths, and diagnostics. Canonical nodes/edges remain raw and unfiltered. Unsupported schema versions fail clearly.
