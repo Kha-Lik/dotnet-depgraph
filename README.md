@@ -1,148 +1,427 @@
 # dotnet-depgraph
 
-`dotnet-depgraph` discovers every C#, F#, and Visual Basic project below a root and creates an offline, interactive architecture graph. It combines evaluated project references with the resolved, per-target NuGet topology in `project.assets.json`. Disconnected applications and tools remain separate graph islands.
+`dotnet-depgraph` turns a .NET source tree into an offline, interactive architecture graph of projects, packages, and their transitive dependencies.
 
 > [!NOTE]
 > This project—including its source code, tests, and documentation—was fully generated using AI. It has been used and tested internally against a real-world .NET source tree containing approximately 200 projects, but it has not undergone an independent security or correctness audit. Review the implementation and validate its output before relying on it for critical architectural, security, or operational decisions.
 
-It analyzes project/package structure—not types, namespaces, calls, or compiled assemblies.
+It discovers C#, F#, and Visual Basic projects, evaluates their real MSBuild references, and reads resolved NuGet dependencies from `project.assets.json`. Disconnected applications and tools remain separate graph islands.
 
-## Build, test, install
+The tool analyzes project and package structure. It does not analyze types, namespaces, method calls, or compiled assemblies.
 
-Requires the .NET 10 SDK. The checked-in browser bundle means Node.js is not needed by users.
+## Table of contents
+
+- [Quick start](#quick-start)
+- [Understanding the report](#understanding-the-report)
+- [Using the viewer](#using-the-viewer)
+- [Filtering the graph](#filtering-the-graph)
+- [How scanning works](#how-scanning-works)
+- [Community detection](#community-detection)
+- [Configuration](#configuration)
+- [Output files and schema](#output-files-and-schema)
+- [Performance and limitations](#performance-and-limitations)
+- [Development](#development)
+- [Research basis](#research-basis)
+
+## Quick start
+
+### Prerequisites
+
+- .NET 10 SDK
+- A trusted .NET source tree to analyze
+
+Node.js and a web server are not required. The browser libraries are bundled with every report.
+
+### Build and install locally
+
+```bash
+dotnet restore DotNetDependencyGraph.slnx
+dotnet build DotNetDependencyGraph.slnx --no-restore
+dotnet pack src/DotNetDependencyGraph.Cli -c Release -o artifacts/packages
+dotnet tool install --global dotnet-depgraph --add-source artifacts/packages
+```
+
+### Create your first report
+
+```bash
+dotnet-depgraph scan \
+  --root /path/to/source \
+  --output /tmp/dependency-report
+```
+
+Open `/tmp/dependency-report/index.html` directly in a modern browser. The report works offline as long as its generated files remain together.
+
+By default, the scan:
+
+- discovers all supported projects below `--root`;
+- evaluates project references with MSBuild;
+- restores only projects whose assets file is missing;
+- includes every target framework;
+- shows projects and a reachability-preserving, contracted package view; and
+- detects architectural communities with deterministic defaults.
+
+> [!WARNING]
+> MSBuild evaluation and `dotnet restore` can execute repository-controlled logic. Analyze only source trees you trust.
+
+### A more focused example
+
+```bash
+dotnet-depgraph scan \
+  --root /repos/product \
+  --output /tmp/product-graph \
+  --include-package 'Company.*' \
+  --exclude-package 'Company.Legacy.*' \
+  --exclude-project 'Tools/*' \
+  --collapse-local-packages \
+  --filter-mode contract \
+  --restore missing \
+  --target-framework all \
+  --jobs 4 \
+  --seed 42
+```
+
+### Re-render without rescanning
+
+Use the canonical `graph.json` to regenerate the browser report without discovery, MSBuild evaluation, or restore:
+
+```bash
+dotnet-depgraph render \
+  --graph /path/to/dependency-report/graph.json \
+  --output /tmp/dependency-report-rendered \
+  --include-package 'Company.*' \
+  --filter-mode contract \
+  --collapse-local-packages
+```
+
+The embedded community analysis is reused when compatible. Passing any `--community-*` option recomputes it from the canonical nodes and edges without accessing the source tree.
+
+Use `--force` only when replacing known report files in a nonempty output directory. Unrelated files are refused.
+
+## Understanding the report
+
+### Graph model
+
+Arrows point from a consumer to its dependency:
+
+```text
+Application -> Library -> Package
+```
+
+The canonical graph retains projects and packages as separate identities. Each edge can carry one or more contexts with its owning project, assets path, target framework, runtime identifier, requested range, resolved version, directness, and observation count.
+
+### Views
+
+| View | Behavior |
+| --- | --- |
+| `raw` | Shows the canonical projects, packages, and dependency edges. |
+| `strict` | Removes packages hidden by filters and removes their incident edges. |
+| `contract` | Traverses hidden dependencies and adds a dashed path to the first retained node reached. |
+
+Contracted edges record the minimum hidden hop count, bounded path samples and counts, and contributing target contexts. They never replace raw edges in `graph.json`.
+
+### Local project and package identities
+
+Packable projects are matched case-insensitively to their evaluated `PackageId`:
+
+- one producer creates a dotted `produces-package` edge;
+- multiple possible producers create a diagnostic; and
+- `--collapse-local-packages` makes the merged projection the viewer default.
+
+The viewer can switch between collapsed and separate identities. The canonical graph always retains the project, package, resolved version, historical metadata, and producer edge.
+
+## Using the viewer
+
+### Explore view
+
+#### Find and inspect nodes
+
+- Search by a partial, case-insensitive name or ID.
+- Select a node to see metadata, dependencies, dependents, communities, architectural role, and runnable impact.
+- Ctrl-click, or Cmd-click on macOS, to select multiple nodes.
+- Select two nodes and choose **Explain path** to show one deterministic directed dependency path.
+- Isolate neighborhoods one to three hops away from the selection.
+
+#### Filter and navigate
+
+Narrow the graph by node or edge kind, component, effective community, target framework, runtime identifier, version skew, minimum runnable-dependent count, or raw/strict/contracted view. Components can be navigated independently; **Fit all** returns to the overview.
+
+#### Communities and presentation
+
+The community legend follows the selected coarse, standard, or fine granularity. It supports hover highlighting, click-to-isolate, rename, recolor, create from selection, multi-node reassignment, effective merge, restore, import, export, and effective-mapping download.
+
+Community overrides change presentation only. They do not change edges, reachability, strongly connected components, or automatic CPM results. Browser persistence uses `dotnet-depgraph.communities.v1:<graph fingerprint>`; exported overrides use schema version 1. Use `--community-overrides` to seed a report after fingerprint validation.
+
+The Physics / Layout panel controls repulsion, link distance and strength, collision spacing, drag threshold, component gravity, and weaker community-centroid attraction. Attraction remains inside each disconnected component and never creates an edge. Settings use `dotnet-depgraph.physics.v3`, with a one-time v2 migration fallback.
+
+#### Labels, colors, and exports
+
+- Node size defaults to `clamp(18 + 6 × log2(transitiveDependents + inDegree + 1), 18, 52)` pixels.
+- Size can instead represent runnable-dependent count.
+- Color can represent effective community or node kind.
+- Projects use distinct shapes; version skew adds a red ring.
+- The 12 visually largest nodes remain labeled by default; the Labels panel accepts 0–50.
+- More labels appear while zooming; hovered and selected labels stay readable at a stable screen size.
+- Overview edges use contrasting colors; focused edges show arrowheads.
+- Contracted paths are dashed and producer mappings are dotted.
+- **PNG** exports the Explore canvas; **Displayed JSON** exports the active filtered projection.
+
+The report uses bundled Cytoscape.js 3.34.2 and d3-force 3.0.0. Its live simulation preserves dependency neighborhoods, avoids node overlap, and keeps disconnected components as separate islands.
+
+### Manual layout view
+
+Use Manual layout to organize the active Explore projection into explicit feature regions without changing dependency facts.
+
+#### Create a board
+
+The first visit can preview either current effective communities as separate regions or every visible node in one Unassigned region. Accept the preview to create the board.
+
+Explore and Manual keep independent node positions, selections, viewports, and paused states when switching tabs.
+
+#### Organize nodes and regions
+
+- Create rectangular or circular regions.
+- Drag nodes within their bounds.
+- Drag whole regions by the body or header.
+- Resize and repack a region.
+- Rename, recolor, reshape, merge, delete, fit, or automatically arrange groups.
+- Move multiple nodes with destination preview and automatic target-region growth.
+- Right-click a node for quick moves or removal to Unassigned.
+- Pin nodes or relax one selected group.
+
+The local layout visibly updates nodes inside region bounds. It can run globally, pause, resume, or apply to one group.
+
+#### Control dependency visibility
+
+- Select a node to emphasize its dependency edges.
+- Hide every edge incident to selected nodes and reveal those connections temporarily.
+- Collapse a region while keeping its header and external connections available.
+- Hide or highlight dependencies that cross a selected region's boundary.
+
+These controls do not rewrite canonical edges, automatic communities, GraphML, reachability, or dependency metrics.
+
+#### Save and restore work
+
+All persistent edits participate in session undo and redo. Boards autosave in the browser and can be downloaded or imported as versioned `manual-layout.json` files. Collapsed-region and cross-region-edge settings are included.
+
+Imported layouts must match both the graph topology and captured display projection. The viewer reports whether browser persistence succeeded; download the layout when durable or portable storage is required.
+
+## Filtering the graph
+
+### Package filters
+
+Use repeatable `--include-package` and `--exclude-package` options. Matching is case-insensitive, and exclusions take precedence.
+
+### Project filters
+
+Use repeatable `--include-project` and `--exclude-project` options to hide project nodes without preventing evaluation. Produced packages remain available, and contract mode can preserve reachability through hidden projects.
+
+Patterns match normalized paths relative to `--root`. For `--root /repo/Renovation`, use `--exclude-project 'Tools/*'`, not `Renovation/Tools/*`.
+
+### Discovery path filters
+
+Use `--include-path` and `--exclude-path` to control which projects are discovered at all. Prefer project filters when local producer information must remain available.
+
+### Glob syntax
+
+- `*` matches any number of characters and may cross `/`.
+- `?` matches one character.
+
+## How scanning works
+
+### Discovery
+
+Discovery is deterministic and ignores `.git`, `.svn`, `.hg`, `bin`, `obj`, and `node_modules`. It does not follow directory symlinks or reparse points. Inaccessible paths become diagnostics. Duplicate filenames are safe because project IDs include the complete root-relative path.
+
+### MSBuild evaluation
+
+Literal project and package reference elements are insufficient because imports, conditions, multi-targeting, and central package management can change their effective values.
+
+The tool uses `dotnet msbuild -getProperty/-getItem`, including framework-specific evaluation for multi-target project references. This honors MSBuild behavior without compiling. Repeatable `--property Name=Value` arguments apply to evaluation and restore.
+
+### NuGet assets and restore
+
+Transitive packages come from `project.assets.json` through NuGet's `NuGet.ProjectModel` lock-file API. Each target framework and runtime identifier is resolved independently before identical logical edges are aggregated.
+
+Missing or invalid assets produce diagnostics and mark the report incomplete. They are never treated as an empty dependency set.
+
+| Restore mode | Behavior |
+| --- | --- |
+| `never` | Reads existing assets only and never writes restore output to the source tree. |
+| `missing` | Default. Restores only when an evaluated assets path is absent. |
+| `always` | Restores every discovered project. |
+
+Restore concurrency is bounded by `--jobs`. Per-project failures do not stop remaining restores. Restore may update normal `obj` files and NuGet caches. Use `--fail-on-incomplete` to return exit code 3 instead of 0 for a partial report.
+
+### Frameworks and runtimes
+
+- `--target-framework` is repeatable; `all` is the default.
+- `--runtime` is repeatable and selects RID-specific targets.
+
+## Community detection
+
+Communities are dependency-topology heuristics, not confirmed business domains or design violations.
+
+### Typical controls
+
+```bash
+dotnet-depgraph scan \
+  --root /repos/product \
+  --output /tmp/product-graph \
+  --community-resolution 0.5 \
+  --community-seed 42 \
+  --community-trials 10 \
+  --community-levels 3 \
+  --community-target-size 20 \
+  --community-min-size 2
+```
+
+| Option | Purpose |
+| --- | --- |
+| `--community-resolution` | CPM resolution. Higher values generally produce smaller groups. |
+| `--community-seed` | Makes seeded trials deterministic. |
+| `--community-trials` | Sets the trials evaluated at each resolution. |
+| `--community-levels` | Sets the maximum precomputed hierarchy depth. |
+| `--community-target-size` | Provides a soft size hint, not a hard partition limit. |
+| `--community-min-size` | Provides a soft minimum useful-split hint. |
+| `--community-contracted-weight` | Weights paths through excluded packages; default `0.25`. |
+
+`--verbosity normal` reports timed stages. `detailed` also reports per-project evaluation and assets progress; `quiet` suppresses progress messages.
+
+### Default scope
+
+Detection uses a source-owned projection of the complete canonical graph, independent of display filters. It includes projects below the root, packages with exactly one local producer, and packages matched by an explicit internal-package pattern.
+
+System packages, third-party packages, unresolved nodes, and unknown external dependencies remain in the canonical graph but are excluded from detection, naming, representatives, and community counts by default.
+
+Broader analysis must be enabled explicitly:
+
+- `--community-include-third-party`
+- `--community-include-system-packages`
+- `--community-internal-package <glob>`
+- `--community-include-unmapped-internal-packages`
+
+The effective scope and all included, excluded, collapsed-producer, and contracted-edge counts appear in `summary.md` and the viewer.
+
+### Detection pipeline
+
+The managed implementation uses Leiden optimization with the Constant Potts Model (CPM):
+
+```text
+Σc(internalWeight(c) − gamma × size(c) × (size(c)−1)/2)
+```
+
+The default pipeline:
+
+1. Contracts compatible dependency paths through excluded packages at weight `0.25`.
+2. Collapses each unambiguous local project/package producer pair exactly once.
+3. Excludes tests from production optimization.
+4. Runs seeded Leiden trials across a bounded resolution profile around `0.5`.
+5. Records Adjusted Rand stability and connectedness.
+6. Builds strict nested partitions by rerunning Leiden on sufficiently large parent subgraphs.
+7. Expands producer identities and assigns tests using direct and bounded transitive production evidence.
+
+Contraction follows dependency edges only, requires compatible owner, TFM, and RID contexts, and never traverses producer mappings.
+
+| Edge | Default weight |
+| --- | ---: |
+| Direct project reference | 3.0 |
+| Package reference | 2.0 |
+| Package dependency | 1.0 |
+
+Observation and context multiplicity do not multiply structural weights. Cohesive topology is not split merely to satisfy a target count.
+
+### Names and derived analysis
+
+Automatic names and representatives prefer non-test local projects, then locally produced package identities. Representatives are ranked by within-community connectivity, deduplicated by display label, and diversified by name tokens. Exact test-assignment ties and missing evidence become informational diagnostics.
+
+Names and paths label detected groups but do not force membership. Use community overrides or Manual layout when dependency shape does not reflect the intended semantic boundary.
+
+Each node records runnable impact, bridge evidence, articulation status, betweenness, neighboring-community count, and a neutral role. The analysis also records runnable-to-dependency shortest paths, directed cross-community counts, and quotient-graph cycles. No embeddings, AI calls, or network requests are used.
+
+## Configuration
+
+```bash
+dotnet-depgraph scan \
+  --root /repos/product \
+  --output /tmp/product-graph \
+  --config examples/dotnet-depgraph.config.json
+```
+
+See [examples/dotnet-depgraph.config.json](examples/dotnet-depgraph.config.json) for discovery and display filters, MSBuild properties, community settings, project rules, package aliases, and known package producers.
+
+Configuration schema `1.0` supports:
+
+- discovery, package, and project filters;
+- restore and collapse defaults;
+- MSBuild properties;
+- community scope, weights, and optimizer settings;
+- project labels, categories, tags, and color hints;
+- package aliases; and
+- explicit package-to-project producer mappings.
+
+Repeatable CLI filters replace configured lists when supplied. Scalar community arguments override configured values.
+
+## Output files and schema
+
+| File | Purpose |
+| --- | --- |
+| `index.html` | Offline entry point with safely escaped embedded graph data. |
+| `graph.json` | Deterministic canonical graph and `communityAnalysis`; schema `2.0`. |
+| `diagnostics.json` | Completeness counters, projection statistics, and ordered diagnostics. |
+| `summary.md` | Generated quick guide, counts, settings, and community representatives. |
+| `graph.graphml` | Interoperable directed export of the raw graph. |
+
+The formal schema is [docs/graph-schema.json](docs/graph-schema.json). Unsupported schema versions fail clearly. Canonical nodes and edges remain raw and unfiltered.
+
+### Exit codes
+
+| Code | Meaning |
+| ---: | --- |
+| `0` | Success, including a disclosed partial report unless strict completeness was requested. |
+| `1` | Fatal generation failure. |
+| `2` | Invalid command or arguments. |
+| `3` | Incomplete result with `--fail-on-incomplete`. |
+| `130` | Cancellation. |
+
+## Performance and limitations
+
+The viewer targets approximately 2,000 nodes and 10,000 edges. Filters and neighborhood isolation reduce rendering work. Most core graph passes are linear; exact per-node reachability counts trade memory for straightforward bounded behavior at this scale.
+
+Known limitations:
+
+- Asset staleness is not inferred. Use `--restore always` when freshness is required.
+- Path glob `*` may cross `/`.
+- Communities cannot recover semantic distinctions absent from dependency topology.
+- Community target size is not an optimizer constraint.
+- Path explanation returns one deterministic path rather than enumerating cyclic alternatives.
+- GraphML always exports the raw graph.
+- Version-expanded graph mode is not available.
+- Manual-layout PNG composition and SVG export are not implemented.
+
+## Development
+
+### Run the test suite
 
 ```bash
 dotnet restore DotNetDependencyGraph.slnx
 dotnet build DotNetDependencyGraph.slnx --no-restore
 pwsh tests/DotNetDependencyGraph.IntegrationTests/bin/Debug/net10.0/playwright.ps1 install chromium
 dotnet test DotNetDependencyGraph.slnx --no-build
-dotnet pack src/DotNetDependencyGraph.Cli -c Release -o artifacts/packages
-dotnet tool install --global dotnet-depgraph --add-source artifacts/packages
 ```
 
-Quick start:
+The Playwright command installs Chromium for integration tests; it is not required to view reports.
 
-```bash
-dotnet-depgraph scan --root /path/to/source --output /tmp/dependency-report
+### Fixtures
+
+`fixtures/build-representative.sh` builds a private package chain:
+
+```text
+Feature -> Storage -> Serialization
 ```
 
-Open `index.html` directly. Its graph data is embedded and its Cytoscape.js runtime is adjacent, so no HTTP server or network connection is required.
+The representative repository covers multi-target conditions, central package management, local and ambiguous producers, duplicate names, disconnected tools, isolated projects, and RID extraction from a committed lock file.
 
-For fast renderer iteration from an existing canonical graph, skip discovery, MSBuild, and restore entirely:
-
-```bash
-dotnet-depgraph render --graph /path/to/graph.json --output /tmp/dependency-report-rendered
-```
-
-`render` accepts graph schema `2.0`, supports the scan-time community controls, `--community-overrides`, `--seed`, `--force`, package and project filters, `--filter-mode`, and `--collapse-local-packages`, and refuses unsupported schema versions or unrelated files in a nonempty output directory. Explicit community settings recompute the analysis from canonical nodes and edges without touching the source tree.
-
-## Why restore data is required
-
-Literal `<PackageReference>` elements are not a transitive graph and can be changed by imports, conditions, and central package management. The tool uses evaluated MSBuild metadata and NuGet's `NuGet.ProjectModel` lock-file API. Each target framework/RID is resolved independently before identical logical edges are aggregated. Missing or invalid assets are reported and make the result incomplete; they are never treated as an empty dependency set.
-
-Restore modes are:
-
-- `never`: never writes to the source tree; consumes existing assets only.
-- `missing` (default): runs `dotnet restore` only where an evaluated assets path is absent.
-- `always`: restores every discovered project.
-
-Restore is bounded by `--jobs`, uses argument-list process invocation, and continues after per-project failures. `--fail-on-incomplete` changes an otherwise successful partial scan from exit 0 to exit 3. Restore may update normal `obj` files and NuGet caches.
-
-## Filtering and views
-
-Package patterns are repeatable, case-insensitive globs: `*` means any characters and `?` means one character. Excludes win over includes. Projects remain visible by default.
-
-```bash
-dotnet-depgraph scan --root /repos/product --output /tmp/product-graph \
-  --include-package 'Company.*' --exclude-package 'Company.Legacy.*' \
-  --exclude-project 'Tools/*' --collapse-local-packages \
-  --filter-mode contract --restore missing --target-framework all --jobs 4 --seed 42
-```
-
-`strict` removes hidden packages and incident edges. `contract` traverses hidden dependency nodes and adds a dashed `contracted-path` only to the first retained node reached. It records minimum hidden hops, bounded path samples/counts, and contributing contexts. Raw facts are never modified. The viewer can switch among raw, strict, and contracted data.
-
-Use repeatable `--include-project` and `--exclude-project` options to filter project nodes without preventing their evaluation. These patterns match normalized, root-relative project paths. For `--root /repo/Renovation`, use `--exclude-project 'Tools/*'`, not `Renovation/Tools/*`. Package nodes produced by hidden projects remain available, and contract mode preserves dependency reachability through those projects.
-
-Packable local projects are matched case-insensitively to their evaluated `PackageId`. A unique match creates a subordinate `produces-package` edge. Ambiguous producers generate diagnostics. Separate identity is the raw truth; “collapse local packages” visually projects references onto the producer without replacing the resolved package version or historical dependency metadata.
-
-Pass `--collapse-local-packages` to make that merged producer/package projection the generated viewer's default. The viewer checkbox can still switch back to separate nodes, and the canonical `graph.json` always retains both identities and their producer edge.
-
-## Targets, discovery, and evaluation
-
-Use repeatable `--target-framework` and `--runtime` selections. `all` is the default TFM selection. Edge contexts retain owner, assets path, TFM, RID, requested range, resolved version, directness, and observation count.
-
-Discovery is deterministic and excludes `.git`, `.svn`, `.hg`, `bin`, `obj`, and `node_modules`. It does not follow directory symlinks/reparse points, preventing cycles. Inaccessible paths become diagnostics. `--include-path` and `--exclude-path` accept normalized root-relative globs and control which projects are discovered at all; use project filters instead when produced packages must be retained. Duplicate filenames are safe because project IDs contain the complete root-relative path.
-
-MSBuild evaluation uses `dotnet msbuild -getProperty/-getItem`, including a framework-specific pass for multi-target project references. This avoids compilation while honoring imports and conditions. `--property Name=Value` is repeatable and also passed safely to restore.
-
-> MSBuild evaluation and restore can execute repository-controlled logic. Analyze only trusted source trees.
-
-## Hierarchical communities and architectural analysis
-
-The .NET tool detects communities with a deterministic managed implementation of Leiden optimizing the Constant Potts Model (CPM). CPM quality is `Σc(internalWeight(c) − gamma × size(c) × (size(c)−1)/2)`. Higher `gamma` generally produces smaller groups. The defaults evaluate a bounded resolution profile around `0.5`, run 10 seeded trials at each resolution, record Adjusted Rand stability and connectedness, and deliberately build strict nested partitions by rerunning Leiden on sufficiently large induced parent subgraphs. `--community-target-size` and `--community-min-size` are soft hints; cohesive topology is never chopped merely to hit a count.
-
-`--verbosity normal` reports timed scan, projection, resolution, hierarchy, derived-analysis, and report-writing stages. `--verbosity detailed` additionally reports evaluation and assets progress for every discovered project; `quiet` suppresses progress messages.
-
-```bash
-dotnet-depgraph scan --root /repos/product --output ./tmp/product-graph \
-  --community-resolution 0.5 --community-seed 42 \
-  --community-trials 10 --community-levels 3 \
-  --community-target-size 20 --community-min-size 2
-```
-
-Detection uses a source-owned architectural projection of the complete canonical graph, independent of display filters. Ownership comes from evidence: a project beneath the analyzed root, a package identity with exactly one local producer, or an explicitly configured internal package pattern. System/framework, third-party, unresolved, and unknown external dependencies remain in the canonical graph and node details but are excluded from detection, naming, representatives, and community counts by default.
-
-Before Leiden runs, excluded package paths are contracted between retained source nodes with a low default weight of `0.25`. Contraction follows dependency edges only, requires compatible owner/TFM/RID contexts, and never traverses producer mappings. Unambiguous local project/package producer pairs are then collapsed exactly once; tests are excluded; detection runs; producer identities are expanded; and tests are assigned from production dependency evidence. Defaults weight direct project references `3.0`, package references `2.0`, and package dependencies `1.0`. Observation/context multiplicity never multiplies structural weight.
-
-Broader package analysis is explicit: `--community-include-third-party` and `--community-include-system-packages` opt those categories in independently. Use repeatable `--community-internal-package <glob>` plus `--community-include-unmapped-internal-packages` for internal packages without local source, and `--community-contracted-weight <n>` to tune hidden-path influence. All broader-scope switches default to false. The effective scope and exact included/excluded, producer-collapse, and contracted-edge counts are persisted and shown in the summary and viewer.
-
-Test projects are excluded from production optimization and assigned afterward using direct and bounded transitive production dependency evidence. Exact ties and missing evidence are surfaced as informational diagnostics. Automatic names and representatives use non-test local source projects, falling back only to locally produced package identities. Representatives are ranked by within-community projected connectivity, deduplicated by display label, and diversified by name tokens; an external-only opt-in community explicitly reports that no eligible source representative exists. Keys and high-separation fill/border color pairs are deterministic.
-
-Each node records dependency-topology runnable impact, bridge evidence, articulation status, betweenness, neighboring-community count, and a neutral role. The embedded analysis also contains runnable-to-dependency shortest paths, directed cross-community counts, and quotient-graph cycles. These are topology heuristics, not confirmed runtime impact or design violations.
-
-> Communities represent dependency-topology structure, not guaranteed business domains.
-
-Names and paths help label detected groups but do not force membership. Similar dependency shapes may be semantically different; use the manual override layer for those boundaries. The intended extension point is a future explicitly enabled attributed/multilayer projection—this phase makes no embeddings, AI calls, or network requests.
-
-## Viewer
-
-The report uses bundled Cytoscape.js 3.34.2 with d3-force 3.0.0 (licenses included in every report). A live many-body simulation repels every node, edge springs retain dependency neighborhoods, rendered-size-aware collision prevents overlap, and weak per-component centering keeps disconnected components as separate islands. Initial positions are seeded; the simulation visibly settles, cools to idle, and reheats after dragging or physics changes.
-
-Search is partial and case-insensitive. Selection shows metadata, detected/effective assignment, runnable blast radius, role evidence, and immediate dependencies/dependents. Controls filter node/edge kind, component, effective community, TFM, RID, and version skew; isolate one-to-three-hop neighborhoods; switch raw/strict/contract, coarse/standard/fine community granularity, community/node-kind color, and separate/collapsed producer views; navigate components; explain a shortest directed path between two selected nodes; reset/fit; and export displayed JSON or a PNG.
-
-The collapsible community legend is synchronized with granularity and color mode. Hover highlights, click isolates, and Ctrl/Cmd-click multi-selects. It supports deterministic automatic names/colors plus rename, recolor, create-from-selection, multi-node reassign, effective merge, per-node/community restore, reset-all, import/export, and effective-mapping download. Overrides never change edges, reachability, SCCs, or automatic CPM results. They persist immediately under `dotnet-depgraph.communities.v1:<graph fingerprint>` and export as schema version 1; `--community-overrides` can seed a rendered report after strict fingerprint validation.
-
-The collapsible Physics / Layout panel controls repulsion, edge-spring distance and strength, collision spacing, drag threshold, weak component gravity, and weaker community-centroid attraction. Attraction is scoped within each disconnected component and never creates an edge. Drag threshold is measured in screen pixels, preventing clicks and small pointer jitter from reheating the graph. Settings moved to `dotnet-depgraph.physics.v3`; the viewer reads v2 once as a migration fallback. Community override storage contains only styles and assignment IDs, not graph topology.
-
-The **Manual layout** tab captures the active Explore projection into an independent board. Before replacing a saved board, it previews either the current effective communities or a single Unassigned region. Manual selection and geometry are kept separate from Explore, so switching tabs restores each view's node positions, selection, viewport, and paused state.
-
-The board supports rectangle/circle feature regions; bounded node and whole-region dragging; resize-and-repack; group rename, recolor, reshape, merge, delete, fit, and automatic arrangement; pins; multi-node moves with destination preview and automatic region growth; and a node context menu for quick moves or removal to Unassigned. Its local layout runs visibly inside region bounds and can be paused, resumed, or applied to one group. Region header controls can collapse members and hide or highlight cross-region dependencies, while node controls can hide every incident edge and reveal those connections temporarily. All persistent edits participate in session undo/redo and browser autosave, including collapsed and cross-region-edge states, and can be downloaded or imported as versioned `manual-layout.json`. Manual membership and hidden connections are presentation state only: they do not rewrite canonical edges, automatic communities, GraphML, or dependency metrics. Imported layouts must match both the graph topology and captured projection.
-
-Node diameter defaults to `clamp(18 + 6 × log2(transitiveDependents + inDegree + 1), 18, 52)` pixels, preserving relative importance without allowing hubs to cover clusters; the viewer can instead size by runnable-dependent count and filter by its minimum. Color indicates topology-derived community. Projects have distinct shapes; version skew has a modest red ring. The 12 visually largest nodes remain labeled by default at every zoom level, configurable from 0–50 in the Labels panel; additional labels appear progressively while zooming. Hovered and selected labels use full, untruncated text at a stable screen-space size. Overview edges use contrasting colors and focused edges reveal arrowheads. Contracted paths are dashed and producer mappings dotted.
-
-## Output and schema
-
-- `index.html`: offline entry point with safely JSON-escaped embedded data.
-- `graph.json`: deterministic canonical raw graph plus derived `communityAnalysis`, schema version `2.0`.
-- `diagnostics.json`: completeness counters and ordered diagnostics.
-- `summary.md`: a bundled quick-start/viewer guide enriched with generated raw/display counts, completeness, community settings, and component representatives.
-- `graph.graphml`: interoperable directed raw graph export.
-
-The schema is documented formally in [`docs/graph-schema.json`](docs/graph-schema.json). `communityAnalysis` records its version, implementation, settings, projection rules, graph fingerprint, resolution profile, strict hierarchy, stable records, automatic node paths, granularity mappings, cross-community dependencies, quotient cycles, runnable paths, and diagnostics. Canonical nodes/edges remain raw and unfiltered. Unsupported schema versions fail clearly.
-
-Exit codes: `0` success (including a disclosed partial report unless strict completeness was requested), `1` fatal generation failure, `2` invalid command/arguments, `3` incomplete with `--fail-on-incomplete`, and `130` cancellation.
-
-## Configuration
-
-Pass `--config examples/dotnet-depgraph.config.json`. Configuration schema `1.0` supports a `communities` section in addition to discovery/display filters and existing rules. Repeatable CLI filters replace configured lists when supplied; scalar community CLI arguments override config. See the [fictional example](examples/dotnet-depgraph.config.json).
-
-## Fixtures, performance, and limitations
-
-`fixtures/build-representative.sh` builds a private local package chain (`Feature → Storage → Serialization`) and restores a repository containing multi-target conditions, central package management, local producers, ambiguities, duplicate names, disconnected tools, and isolated projects. A committed lock file covers RID target extraction. The integration suite generates a real offline report and uses Playwright against Chromium for manual-view pointer, selection, group and connection controls, editing, persistence, and layout interactions; it does not rely on screenshot comparisons.
-
-The viewer targets roughly 2,000 nodes and 10,000 edges. Overview edges use high-contrast colors, while a configurable number of the visually largest nodes remain labeled at every zoom level. Hovered, selected, and searched labels stay a readable screen-space size instead of shrinking with graph zoom. Filters and neighborhoods reduce render work. The core uses linear graph passes except exact per-node reachability counts, which trade memory for straightforward bounded behavior at this scale.
-
-Known limitations: staleness is not guessed (use `always` when necessary); path glob `*` may cross `/`; communities cannot recover semantic distinctions absent from topology; target size is not an optimizer constraint; shortest active-view explanations return one deterministic path rather than enumerating cyclic alternatives; GraphML exports the raw view; no version-expanded graph mode is provided; manual PNG composition and SVG export are not implemented.
+Integration tests generate a real offline report and exercise pointer handling, independent selection, group and connection controls, editing, persistence, and layout behavior in Chromium. They do not rely on screenshot comparisons.
 
 ## Research basis
 
@@ -152,4 +431,4 @@ Known limitations: staleness is not guessed (use `always` when necessary); path 
 - Fortunato and Barthélemy, [“Resolution limit in community detection”](https://doi.org/10.1073/pnas.0605965104) (2007).
 - Rosvall and Bergstrom, [“Multilevel compression of random walks in networks reveals hierarchical organization”](https://doi.org/10.1371/journal.pone.0018209) (2011), as an alternative hierarchy design.
 
-These papers motivate algorithms and tradeoffs; they do not validate the business meaning of this tool's output.
+These papers motivate the algorithms and tradeoffs; they do not validate the business meaning of this tool's output.
