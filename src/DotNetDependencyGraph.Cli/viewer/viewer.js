@@ -26,6 +26,7 @@
   scope.append(scopeHeading, scopeDetails, scopeCounts, scopeExcluded, scopeIncluded);
   $("community-legend").before(scope);
   const state = {
+    mode: "explore",
     view: payload.defaults.filterMode || "contract",
     selected: null,
     hovered: null,
@@ -273,12 +274,17 @@
         target = producer.get(e.target) || e.target;
       if (source === target) continue;
       const key = `${source}|${target}|${e.kind}`;
-      if (seen.has(key)) continue;
+      if (seen.has(key)) {
+        const existing = edges.find(item => `${item.data.source}|${item.data.target}|${item.data.kind}` === key);
+        if (existing) existing.data.supportingRawEdgeIds.push(e.id);
+        continue;
+      }
       seen.add(key);
       edges.push({
         data: {
           id: e.id + (state.collapsed ? ":collapsed" : ""),
           rawId: e.id,
+          supportingRawEdgeIds: [e.id],
           source,
           target,
           kind: e.kind,
@@ -305,6 +311,7 @@
         return {
           data: {
             ...n,
+            canonicalIds: [n.id, ...[...producer.entries()].filter(([, producerId]) => producerId === n.id).map(([packageId]) => packageId)].sort(),
             size: nodeDiameter(n),
             rank: ranks.get(n.id),
             detectedCommunityPath: detected,
@@ -486,6 +493,12 @@
           opacity: .12,
         },
       },
+      { selector: "edge.manual-hidden", style: { display: "none" } },
+      {
+        selector: "edge.manual-hidden.manual-reveal",
+        style: { display: "element", "line-style": "dashed", "line-color": "#f2cc60", "target-arrow-color": "#f2cc60", opacity: .9, width: 2 },
+      },
+      { selector: "node.manual-muted", style: { "underlay-color": "#f2cc60", "underlay-opacity": .42, "underlay-padding": 5 } },
     ],
     layout: { name: "preset" },
   });
@@ -1169,10 +1182,12 @@
     state.selectionOrder = state.selectionOrder.filter(selected => selected !== id);
   });
   cy.on("tap", "node", (e) => {
+    if (state.mode === "manual") return;
     rememberNodeSelection(e.target.id());
     detail(e.target);
   });
   cy.on("tap", (e) => {
+    if (state.mode === "manual") return;
     if (e.target === cy) {
       state.selected = null;
       clearFocus();
@@ -1180,11 +1195,13 @@
     }
   });
   cy.on("mouseover", "node", (e) => {
+    if (state.mode === "manual") return;
     state.hovered = e.target.id();
     if (!state.selected) focusNode(e.target, true);
     updateLabels();
   });
   cy.on("mouseout", "node", () => {
+    if (state.mode === "manual") return;
     state.hovered = null;
     if (state.selected) focusNode(cy.$id(state.selected));
     else clearFocus();
@@ -1192,6 +1209,7 @@
   });
   cy.on("zoom", updateLabels);
   cy.on("grab", "node", (e) => {
+    if (state.mode === "manual") return;
     const d = state.forceById.get(e.target.id());
     if (!d) return;
     state.dragGesture = {
@@ -1202,6 +1220,7 @@
     };
   });
   cy.on("drag", "node", (e) => {
+    if (state.mode === "manual") return;
     const gesture = state.dragGesture,
       d = state.forceById.get(e.target.id());
     if (!gesture || gesture.id !== e.target.id() || !d) return;
@@ -1223,6 +1242,7 @@
     d.fy = e.target.position("y");
   });
   cy.on("free", "node", (e) => {
+    if (state.mode === "manual") return;
     const gesture = state.dragGesture,
       d = state.forceById.get(e.target.id());
     state.dragGesture = null;
@@ -1401,6 +1421,54 @@
     a.textContent = "Open diagnostics";
     w.appendChild(a);
   }
+  function manualSpec() {
+    const nodes = cy.nodes().map(node => ({
+      id: node.id(), label: node.data("label"),
+      canonicalIds: node.data("canonicalIds") || [node.id()],
+      radius: node.data("size") / 2 + 5,
+      x: node.position("x"), y: node.position("y"),
+    }));
+    const grouped = new Map();
+    nodes.forEach(node => {
+      const assignments = new Set(node.canonicalIds.map(effectiveKey).filter(Boolean));
+      const key = assignments.size === 1 ? [...assignments][0] : "unassigned";
+      if (!grouped.has(key)) grouped.set(key, []); grouped.get(key).push(node.id);
+    });
+    const groups = [...grouped].map(([key, nodeIds]) => {
+      const info = key === "unassigned" ? { name: "Unassigned", color: "#6e7681" } : communityInfo(key);
+      return { key, name: info.name, color: info.color, nodeIds };
+    });
+    const edgeIdentity = cy.edges().map(edge => `${edge.source().id()}>${edge.target().id()}:${(edge.data("supportingRawEdgeIds") || [edge.data("rawId")]).join(",")}`).sort().join("|");
+    const identity = `${state.view}|${state.collapsed}|${nodes.map(node => `${node.id}:${node.canonicalIds.join(",")}`).sort().join("|")}|${edgeIdentity}`;
+    return {
+      graphFingerprint: analysis.graphFingerprint,
+      projectionFingerprint: hash(identity, 0x91e10da5).toString(16).padStart(8, "0"),
+      sourceView: { view: state.view, collapseLocalPackages: state.collapsed, nodeCount: nodes.length, edgeCount: cy.edges().length },
+      sourceGranularity: state.granularity,
+      viewport: { pan: { ...cy.pan() }, zoom: cy.zoom() }, nodes, groups,
+    };
+  }
+  function captureExplore() {
+    return {
+      viewport: { pan: { ...cy.pan() }, zoom: cy.zoom() }, selected: cy.nodes(":selected").map(node => node.id()),
+      nodes: Object.fromEntries(cy.nodes().map(node => [node.id(), { position: { ...node.position() }, color: node.data("color"), borderColor: node.data("borderColor") }])),
+    };
+  }
+  function restoreExplore(snapshot) {
+    if (!snapshot) return;
+    cy.batch(() => {
+      cy.nodes().forEach(node => { const saved = snapshot.nodes[node.id()]; if (!saved) return; node.position(saved.position); node.data("color", saved.color); node.data("borderColor", saved.borderColor); node.removeClass("manual-muted"); node.removeData("manualGroup"); node.removeData("manualMuted"); node.unselect(); });
+      snapshot.selected.forEach(id => cy.$id(id).select()); cy.edges().removeClass("manual-hidden manual-reveal physics-active");
+    });
+    cy.viewport(snapshot.viewport); state.paused = true; $("pause").textContent = "Resume physics"; setStatus("Explore restored · physics paused"); updateLabels();
+  }
+  function stopExplore() { state.simulation?.stop(); state.paused = true; cy.edges().removeClass("physics-active"); }
+  const manualView = new window.DepGraphManualView({
+    cy, getSpec: manualSpec, captureExplore, restoreExplore, stopExplore,
+    setMode: mode => { state.mode = mode; }, notice: showNotice,
+  });
+  const updateManualScope = () => { const spec = manualSpec(); $("manual-scope").textContent = `Manual layout: ${spec.nodes.length} nodes from ${spec.sourceView.view}${spec.sourceView.collapseLocalPackages ? " · local producers collapsed" : ""}`; };
+  $("tab-manual").addEventListener("click", updateManualScope);
   window.__depgraphDebug = {
     cy,
     state,
@@ -1415,6 +1483,8 @@
     effectiveMatrix,
     effectiveKey,
     overrideStorageKey,
+    manualView,
+    manualGeometry: window.DepGraphManualGeometry,
   };
   syncControls();
   populateFilters();
