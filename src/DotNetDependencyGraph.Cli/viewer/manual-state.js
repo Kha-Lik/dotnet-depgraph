@@ -319,15 +319,33 @@
               y: p.y,
               radius: board.entities[key].radius,
             }));
-        const slots = G.slots(
-          group,
-          entityIds.map((key) => board.entities[key].radius),
-          occupied,
+        const radii = entityIds.map((key) => board.entities[key].radius);
+        let slots = null;
+        for (let attempt = 0; attempt < 24 && !slots; attempt++) {
+          const candidate = G.slots(group, radii, clone(occupied));
+          if (candidate.every(Boolean)) slots = candidate;
+          else if (group.shape === "circle") group.radius *= 1.16;
+          else {
+            group.width *= 1.12;
+            group.height = group.header + (group.height - group.header) * 1.12;
+          }
+        }
+        if (!slots)
+          throw new Error("The selected nodes could not be packed safely.");
+
+        const others = Object.values(board.groups).filter(
+          (candidate) => candidate.id !== groupId,
         );
-        if (slots.some((point) => !point))
-          throw new Error(
-            "That group cannot accommodate the selection. Enlarge it and try again.",
-          );
+        if (others.some((candidate) => !G.separated(group, candidate))) {
+          const current = G.envelope(group),
+            left =
+              Math.max(
+                ...others.map((candidate) => G.envelope(candidate).right),
+              ) + 40,
+            dx = left - current.left;
+          translateGroup(board, groupId, dx, 0);
+          slots.forEach((point) => (point.x += dx));
+        }
         entityIds.forEach((key, index) =>
           Object.assign(board.placements[key], slots[index], { groupId }),
         );

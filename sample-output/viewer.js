@@ -4,6 +4,21 @@
 
   const payload = JSON.parse(document.getElementById("graph-data").textContent);
   const $ = (id) => document.getElementById(id);
+  const I = window.DepGraphIcons;
+  [
+    ["fit", "fit", "Fit all", true],
+    ["reset", "refresh", "Reset view", true],
+    ["explain-path", "route", "Explain path", false],
+    ["png", "image", "Export PNG", true],
+    ["json", "download", "Export displayed JSON", true],
+    ["rerun", "refresh", "Re-run layout", false],
+    ["physics-reset", "refresh", "Reset defaults", false],
+    ["community-create", "add", "Create from selection", false],
+    ["community-merge", "merge", "Merge selected", false],
+    ["community-export", "download", "Export overrides", false],
+    ["community-import", "upload", "Import overrides", false],
+    ["community-reset", "refresh", "Reset all", false],
+  ].forEach((args) => I.button(...args));
   const analysis = payload.raw.communityAnalysis;
   if (!analysis)
     throw new Error("Schema 2.0 report is missing communityAnalysis.");
@@ -857,6 +872,14 @@
   function setStatus(text) {
     $("physics-status").textContent = text;
   }
+  function setPhysicsButton(paused) {
+    I.button(
+      "pause",
+      paused ? "play" : "pause",
+      paused ? "Resume physics" : "Pause physics",
+      false,
+    );
+  }
   function startSimulation(randomize = false) {
     if (state.simulation) state.simulation.stop();
     const nodes = cy.nodes().map((n) => ({
@@ -877,7 +900,7 @@
     updateLabels();
     state.fitted = false;
     state.paused = false;
-    $("pause").textContent = "Pause physics";
+    setPhysicsButton(false);
     const simulation = d3
       .forceSimulation(nodes)
       .alpha(1)
@@ -926,7 +949,7 @@
       .alpha(Math.max(alpha, state.simulation.alpha()))
       .restart();
     state.paused = false;
-    $("pause").textContent = "Pause physics";
+    setPhysicsButton(false);
     setStatus("Physics reheated");
   }
   function replace() {
@@ -2001,13 +2024,13 @@
     if (!state.simulation) return;
     if (state.paused) {
       state.paused = false;
-      $("pause").textContent = "Pause physics";
+      setPhysicsButton(false);
       reheat(0.3);
     } else {
       state.paused = true;
       state.simulation.stop();
       cy.edges().removeClass("physics-active");
-      $("pause").textContent = "Resume physics";
+      setPhysicsButton(true);
       setStatus("Physics paused");
     }
   };
@@ -2188,7 +2211,7 @@
     });
     cy.viewport(snapshot.viewport);
     state.paused = true;
-    $("pause").textContent = "Resume physics";
+    setPhysicsButton(true);
     setStatus("Explore restored · physics paused");
     updateLabels();
   }

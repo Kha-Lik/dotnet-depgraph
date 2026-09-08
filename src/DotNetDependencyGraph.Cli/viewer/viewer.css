@@ -73,6 +73,31 @@ button {
 button:hover {
   border-color: var(--accent);
 }
+.button-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+button.has-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+button.icon-only {
+  width: 32px;
+  min-width: 32px;
+  padding: 6px;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
 #search {
   width: min(360px, 30vw);
 }
@@ -447,6 +472,11 @@ a {
   stroke: #f0f6fc;
   stroke-width: 4px;
 }
+.manual-region.assignment-target .manual-region-body,
+.manual-region.assignment-target .manual-region-header {
+  stroke: #f2cc60;
+  stroke-width: 4px;
+}
 .manual-region.collapsed .manual-region-body {
   display: none;
 }
@@ -498,12 +528,22 @@ a {
   stroke: #fff;
 }
 .manual-resize-handle {
+  cursor: nwse-resize;
+  pointer-events: all;
+}
+.manual-resize-handle rect {
   fill: var(--accent);
   stroke: #fff;
   stroke-width: 1px;
   vector-effect: non-scaling-stroke;
-  cursor: nwse-resize;
-  pointer-events: all;
+}
+.manual-resize-handle path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.8px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
 #manual-run-status {
   padding: 9px 11px;

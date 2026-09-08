@@ -25,8 +25,99 @@ public sealed class ManualViewInteractionTests
         var node = await NodePointAsync(page, 1);
         await page.Mouse.ClickAsync(node.X, node.Y);
         Assert.Equal(node.Id, await page.EvaluateAsync<string>("__depgraphDebug.cy.nodes(':selected')[0]?.id() || ''"));
+        await page.Keyboard.DownAsync("Control");
+        await page.Mouse.ClickAsync(node.X, node.Y);
+        await page.Keyboard.UpAsync("Control");
+        Assert.Equal(0, await page.EvaluateAsync<int>("__depgraphDebug.cy.nodes(':selected').length"));
+        await page.Mouse.ClickAsync(node.X, node.Y);
         await page.Mouse.ClickAsync(700, 820);
         Assert.Equal(0, await page.EvaluateAsync<int>("__depgraphDebug.cy.nodes(':selected').length"));
+    }
+
+    [Fact]
+    public async Task SharedSvgIconsPreserveAccessibleButtonLabels()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+
+        Assert.Equal(1, await page.Locator("#fit > svg.button-icon").CountAsync());
+        Assert.Equal("Fit all", await page.Locator("#fit").GetAttributeAsync("aria-label"));
+        Assert.Equal(0, await page.Locator("#fit .button-label").CountAsync());
+
+        await EnterManualAsync(page, startUnassigned: true);
+
+        Assert.Equal(1, await page.Locator("#manual-undo > svg.button-icon").CountAsync());
+        Assert.Equal("Undo", await page.Locator("#manual-undo").GetAttributeAsync("aria-label"));
+        Assert.Equal(0, await page.Locator("#manual-undo .button-label").CountAsync());
+        Assert.Equal("Hide connections", await page.Locator("#manual-mute .button-label").TextContentAsync());
+        Assert.Equal(1, await page.Locator("#manual-mute > svg.button-icon").CountAsync());
+        Assert.Equal("M4 4h10v10H4zM10 10h10v10H10zM12 8v8M8 12h8", await page.Locator("#manual-merge-groups .button-icon path").GetAttributeAsync("d"));
+        Assert.Equal(1, await page.Locator(".manual-region-action.svg-icon-button .button-icon").First.CountAsync());
+    }
+
+    [Fact]
+    public async Task AssignmentDropdownExcludesNoOpTargetsAndPreviewsDestination()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 2).map(node => node.id())");
+        await CreateGroupAsync(page, "Destination", ids[1]);
+        var destination = await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.placements[id].groupId", new object[] { ids[1] });
+
+        await SelectIdsAsync(page, ids[0]);
+
+        Assert.False(await page.Locator("#manual-assign-target").IsDisabledAsync());
+        Assert.Equal("Move selected to…", await page.Locator("#manual-assign-target option").First.TextContentAsync());
+        Assert.Equal(0, await page.Locator("#manual-assign-target option[value='group:unassigned']").CountAsync());
+        await page.Locator("#manual-assign-target").SelectOptionAsync(destination);
+        Assert.True(await page.Locator($".manual-region[data-group-id='{destination}']").EvaluateAsync<bool>("region => region.classList.contains('assignment-target')"));
+        Assert.Equal("Move 1 selected", await page.Locator("#manual-assign .button-label").TextContentAsync());
+        Assert.False(await page.Locator("#manual-assign").IsDisabledAsync());
+
+        await page.Locator("#manual-assign").ClickAsync();
+
+        Assert.Equal(destination, await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.placements[id].groupId", new object[] { ids[0] }));
+        Assert.False(await page.Locator("#manual-assign").IsEnabledAsync());
+        Assert.Empty(await BoardErrorsAsync(page));
+    }
+
+    [Fact]
+    public async Task MovingManyNodesAutomaticallyEnlargesTheTargetGroup()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().map(node => node.id())");
+        await CreateGroupAsync(page, "Small destination", ids[0]);
+        var target = await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.placements[id].groupId", new object[] { ids[0] });
+        var before = await GroupGeometryAsync(page, target);
+        await SelectIdsAsync(page, ids.Skip(1).ToArray());
+
+        await page.Locator("#manual-assign-target").SelectOptionAsync(target);
+        await page.Locator("#manual-assign").ClickAsync();
+
+        var after = await GroupGeometryAsync(page, target);
+        Assert.True(after.Width > before.Width || after.Height > before.Height);
+        Assert.True(await page.EvaluateAsync<bool>("([ids, target]) => ids.every(id => __depgraphDebug.manualView.model.board.placements[id].groupId === target)", new object[] { ids, target }));
+        Assert.False(await page.Locator("#warning").IsVisibleAsync());
+        Assert.Empty(await BoardErrorsAsync(page));
+    }
+
+    [Fact]
+    public async Task ManualLayoutPaintsIntermediatePositionsWhileRunning()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        await page.EvaluateAsync("window.__manualBefore = Object.fromEntries(__depgraphDebug.cy.nodes().map(node => [node.id(), {...node.position()}]))");
+
+        await page.Locator("#manual-run").ClickAsync();
+
+        await page.WaitForFunctionAsync("() => __depgraphDebug.manualView.layout.running.size > 0 && __depgraphDebug.cy.nodes().some(node => { const before=window.__manualBefore[node.id()], board=__depgraphDebug.manualView.model.board.placements[node.id()], shown=node.position(); return Math.hypot(board.x-before.x,board.y-before.y) > 0.1 && Math.hypot(shown.x-board.x,shown.y-board.y) < 0.001; })", null, new() { Timeout = 10_000 });
+        Assert.Equal("Layout running", await page.Locator("#manual-run-status").TextContentAsync());
+        await page.Locator("#manual-pause").ClickAsync();
+        Assert.Equal("Resume layout", await page.Locator("#manual-pause").TextContentAsync());
     }
 
     [Fact]
@@ -71,6 +162,16 @@ public sealed class ManualViewInteractionTests
         await DragAsync(page, page.Locator($".manual-region[data-group-id='{groupId}'] .manual-resize-handle"), -80, -70);
         var shrunk = await GroupGeometryAsync(page, groupId);
         Assert.True(shrunk.Width < resized.Width); Assert.True(shrunk.Height < resized.Height);
+
+        var body = await GroupBodyPointAsync(page, groupId);
+        var boxSelectionBefore = await page.EvaluateAsync<bool>("__depgraphDebug.cy.boxSelectionEnabled()");
+        await page.Mouse.MoveAsync(body.X, body.Y); await page.Mouse.DownAsync(); await page.Mouse.MoveAsync(body.X + 65, body.Y + 40, new() { Steps = 8 });
+        Assert.False(await page.EvaluateAsync<bool>("__depgraphDebug.cy.boxSelectionEnabled()"));
+        await page.Mouse.UpAsync();
+        Assert.Equal(boxSelectionBefore, await page.EvaluateAsync<bool>("__depgraphDebug.cy.boxSelectionEnabled()"));
+        var bodyMoved = await GroupGeometryAsync(page, groupId);
+        Assert.InRange(bodyMoved.Left - shrunk.Left, 60 / zoom, 70 / zoom);
+        Assert.InRange(bodyMoved.Top - shrunk.Top, 35 / zoom, 45 / zoom);
         Assert.Empty(await BoardErrorsAsync(page));
     }
 
@@ -85,6 +186,8 @@ public sealed class ManualViewInteractionTests
         await page.Locator("#manual-update-group").ClickAsync();
 
         Assert.Equal("circle", await page.EvaluateAsync<string>("__depgraphDebug.manualView.model.board.groups['group:unassigned'].shape"));
+        Assert.Equal(1, await page.Locator(".manual-region[data-group-id='group:unassigned'] .manual-resize-handle .button-icon").CountAsync());
+        Assert.True(await page.EvaluateAsync<bool>("() => { const group=__depgraphDebug.manualView.model.board.groups['group:unassigned'], handle=document.querySelector(\".manual-region[data-group-id='group:unassigned'] .manual-resize-handle\"), matrix=handle.transform.baseVal.consolidate().matrix, center={x:matrix.e+9,y:matrix.f+9}; return Math.abs(Math.hypot(center.x-group.cx,center.y-group.cy)-group.radius) < 0.01; }"));
         Assert.Empty(await BoardErrorsAsync(page));
     }
 
@@ -431,6 +534,7 @@ public sealed class ManualViewInteractionTests
     private static async Task<NodePoint> NodePointAsync(IPage page, string id) => await page.EvaluateAsync<NodePoint>("([id]) => { const n=__depgraphDebug.cy.$id(id), p=n.renderedPosition(), r=document.getElementById('cy').getBoundingClientRect(); return {id:n.id(),x:r.left+p.x,y:r.top+p.y}; }", new object[] { id });
     private static async Task<string[]> BoardErrorsAsync(IPage page) => await page.EvaluateAsync<string[]>("DepGraphManualGeometry.validate(__depgraphDebug.manualView.model.board)");
     private static async Task<GroupGeometry> GroupGeometryAsync(IPage page, string groupId) => await page.EvaluateAsync<GroupGeometry>("([id]) => { const e=DepGraphManualGeometry.envelope(__depgraphDebug.manualView.model.board.groups[id]); return {left:e.left,top:e.top,width:e.right-e.left,height:e.bottom-e.top}; }", new object[] { groupId });
+    private static async Task<NodePoint> GroupBodyPointAsync(IPage page, string groupId) => await page.EvaluateAsync<NodePoint>("([id]) => { const group=__depgraphDebug.manualView.model.board.groups[id], area=DepGraphManualGeometry.usable(group), nodes=Object.entries(__depgraphDebug.manualView.model.board.placements).filter(([,placement]) => placement.groupId===id).map(([nodeId,placement]) => ({...placement,radius:__depgraphDebug.manualView.model.board.entities[nodeId].radius})), bounds=area.shape==='circle'?{left:area.cx-area.radius,right:area.cx+area.radius,top:area.cy-area.radius,bottom:area.cy+area.radius}:area; for(let y=bounds.top+24;y<=bounds.bottom-24;y+=12) for(let x=bounds.left+24;x<=bounds.right-24;x+=12) if(DepGraphManualGeometry.contains(group,{x,y},12)&&nodes.every(node=>Math.hypot(node.x-x,node.y-y)>node.radius+14)){ const rect=document.getElementById('cy').getBoundingClientRect(), zoom=__depgraphDebug.cy.zoom(), pan=__depgraphDebug.cy.pan(); return {id,x:rect.left+pan.x+x*zoom,y:rect.top+pan.y+y*zoom}; } throw new Error('No empty group-body point found.'); }", new object[] { groupId });
     private static async Task DragAsync(IPage page, ILocator locator, float dx, float dy)
     {
         var box = await locator.BoundingBoxAsync() ?? throw new InvalidOperationException("Drag target has no bounding box.");

@@ -15,14 +15,21 @@
       this.preview = null;
       this.explore = null;
       this.drag = null;
+      this.regionBodyDrag = null;
+      this.nodePointerSelection = null;
+      this.pointerAdditive = false;
+      this.pointerSelection = [];
       this.manualSelection = [];
       this.contextNodeId = null;
+      this.assignmentTargetId = null;
+      this.assignmentSelectionKey = "";
       this.layer = document.getElementById("manual-regions");
       this.groupLayer = svgElement("g");
       this.layer.append(this.groupLayer);
       this.setRegionsVisible(false);
       this.installGroupInspector();
       this.installContextMenu();
+      this.installButtonIcons();
       this.bind();
     }
     installGroupInspector() {
@@ -87,7 +94,50 @@
       document.body.append(menu);
       this.contextMenu = menu;
     }
+    installButtonIcons() {
+      const I = window.DepGraphIcons;
+      [
+        ["manual-new-group", "add", "New group", false],
+        ["manual-assign", "assign", "Move selected", false],
+        ["manual-undo", "undo", "Undo", true],
+        ["manual-redo", "redo", "Redo", true],
+        ["manual-run", "play", "Run layout", false],
+        ["manual-arrange", "arrange", "Arrange groups", true],
+        ["manual-save", "save", "Save layout", true],
+        ["manual-load", "upload", "Load layout", true],
+        ["manual-restore-all", "eye", "Restore all connections", false],
+        ["manual-pin", "pin", "Pin", false],
+        ["manual-unpin", "unpin", "Unpin", false],
+        ["manual-mute", "hide", "Hide connections", false],
+        ["manual-unmute", "eye", "Restore connections", false],
+        ["manual-reveal", "eye", "Reveal temporarily", false],
+        ["manual-relax-group", "refresh", "Relax selected group", false],
+        ["manual-group-create", "add", "Create", false],
+        ["manual-update-group", "save", "Apply group changes", false],
+        ["manual-fit-group", "fit", "Fit group to members", false],
+        ["manual-merge-groups", "merge", "Merge selected groups", false],
+        ["manual-delete-group", "delete", "Delete group", false],
+        ["manual-start-over", "refresh", "Start over from Explore", false],
+      ].forEach((args) => I.button(...args));
+      I.button(
+        "manual-node-remove-group",
+        "assign",
+        "Remove from group",
+        false,
+      );
+    }
     bind() {
+      this.cy.container().addEventListener(
+        "pointerdown",
+        (event) => {
+          if (event.button === 0)
+            this.pointerAdditive = event.ctrlKey || event.metaKey;
+          this.pointerSelection = this.cy
+            .nodes(":selected")
+            .map((node) => node.id());
+        },
+        true,
+      );
       document.getElementById("tab-explore").onclick = () => this.leave();
       document.getElementById("tab-manual").onclick = () => this.enter();
       document.getElementById("manual-create-current").onclick = () =>
@@ -140,6 +190,11 @@
         (document.getElementById("manual-group-editor").hidden = true);
       document.getElementById("manual-assign").onclick = () =>
         this.assignSelected();
+      document.getElementById("manual-assign-target").onchange = (event) => {
+        this.assignmentTargetId = event.target.value || null;
+        this.updateAssignmentTargetHighlight();
+        this.updateAssignmentButton();
+      };
       document.getElementById("manual-mute").onclick = () =>
         this.toggleMuted(true);
       document.getElementById("manual-unmute").onclick = () =>
@@ -176,6 +231,9 @@
       });
       this.cy.on("tap", "node", (event) => this.nodeTap(event));
       this.cy.on("cxttap", "node", (event) => this.openContextMenu(event));
+      this.cy.on("tapstart", (event) => this.regionBodyStart(event));
+      this.cy.on("tapdrag", (event) => this.regionBodyMove(event));
+      this.cy.on("tapend", (event) => this.regionBodyEnd(event));
       this.cy.on("tap", (event) => {
         if (!this.active || event.target !== this.cy || !this.model) return;
         const group = [...Object.values(this.model.board.groups)]
@@ -191,6 +249,9 @@
           this.paint();
         }
       });
+      this.cy.on("mousedown", "node", (event) =>
+        this.rememberNodePointerSelection(event),
+      );
       this.cy.on("grab", "node", (event) => this.nodeGrab(event));
       this.cy.on("drag", "node", (event) => this.nodeDrag(event));
       this.cy.on("free", "node", (event) => this.nodeFree(event));
@@ -257,6 +318,12 @@
     leave() {
       if (!this.active) return;
       this.layout?.stop();
+      if (this.regionBodyDrag) {
+        this.model.board = this.regionBodyDrag.before;
+        this.cy.userPanningEnabled(this.regionBodyDrag.panning);
+        this.cy.boxSelectionEnabled(this.regionBodyDrag.boxSelection);
+        this.regionBodyDrag = null;
+      }
       this.manualSelection = this.cy
         .nodes(":selected")
         .map((node) => node.id());
@@ -317,7 +384,7 @@
       this.layout = new window.DepGraphManualLayout(
         this.cy,
         this.model,
-        () => this.paint(false),
+        () => this.paintLayoutFrame(),
         (status) => this.setLayoutControls(status, false, false),
       );
       this.paint();
@@ -354,7 +421,12 @@
       this.setStatus(text);
       const button = document.getElementById("manual-pause");
       button.disabled = !active;
-      button.textContent = paused ? "Resume layout" : "Pause layout";
+      window.DepGraphIcons.button(
+        button,
+        paused ? "play" : "pause",
+        paused ? "Resume layout" : "Pause layout",
+        false,
+      );
       button.setAttribute("aria-pressed", paused ? "true" : "false");
     }
     setSaveStatus(text, warning) {
@@ -365,14 +437,11 @@
     applyBoard(board) {
       const muted = new Set(board.mutedEntityIds);
       this.cy.batch(() => {
+        this.applyPositions(board);
         this.cy.nodes().forEach((node) => {
           const placement = board.placements[node.id()];
           if (!placement) return;
-          const group = board.groups[placement.groupId],
-            position = group.collapsed
-              ? this.groupAnchor(group)
-              : { x: placement.x, y: placement.y };
-          node.position(position);
+          const group = board.groups[placement.groupId];
           node.data("color", group.color);
           node.data("manualGroup", placement.groupId);
           node.data("manualMuted", muted.has(node.id()));
@@ -405,6 +474,22 @@
           edge.removeClass("manual-reveal");
         });
       });
+    }
+    applyPositions(board) {
+      this.cy.nodes().forEach((node) => {
+        const placement = board.placements[node.id()];
+        if (!placement) return;
+        const group = board.groups[placement.groupId];
+        node.position(
+          group.collapsed
+            ? this.groupAnchor(group)
+            : { x: placement.x, y: placement.y },
+        );
+      });
+    }
+    paintLayoutFrame() {
+      if (!this.active || !this.model) return;
+      this.cy.batch(() => this.applyPositions(this.model.board));
     }
     groupAnchor(group) {
       if (group.collapsed)
@@ -451,10 +536,12 @@
         root.classList.add("manual-region");
         if (group.collapsed) root.classList.add("collapsed");
         if (group.id === this.selectedGroupId) root.classList.add("selected");
+        if (group.id === this.assignmentTargetId)
+          root.classList.add("assignment-target");
         const shape = svgElement(group.shape === "circle" ? "circle" : "rect"),
           header = svgElement("rect"),
           label = svgElement("text"),
-          handle = svgElement("rect");
+          handle = window.DepGraphIcons.svgControl("resize", "Resize group");
         let headerX, headerY, headerWidth;
         if (group.shape === "circle") {
           shape.setAttribute("cx", group.cx);
@@ -466,8 +553,10 @@
           header.setAttribute("height", group.header);
           label.setAttribute("x", group.cx - group.radius + 8);
           label.setAttribute("y", group.cy - group.radius - 8);
-          handle.setAttribute("x", group.cx + group.radius - 8);
-          handle.setAttribute("y", group.cy + group.radius - 8);
+          handle.setAttribute(
+            "transform",
+            `translate(${group.cx + group.radius * Math.SQRT1_2 - 9} ${group.cy + group.radius * Math.SQRT1_2 - 9})`,
+          );
           headerX = group.cx - group.radius;
           headerY = group.cy - group.radius - group.header;
           headerWidth = group.radius * 2;
@@ -482,8 +571,10 @@
           header.setAttribute("height", group.header);
           label.setAttribute("x", group.x + 8);
           label.setAttribute("y", group.y + 19);
-          handle.setAttribute("x", group.x + group.width - 8);
-          handle.setAttribute("y", group.y + group.height - 8);
+          handle.setAttribute(
+            "transform",
+            `translate(${group.x + group.width - 18} ${group.y + group.height - 18})`,
+          );
           headerX = group.x;
           headerY = group.y;
           headerWidth = group.width;
@@ -492,8 +583,6 @@
         shape.style.fill = group.color;
         header.classList.add("manual-region-header");
         handle.classList.add("manual-resize-handle");
-        handle.setAttribute("width", 16);
-        handle.setAttribute("height", 16);
         const memberCount = Object.values(board.placements).filter(
           (p) => p.groupId === group.id,
         ).length;
@@ -509,29 +598,27 @@
         const actions = [
           {
             action: "collapse",
+            icon: group.collapsed ? "expand" : "collapse",
             active: !!group.collapsed,
             label: group.collapsed ? "Expand group" : "Collapse group",
-            path: group.collapsed
-              ? "M3 9h12M3 9l3-3M3 9l3 3M15 9l-3-3M15 9l-3 3"
-              : "M3 9h12M7 6 4 9l3 3M11 6l3 3-3 3",
           },
           {
             action: "hide-outer",
+            icon: "hide",
             active: group.outerEdgeMode === "hidden",
             label:
               group.outerEdgeMode === "hidden"
                 ? "Show outer edges"
                 : "Hide outer edges",
-            path: "M3 5h5M10 13h5M4 14 14 4",
           },
           {
             action: "highlight-outer",
+            icon: "highlight",
             active: group.outerEdgeMode === "highlighted",
             label:
               group.outerEdgeMode === "highlighted"
                 ? "Clear outer-edge highlight"
                 : "Highlight outer edges",
-            path: "M9 2v3M9 13v3M2 9h3M13 9h3M4 4l2 2M12 12l2 2M14 4l-2 2M6 12l-2 2",
           },
         ];
         actions.forEach((action, index) =>
@@ -549,37 +636,15 @@
       this.transform();
     }
     regionAction(groupId, action, x, y) {
-      const root = svgElement("g"),
-        background = svgElement("rect"),
-        icon = svgElement("path"),
-        title = svgElement("title");
+      const root = window.DepGraphIcons.svgButton(
+        action.icon,
+        action.label,
+        action.active,
+        () => this.toggleGroupControl(groupId, action.action),
+      );
       root.classList.add("manual-region-action");
-      if (action.active) root.classList.add("active");
       root.dataset.action = action.action;
-      root.setAttribute("role", "button");
-      root.setAttribute("tabindex", "0");
-      root.setAttribute("aria-label", action.label);
-      root.setAttribute("aria-pressed", action.active ? "true" : "false");
       root.setAttribute("transform", `translate(${x} ${y})`);
-      background.setAttribute("width", 18);
-      background.setAttribute("height", 18);
-      background.setAttribute("rx", 3);
-      icon.setAttribute("d", action.path);
-      title.textContent = action.label;
-      const activate = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        this.toggleGroupControl(groupId, action.action);
-      };
-      root.addEventListener("pointerdown", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-      });
-      root.addEventListener("click", activate);
-      root.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") activate(event);
-      });
-      root.append(background, icon, title);
       return root;
     }
     toggleGroupControl(groupId, action) {
@@ -666,6 +731,73 @@
       window.addEventListener("pointermove", move);
       window.addEventListener("pointerup", up, { once: true });
       window.addEventListener("pointercancel", up, { once: true });
+    }
+    regionBodyStart(event) {
+      if (!this.active || !this.model || event.target !== this.cy) return;
+      const group = [...Object.values(this.model.board.groups)]
+        .reverse()
+        .find(
+          (candidate) =>
+            !candidate.collapsed && G.contains(candidate, event.position),
+        );
+      if (!group) return;
+      event.originalEvent?.preventDefault();
+      this.layout.stop();
+      this.regionBodyDrag = {
+        groupId: group.id,
+        before: structuredClone(this.model.board),
+        origin: { ...event.position },
+        moved: false,
+        panning: this.cy.userPanningEnabled(),
+        boxSelection: this.cy.boxSelectionEnabled(),
+      };
+      this.cy.userPanningEnabled(false);
+      this.cy.boxSelectionEnabled(false);
+    }
+    regionBodyMove(event) {
+      const drag = this.regionBodyDrag;
+      if (!drag) return;
+      const dx = event.position.x - drag.origin.x,
+        dy = event.position.y - drag.origin.y;
+      if (Math.hypot(dx, dy) < 1) return;
+      drag.moved = true;
+      const original = drag.before.groups[drag.groupId],
+        target = this.model.board.groups[drag.groupId];
+      if (target.shape === "circle") {
+        target.cx = original.cx + dx;
+        target.cy = original.cy + dy;
+      } else {
+        target.x = original.x + dx;
+        target.y = original.y + dy;
+      }
+      Object.entries(this.model.board.placements)
+        .filter(([, placement]) => placement.groupId === drag.groupId)
+        .forEach(([id, placement]) => {
+          placement.x = drag.before.placements[id].x + dx;
+          placement.y = drag.before.placements[id].y + dy;
+        });
+      this.paint();
+    }
+    regionBodyEnd() {
+      const drag = this.regionBodyDrag;
+      if (!drag) return;
+      this.regionBodyDrag = null;
+      this.cy.userPanningEnabled(drag.panning);
+      this.cy.boxSelectionEnabled(drag.boxSelection);
+      if (!drag.moved) return;
+      const after = structuredClone(this.model.board);
+      this.model.board = drag.before;
+      try {
+        this.model.transact("Move group", (board) => {
+          board.groups[drag.groupId] = after.groups[drag.groupId];
+          Object.entries(after.placements)
+            .filter(([, placement]) => placement.groupId === drag.groupId)
+            .forEach(([id, placement]) => (board.placements[id] = placement));
+        });
+      } catch (error) {
+        this.notice(error.message);
+        this.paint();
+      }
     }
     worldPoint(event) {
       const rect = this.layer.getBoundingClientRect(),
@@ -756,18 +888,44 @@
         this.hideContextMenu();
       }
     }
+    rememberNodePointerSelection(event) {
+      const originalEvent = event.originalEvent || {};
+      if (originalEvent.button != null && originalEvent.button !== 0) return;
+      this.nodePointerSelection = {
+        id: event.target.id(),
+        additive: !!(
+          originalEvent.ctrlKey ||
+          originalEvent.metaKey ||
+          this.pointerAdditive
+        ),
+        selection: this.cy.nodes(":selected").map((node) => node.id()),
+      };
+    }
     nodeGrab(event) {
       if (!this.active || !this.model) return;
       this.layout.stop();
       const id = event.target.id(),
         placement = this.model.board.placements[id],
-        originalEvent = event.originalEvent || {},
-        additive = !!(originalEvent.ctrlKey || originalEvent.metaKey),
-        selectionBefore = this.cy.nodes(":selected").map((node) => node.id());
+        pointer =
+          this.nodePointerSelection?.id === id
+            ? this.nodePointerSelection
+            : {
+                additive: this.pointerAdditive,
+                selection: this.cy.nodes(":selected").map((node) => node.id()),
+              },
+        additive = pointer.additive,
+        selectionBefore = pointer.selection;
+      this.nodePointerSelection = null;
       if (!additive) {
         this.cy.nodes().unselect();
         event.target.select();
-      } else if (!event.target.selected()) event.target.select();
+      } else {
+        this.cy.nodes().unselect();
+        selectionBefore.forEach((selectedId) =>
+          this.cy.$id(selectedId).select(),
+        );
+        if (!event.target.selected()) event.target.select();
+      }
       if (placement)
         this.drag = {
           id,
@@ -807,23 +965,44 @@
       this.model.board = drag.before;
       this.cy.nodes().unselect();
       drag.selection.forEach((id) => this.cy.$id(id).select());
-      if (!moved) return;
+      if (!moved) {
+        const selected = new Set(this.pointerSelection);
+        if (this.pointerAdditive)
+          selected.has(drag.id)
+            ? selected.delete(drag.id)
+            : selected.add(drag.id);
+        else {
+          selected.clear();
+          selected.add(drag.id);
+        }
+        this.cy.nodes().unselect();
+        selected.forEach((id) => this.cy.$id(id).select());
+        this.lastNodeGesture = null;
+        return;
+      }
       this.model.transact("Move node", (board) =>
         Object.assign(board.placements[drag.id], final),
       );
     }
     nodeTap(event) {
-      if (
-        !this.active ||
-        !this.lastNodeGesture ||
-        this.lastNodeGesture.id !== event.target.id()
-      )
-        return;
-      const gesture = this.lastNodeGesture;
+      if (!this.active) return;
+      const gesture =
+        this.lastNodeGesture?.id === event.target.id()
+          ? this.lastNodeGesture
+          : {
+              id: event.target.id(),
+              selectionBefore: this.pointerSelection,
+              additive: this.pointerAdditive,
+              moved: false,
+            };
       this.lastNodeGesture = null;
       if (gesture.moved) return;
-      const selected = new Set(gesture.selectionBefore);
-      if (gesture.additive)
+      const selected = new Set(gesture.selectionBefore),
+        additive =
+          gesture.additive ||
+          this.pointerAdditive ||
+          !!(event.originalEvent?.ctrlKey || event.originalEvent?.metaKey);
+      if (additive)
         selected.has(gesture.id)
           ? selected.delete(gesture.id)
           : selected.add(gesture.id);
@@ -855,11 +1034,14 @@
     }
     assignSelected() {
       const ids = this.selectedIds(),
-        groupId = document.getElementById("manual-assign-target").value;
+        groupId = this.assignmentTargetId;
       if (!ids.length) return this.notice("Select one or more nodes first.");
+      if (!groupId) return this.notice("Choose a destination group.");
       try {
         this.layout.stop();
         this.model.assign(ids, groupId);
+        this.assignmentTargetId = null;
+        this.renderAssignmentControls(ids);
       } catch (error) {
         this.notice(error.message);
       }
@@ -902,10 +1084,8 @@
       this.renderInspector();
     }
     renderGroups() {
-      const list = document.getElementById("manual-group-list"),
-        target = document.getElementById("manual-assign-target");
+      const list = document.getElementById("manual-group-list");
       list.replaceChildren();
-      target.replaceChildren();
       Object.values(this.model.board.groups)
         .sort((a, b) => a.name.localeCompare(b.name))
         .forEach((group) => {
@@ -914,7 +1094,6 @@
           button.style.borderLeftColor = group.color;
           button.onclick = () => this.selectGroup(group.id);
           list.append(button);
-          target.add(new Option(group.name, group.id));
         });
       const muted = document.getElementById("manual-muted-list");
       muted.replaceChildren();
@@ -933,6 +1112,7 @@
       if (!this.model) return;
       const ids = this.selectedIds(),
         summary = document.getElementById("manual-selection-summary");
+      this.renderAssignmentControls(ids);
       summary.textContent = ids.length
         ? `${ids.length} selected: ${ids
             .slice(0, 4)
@@ -944,7 +1124,6 @@
         group = this.model.board.groups[groupId];
       if (first) {
         this.selectedGroupId = first.groupId;
-        document.getElementById("manual-assign-target").value = first.groupId;
       }
       if (group) {
         document.getElementById("manual-edit-name").value = group.name;
@@ -958,6 +1137,64 @@
         this.setPinned(false);
       document.getElementById("manual-relax-group").onclick = () =>
         groupId && this.layout.start([groupId]);
+    }
+    renderAssignmentControls(ids) {
+      const target = document.getElementById("manual-assign-target"),
+        selectionKey = [...ids].sort().join("|");
+      if (selectionKey !== this.assignmentSelectionKey) {
+        this.assignmentSelectionKey = selectionKey;
+        this.assignmentTargetId = null;
+      }
+      target.replaceChildren(
+        new Option(ids.length ? "Move selected to…" : "Select nodes first", ""),
+      );
+      if (ids.length)
+        Object.values(this.model.board.groups)
+          .filter(
+            (group) =>
+              !ids.every(
+                (id) => this.model.board.placements[id]?.groupId === group.id,
+              ),
+          )
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .forEach((group) => target.add(new Option(group.name, group.id)));
+      const available = [...target.options].some((option) => option.value);
+      if (
+        this.assignmentTargetId &&
+        [...target.options].some(
+          (option) => option.value === this.assignmentTargetId,
+        )
+      )
+        target.value = this.assignmentTargetId;
+      else this.assignmentTargetId = null;
+      target.disabled = !ids.length || !available;
+      this.updateAssignmentTargetHighlight();
+      this.updateAssignmentButton();
+    }
+    updateAssignmentTargetHighlight() {
+      this.groupLayer
+        .querySelectorAll(".manual-region")
+        .forEach((region) =>
+          region.classList.toggle(
+            "assignment-target",
+            !!this.assignmentTargetId &&
+              region.dataset.groupId === this.assignmentTargetId,
+          ),
+        );
+    }
+    updateAssignmentButton() {
+      const ids = this.selectedIds(),
+        button = document.getElementById("manual-assign"),
+        group = this.model?.board.groups[this.assignmentTargetId],
+        label = ids.length ? `Move ${ids.length} selected` : "Move selected";
+      button.disabled = !ids.length || !group;
+      window.DepGraphIcons.button(button, "assign", label, false);
+      button.title = group
+        ? `${label} to ${group.name}`
+        : ids.length
+          ? "Choose a destination group"
+          : "Select one or more nodes first";
+      button.dataset.iconTitle = "false";
     }
     updateGroup() {
       const groupId = this.selectedGroupId;
