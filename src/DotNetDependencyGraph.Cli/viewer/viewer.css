@@ -128,8 +128,12 @@ button:hover {
 }
 #manual-regions {
   z-index: 2;
+  display: none;
   overflow: visible;
   pointer-events: none;
+}
+.manual-mode #manual-regions.manual-regions-visible {
+  display: block;
 }
 #cy {
   z-index: 1;

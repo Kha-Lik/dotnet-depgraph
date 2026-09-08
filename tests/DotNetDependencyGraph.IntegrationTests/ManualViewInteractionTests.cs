@@ -216,6 +216,28 @@ public sealed class ManualViewInteractionTests
     }
 
     [Fact]
+    public async Task ManualRegionsAreHiddenInExploreAndRestoredInManualView()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var regions = page.Locator("#manual-regions");
+
+        Assert.True(await regions.Locator(".manual-region").CountAsync() > 0);
+        Assert.True(await regions.IsVisibleAsync());
+
+        await page.Locator("#tab-explore").ClickAsync();
+
+        Assert.False(await regions.IsVisibleAsync());
+        Assert.Equal("true", await regions.GetAttributeAsync("aria-hidden"));
+
+        await page.Locator("#tab-manual").ClickAsync();
+
+        Assert.True(await regions.IsVisibleAsync());
+        Assert.Equal("false", await regions.GetAttributeAsync("aria-hidden"));
+    }
+
+    [Fact]
     public async Task ConnectionPolicyHidesEitherEndpointAndCanRevealTemporarily()
     {
         await using var session = await BrowserSession.CreateAsync();

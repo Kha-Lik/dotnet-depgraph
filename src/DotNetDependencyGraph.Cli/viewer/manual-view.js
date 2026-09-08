@@ -19,6 +19,7 @@
       this.layer = document.getElementById("manual-regions");
       this.groupLayer = svgElement("g");
       this.layer.append(this.groupLayer);
+      this.setRegionsVisible(false);
       this.installGroupInspector();
       this.bind();
     }
@@ -223,7 +224,7 @@
       if (this.model) this.storage.checkpoint(this.model.board);
       this.active = false;
       this.preview = null;
-      this.layer.hidden = true;
+      this.setRegionsVisible(false);
       document.body.classList.remove("manual-mode");
       document
         .getElementById("tab-manual")
@@ -237,13 +238,13 @@
     showCreate() {
       document.getElementById("manual-empty").hidden = false;
       document.getElementById("manual-workspace").hidden = true;
-      this.layer.hidden = true;
+      this.setRegionsVisible(false);
       this.setLayoutControls("Paused", false, false);
     }
     previewBoard(useGroups) {
       this.preview = S.createBoard(this.getSpec(), useGroups);
       this.applyBoard(this.preview);
-      this.layer.hidden = false;
+      this.setRegionsVisible(true);
       document.getElementById("manual-preview-actions").hidden = false;
       document.getElementById("manual-empty-copy").hidden = true;
       this.renderRegions(this.preview);
@@ -260,14 +261,14 @@
       document.getElementById("manual-empty-copy").hidden = false;
       this.restoreExplore(this.explore);
       this.stopExplore();
-      this.layer.hidden = true;
+      this.setRegionsVisible(false);
     }
     mount(board, fresh = false) {
       document.getElementById("manual-empty").hidden = true;
       document.getElementById("manual-workspace").hidden = false;
       document.getElementById("manual-preview-actions").hidden = true;
       document.getElementById("manual-empty-copy").hidden = false;
-      this.layer.hidden = false;
+      this.setRegionsVisible(true);
       this.model = new S.ManualState(board, () => {
         this.storage.save(this.model.board);
         this.paint();
@@ -284,6 +285,10 @@
       this.manualSelection.forEach((id) => this.cy.$id(id).select());
       if (fresh || !board.viewport) this.fitBoard(board);
       else this.cy.viewport(board.viewport);
+    }
+    setRegionsVisible(visible) {
+      this.layer.classList.toggle("manual-regions-visible", visible);
+      this.layer.setAttribute("aria-hidden", visible ? "false" : "true");
     }
     startOver() {
       if (!this.model) return;
