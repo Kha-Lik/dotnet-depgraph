@@ -213,6 +213,41 @@ public sealed class ManualViewInteractionTests
         Assert.Empty(await BoardErrorsAsync(page));
     }
 
+    [Theory]
+    [InlineData("rectangle")]
+    [InlineData("circle")]
+    public async Task NewGroupSizesToFitAllSelectedNodesAndExtractsThem(string shape)
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().map(node => node.id())");
+        await CreateGroupAsync(page, "First source", ids[0], ids[1]);
+        await CreateGroupAsync(page, "Second source", ids[2], ids[3]);
+        var sourceRight = await page.EvaluateAsync<double>("Math.max(...Object.values(__depgraphDebug.manualView.model.board.groups).map(DepGraphManualGeometry.envelope).map(envelope => envelope.right))");
+        var originalAssignments = await page.EvaluateAsync<string>("JSON.stringify(Object.fromEntries(Object.entries(__depgraphDebug.manualView.model.board.placements).map(([id, placement]) => [id, placement.groupId])))");
+        await SelectIdsAsync(page, ids);
+
+        await page.Locator("#manual-new-group").ClickAsync();
+        await page.Locator("#manual-group-name").FillAsync($"Large {shape} group");
+        await page.Locator("#manual-group-shape").SelectOptionAsync(shape);
+        await page.Locator("#manual-group-create").ClickAsync();
+
+        var groupId = await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.placements[id].groupId", new object[] { ids[0] });
+        Assert.NotEqual("group:unassigned", groupId);
+        Assert.Equal(ids.Length, await page.EvaluateAsync<int>("([groupId]) => Object.values(__depgraphDebug.manualView.model.board.placements).filter(placement => placement.groupId === groupId).length", new object[] { groupId }));
+        Assert.True(await page.EvaluateAsync<bool>("([ids, groupId]) => ids.every(id => __depgraphDebug.manualView.model.board.placements[id].groupId === groupId)", new object[] { ids, groupId }));
+        var created = await GroupGeometryAsync(page, groupId);
+        Assert.True(created.Left >= sourceRight + 18);
+        Assert.True(shape == "circle" ? created.Width > 220 : created.Width > 240 || created.Height > 220);
+        Assert.False(await page.Locator("#warning").IsVisibleAsync());
+        Assert.Empty(await BoardErrorsAsync(page));
+
+        await page.Locator("#manual-undo").ClickAsync();
+        Assert.Equal(originalAssignments, await page.EvaluateAsync<string>("JSON.stringify(Object.fromEntries(Object.entries(__depgraphDebug.manualView.model.board.placements).map(([id, placement]) => [id, placement.groupId])))"));
+        Assert.False(await page.EvaluateAsync<bool>("([groupId]) => !!__depgraphDebug.manualView.model.board.groups[groupId]", new object[] { groupId }));
+    }
+
     [Fact]
     public async Task LocalLayoutSettlesWithoutBreakingContainment()
     {

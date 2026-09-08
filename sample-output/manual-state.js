@@ -210,10 +210,25 @@
     addGroup(name, groupColor, shape, entityIds) {
       const groupId = id("group");
       this.transact("Create group", (board) => {
-        const source =
-            board.groups[board.placements[entityIds[0]]?.groupId] ||
-            Object.values(board.groups)[0],
-          env = G.envelope(source);
+        const sourceGroups = [
+            ...new Set(
+              entityIds.map((entityId) => board.placements[entityId]?.groupId),
+            ),
+          ]
+            .map((sourceId) => board.groups[sourceId])
+            .filter(Boolean),
+          sourceEnvelopes = sourceGroups.map(G.envelope),
+          sourceBounds = {
+            left: Math.min(...sourceEnvelopes.map((env) => env.left)),
+            right: Math.max(...sourceEnvelopes.map((env) => env.right)),
+            top: Math.min(...sourceEnvelopes.map((env) => env.top)),
+            bottom: Math.max(...sourceEnvelopes.map((env) => env.bottom)),
+          },
+          radii = entityIds.map((entityId) => board.entities[entityId].radius),
+          maximum = Math.max(12, ...radii),
+          spacing = maximum * 2 + 10,
+          columns = Math.max(1, Math.ceil(Math.sqrt(entityIds.length))),
+          rows = Math.max(1, Math.ceil(entityIds.length / columns));
         const group =
           shape === "circle"
             ? {
@@ -221,9 +236,12 @@
                 name,
                 color: groupColor,
                 shape,
-                cx: env.right + 150,
-                cy: env.top + 130,
-                radius: 110,
+                cx: 0,
+                cy: 0,
+                radius: Math.max(
+                  70,
+                  Math.sqrt(entityIds.length) * spacing * 0.72,
+                ),
                 header: 24,
               }
             : {
@@ -231,31 +249,58 @@
                 name,
                 color: groupColor,
                 shape: "rectangle",
-                x: env.right + 40,
-                y: env.top,
-                width: 240,
-                height: 220,
+                x: 0,
+                y: 0,
+                width: Math.max(
+                  140,
+                  maximum * 2 + (columns - 1) * spacing + 24,
+                ),
+                height: Math.max(
+                  120,
+                  28 + maximum * 2 + (rows - 1) * spacing + 24,
+                ),
                 header: 28,
               };
         group.collapsed = false;
         group.outerEdgeMode = "visible";
+        let placed = null;
+        for (let attempt = 0; attempt < 24 && !placed; attempt++) {
+          const candidate = G.slots(group, radii);
+          if (candidate.every(Boolean)) placed = candidate;
+          else if (group.shape === "circle") group.radius *= 1.16;
+          else {
+            group.width *= 1.12;
+            group.height = group.header + (group.height - group.header) * 1.12;
+          }
+        }
+        if (!placed)
+          throw new Error("The selected nodes could not be packed safely.");
+        const initial = G.envelope(group),
+          dx = sourceBounds.right + 40 - initial.left,
+          dy = sourceBounds.top - initial.top,
+          translate = (moveX, moveY) => {
+            if (group.shape === "circle") {
+              group.cx += moveX;
+              group.cy += moveY;
+            } else {
+              group.x += moveX;
+              group.y += moveY;
+            }
+            placed.forEach((point) => {
+              point.x += moveX;
+              point.y += moveY;
+            });
+          };
+        translate(dx, dy);
         while (
           Object.values(board.groups).some(
             (existing) => !G.separated(existing, group),
           )
         ) {
-          if (group.shape === "circle") group.cy += 250;
-          else group.y += 250;
+          const envelope = G.envelope(group);
+          translate(0, envelope.bottom - envelope.top + 40);
         }
         board.groups[groupId] = group;
-        const placed = G.slots(
-          group,
-          entityIds.map((entityId) => board.entities[entityId].radius),
-        );
-        if (placed.some((point) => !point))
-          throw new Error(
-            "The new group is too small. Create it with fewer nodes or enlarge the source group first.",
-          );
         entityIds.forEach((entityId, index) =>
           Object.assign(board.placements[entityId], placed[index], { groupId }),
         );
