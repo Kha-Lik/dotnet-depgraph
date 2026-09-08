@@ -5,7 +5,8 @@
   const payload = JSON.parse(document.getElementById("graph-data").textContent);
   const $ = (id) => document.getElementById(id);
   const analysis = payload.raw.communityAnalysis;
-  if (!analysis) throw new Error("Schema 2.0 report is missing communityAnalysis.");
+  if (!analysis)
+    throw new Error("Schema 2.0 report is missing communityAnalysis.");
   const automaticCommunities = new Map(
     analysis.communities.map((community) => [community.stableKey, community]),
   );
@@ -23,7 +24,13 @@
   scopeExcluded.textContent = `Excluded: ${projection.excludedTestProjectCount ?? "?"} tests · ${projection.excludedSystemPackageCount ?? "?"} system packages · ${projection.excludedThirdPartyPackageCount ?? "?"} third-party packages · ${projection.excludedUnresolvedExternalCount ?? "?"} unresolved external nodes`;
   const scopeIncluded = document.createElement("p");
   scopeIncluded.textContent = `Optional packages included: ${projection.includedUnmappedInternalPackageCount ?? "?"} unmapped internal · ${projection.includedSystemPackageCount ?? "?"} system · ${projection.includedThirdPartyPackageCount ?? "?"} third-party`;
-  scope.append(scopeHeading, scopeDetails, scopeCounts, scopeExcluded, scopeIncluded);
+  scope.append(
+    scopeHeading,
+    scopeDetails,
+    scopeCounts,
+    scopeExcluded,
+    scopeIncluded,
+  );
   $("community-legend").before(scope);
   const state = {
     mode: "explore",
@@ -44,22 +51,35 @@
     selectedCommunities: new Set(),
     selectionOrder: [],
   };
-  const borderPalette = ["#79C0FF", "#FFB77C", "#7EE787", "#D2A8FF", "#FF9492", "#E3B341", "#76E3EA", "#F778BA", "#B1BAC4", "#1F6FEB", "#A40E26", "#238636"];
+  const borderPalette = [
+    "#79C0FF",
+    "#FFB77C",
+    "#7EE787",
+    "#D2A8FF",
+    "#FF9492",
+    "#E3B341",
+    "#76E3EA",
+    "#F778BA",
+    "#B1BAC4",
+    "#1F6FEB",
+    "#A40E26",
+    "#238636",
+  ];
   const physicsDefaults = Object.freeze({ ...payload.defaults.physics });
-  const storageKey = payload.defaults.physicsStorageKey ||
-    "dotnet-depgraph.physics.v2";
-  const viewerStorageKey = payload.defaults.viewerStorageKey ||
-    "dotnet-depgraph.viewer.v1";
+  const storageKey =
+    payload.defaults.physicsStorageKey || "dotnet-depgraph.physics.v2";
+  const viewerStorageKey =
+    payload.defaults.viewerStorageKey || "dotnet-depgraph.viewer.v1";
   const overrideStorageKey = `${payload.defaults.communityOverrideStoragePrefix || "dotnet-depgraph.communities.v1"}:${analysis.graphFingerprint}`;
   const defaultImportantLabelCount = payload.defaults.importantLabelCount ?? 12;
   const bounds = {
     repulsion: [100, 5000],
     linkDistance: [30, 240],
-    linkStrength: [.02, 1],
+    linkStrength: [0.02, 1],
     collisionPadding: [2, 50],
     dragThreshold: [0, 30],
-    gravity: [0, .2],
-    communityAttraction: [0, .08],
+    gravity: [0, 0.2],
+    communityAttraction: [0, 0.08],
   };
   const clamp = (value, min, max) =>
     Math.max(min, Math.min(max, Number(value)));
@@ -86,11 +106,13 @@
   const collisionRadius = (d, padding) =>
     nodeDiameter(d) / 2 + Math.max(0, padding);
   function overviewLabel(d, rank, count, zoom) {
-    if (zoom < .35) return false;
+    if (zoom < 0.35) return false;
     if (zoom >= 1.25) return true;
-    return zoom >= .7 &&
+    return (
+      zoom >= 0.7 &&
       rank < clamp(Math.floor(Math.sqrt(Math.max(1, count))), 3, 18) &&
-      (d.centrality || 0) > 0;
+      (d.centrality || 0) > 0
+    );
   }
   function validatedPhysics(candidate) {
     const result = {};
@@ -103,20 +125,21 @@
     }
     result.alphaDecay = clamp(
       candidate?.alphaDecay ?? physicsDefaults.alphaDecay,
-      .01,
-      .1,
+      0.01,
+      0.1,
     );
     result.alphaMin = clamp(
       candidate?.alphaMin ?? physicsDefaults.alphaMin,
-      .0001,
-      .02,
+      0.0001,
+      0.02,
     );
     return result;
   }
   function loadPhysics() {
     try {
       const current = localStorage.getItem(storageKey);
-      const migrated = current || localStorage.getItem("dotnet-depgraph.physics.v2");
+      const migrated =
+        current || localStorage.getItem("dotnet-depgraph.physics.v2");
       return validatedPhysics(JSON.parse(migrated));
     } catch {
       return validatedPhysics();
@@ -155,84 +178,178 @@
     if (candidate.graphFingerprint !== analysis.graphFingerprint) {
       throw new Error("Override graphFingerprint does not match this graph.");
     }
-    if (!Array.isArray(candidate.communityOverrides) ||
+    if (
+      !Array.isArray(candidate.communityOverrides) ||
       !Array.isArray(candidate.manualCommunities) ||
-      !candidate.nodeAssignments || typeof candidate.nodeAssignments !== "object") {
+      !candidate.nodeAssignments ||
+      typeof candidate.nodeAssignments !== "object"
+    ) {
       throw new Error("Override document has an invalid shape.");
     }
     const nodeIds = new Set(payload.raw.nodes.map((node) => node.id));
     const manualIds = new Set();
     candidate.manualCommunities.forEach((community) => {
-      if (!community.id?.startsWith("manual:") || manualIds.has(community.id) ||
-        typeof community.name !== "string" || !validColor(community.color)) {
-        throw new Error("Manual communities require unique manual: IDs, names, and #RRGGBB colors.");
+      if (
+        !community.id?.startsWith("manual:") ||
+        manualIds.has(community.id) ||
+        typeof community.name !== "string" ||
+        !validColor(community.color)
+      ) {
+        throw new Error(
+          "Manual communities require unique manual: IDs, names, and #RRGGBB colors.",
+        );
       }
       manualIds.add(community.id);
     });
     const known = new Set([...automaticCommunities.keys(), ...manualIds]);
-    for (const [nodeId, community] of Object.entries(candidate.nodeAssignments)) {
+    for (const [nodeId, community] of Object.entries(
+      candidate.nodeAssignments,
+    )) {
       if (!nodeIds.has(nodeId) || !known.has(community)) {
-        throw new Error(`Unknown node/community assignment: ${nodeId} → ${community}`);
+        throw new Error(
+          `Unknown node/community assignment: ${nodeId} → ${community}`,
+        );
       }
     }
     return {
       ...emptyOverrides(),
       ...candidate,
-      communityOverrides: candidate.communityOverrides.map((item) => ({ ...item })),
-      manualCommunities: candidate.manualCommunities.map((item) => ({ ...item })),
+      communityOverrides: candidate.communityOverrides.map((item) => ({
+        ...item,
+      })),
+      manualCommunities: candidate.manualCommunities.map((item) => ({
+        ...item,
+      })),
       nodeAssignments: { ...candidate.nodeAssignments },
     };
   }
   function loadOverrides() {
     try {
       const local = localStorage.getItem(overrideStorageKey);
-      return validateOverrides(local ? JSON.parse(local) : (payload.communityOverrides || emptyOverrides()));
+      return validateOverrides(
+        local
+          ? JSON.parse(local)
+          : payload.communityOverrides || emptyOverrides(),
+      );
     } catch (error) {
-      queueMicrotask(() => showNotice(`Community overrides were ignored: ${error.message}`));
+      queueMicrotask(() =>
+        showNotice(`Community overrides were ignored: ${error.message}`),
+      );
       return emptyOverrides();
     }
   }
   let overrides = loadOverrides();
-  if (overrides.overrideDiagnostics?.length) queueMicrotask(() => showNotice(`${overrides.overrideDiagnostics.length} stale community override entries were not applied; export overrides to inspect diagnostics.`));
+  if (overrides.overrideDiagnostics?.length)
+    queueMicrotask(() =>
+      showNotice(
+        `${overrides.overrideDiagnostics.length} stale community override entries were not applied; export overrides to inspect diagnostics.`,
+      ),
+    );
   function saveOverrides() {
-    try { localStorage.setItem(overrideStorageKey, JSON.stringify(overrides)); } catch { /* storage may be disabled */ }
+    try {
+      localStorage.setItem(overrideStorageKey, JSON.stringify(overrides));
+    } catch {
+      /* storage may be disabled */
+    }
   }
-  function validColor(value) { return /^#[0-9a-f]{6}$/i.test(value || ""); }
-  function manualMap() { return new Map(overrides.manualCommunities.map((community) => [community.id, community])); }
+  function validColor(value) {
+    return /^#[0-9a-f]{6}$/i.test(value || "");
+  }
+  function manualMap() {
+    return new Map(
+      overrides.manualCommunities.map((community) => [community.id, community]),
+    );
+  }
   function automaticKey(nodeId) {
-    return analysis.granularityAssignments[state.granularity]?.[nodeId] ||
-      analysis.nodeAssignments[nodeId]?.detectedCommunityPath?.at(-1);
+    return (
+      analysis.granularityAssignments[state.granularity]?.[nodeId] ||
+      analysis.nodeAssignments[nodeId]?.detectedCommunityPath?.at(-1)
+    );
   }
-  function effectiveKey(nodeId) { return overrides.nodeAssignments[nodeId] || automaticKey(nodeId); }
-  function generatedBorder(key) { return borderPalette[hash(key, 0x6d2b79f5) % borderPalette.length]; }
+  function effectiveKey(nodeId) {
+    return overrides.nodeAssignments[nodeId] || automaticKey(nodeId);
+  }
+  function generatedBorder(key) {
+    return borderPalette[hash(key, 0x6d2b79f5) % borderPalette.length];
+  }
   function communityInfo(key) {
-    if (!key) return { stableKey: null, name: "Not in detection scope", color: "#484F58", borderColor: "#6E7681", memberNodeIds: [] };
+    if (!key)
+      return {
+        stableKey: null,
+        name: "Not in detection scope",
+        color: "#484F58",
+        borderColor: "#6E7681",
+        memberNodeIds: [],
+      };
     const manual = manualMap().get(key);
-    if (manual) return { stableKey: key, borderColor: generatedBorder(key), ...manual, manual: true };
-    const automatic = automaticCommunities.get(key) || { stableKey: key, name: key, color: "#8B949E", borderColor: generatedBorder(key), memberNodeIds: [] };
-    const style = overrides.communityOverrides.find((item) => item.communityKey === key ||
-      automatic.memberNodeIds?.includes(item.detectedAnchorNodeId));
-    return { ...automatic, name: style?.name || automatic.name, color: style?.color || automatic.color, manual: !!style };
+    if (manual)
+      return {
+        stableKey: key,
+        borderColor: generatedBorder(key),
+        ...manual,
+        manual: true,
+      };
+    const automatic = automaticCommunities.get(key) || {
+      stableKey: key,
+      name: key,
+      color: "#8B949E",
+      borderColor: generatedBorder(key),
+      memberNodeIds: [],
+    };
+    const style = overrides.communityOverrides.find(
+      (item) =>
+        item.communityKey === key ||
+        automatic.memberNodeIds?.includes(item.detectedAnchorNodeId),
+    );
+    return {
+      ...automatic,
+      name: style?.name || automatic.name,
+      color: style?.color || automatic.color,
+      manual: !!style,
+    };
   }
   let warningTimer;
-  function hideNotice() { clearTimeout(warningTimer); $("warning").hidden = true; }
-  function showWarning(...content) {
-    const warning = $("warning"), message = document.createElement("span"), close = document.createElement("button");
-    message.id = "warning-message"; content.forEach(item => message.append(item instanceof Node ? item : document.createTextNode(String(item))));
-    close.id = "warning-close"; close.type = "button"; close.setAttribute("aria-label", "Dismiss warning"); close.textContent = "×"; close.onclick = hideNotice;
-    warning.replaceChildren(message, close); warning.hidden = false; clearTimeout(warningTimer); warningTimer = setTimeout(hideNotice, 6500);
+  function hideNotice() {
+    clearTimeout(warningTimer);
+    $("warning").hidden = true;
   }
-  function showNotice(message) { showWarning(message); }
+  function showWarning(...content) {
+    const warning = $("warning"),
+      message = document.createElement("span"),
+      close = document.createElement("button");
+    message.id = "warning-message";
+    content.forEach((item) =>
+      message.append(
+        item instanceof Node ? item : document.createTextNode(String(item)),
+      ),
+    );
+    close.id = "warning-close";
+    close.type = "button";
+    close.setAttribute("aria-label", "Dismiss warning");
+    close.textContent = "×";
+    close.onclick = hideNotice;
+    warning.replaceChildren(message, close);
+    warning.hidden = false;
+    clearTimeout(warningTimer);
+    warningTimer = setTimeout(hideNotice, 6500);
+  }
+  function showNotice(message) {
+    showWarning(message);
+  }
 
   function savePhysics() {
     try {
       localStorage.setItem(storageKey, JSON.stringify(physics));
-    } catch { /* storage may be disabled */ }
+    } catch {
+      /* storage may be disabled */
+    }
   }
   function saveViewerPreferences() {
     try {
       localStorage.setItem(viewerStorageKey, JSON.stringify(viewerPreferences));
-    } catch { /* storage may be disabled */ }
+    } catch {
+      /* storage may be disabled */
+    }
   }
   function addDragThresholdControl() {
     const label = document.createElement("label"),
@@ -259,17 +376,15 @@
   function elements() {
     const g = graph(),
       producer = new Map(),
-      graphNodeIds = new Set(
-        g.nodes.map((n) => n.id),
-      );
+      graphNodeIds = new Set(g.nodes.map((n) => n.id));
     if (state.collapsed) {
-      payload.raw.edges.filter((e) => e.kind === "produces-package").forEach(
-        (e) => {
+      payload.raw.edges
+        .filter((e) => e.kind === "produces-package")
+        .forEach((e) => {
           if (graphNodeIds.has(e.source) && graphNodeIds.has(e.target)) {
             producer.set(e.target, e.source);
           }
-        },
-      );
+        });
     }
     const visibleNodes = g.nodes.filter((n) => !producer.has(n.id)),
       edges = [],
@@ -281,7 +396,10 @@
       if (source === target) continue;
       const key = `${source}|${target}|${e.kind}`;
       if (seen.has(key)) {
-        const existing = edges.find(item => `${item.data.source}|${item.data.target}|${item.data.kind}` === key);
+        const existing = edges.find(
+          (item) =>
+            `${item.data.source}|${item.data.target}|${item.data.kind}` === key,
+        );
         if (existing) existing.data.supportingRawEdgeIds.push(e.id);
         continue;
       }
@@ -301,33 +419,49 @@
         },
       });
     }
-    const ranked = [...visibleNodes].sort((a, b) =>
-      nodeDiameter(b) - nodeDiameter(a) ||
-      (b.centrality || 0) - (a.centrality || 0) ||
-      String(a.id).localeCompare(String(b.id))
+    const ranked = [...visibleNodes].sort(
+      (a, b) =>
+        nodeDiameter(b) - nodeDiameter(a) ||
+        (b.centrality || 0) - (a.centrality || 0) ||
+        String(a.id).localeCompare(String(b.id)),
     );
     const ranks = new Map(ranked.map((n, i) => [n.id, i]));
     return [
       ...visibleNodes.map((n) => {
-        const detected = analysis.nodeAssignments[n.id]?.detectedCommunityPath || [],
+        const detected =
+            analysis.nodeAssignments[n.id]?.detectedCommunityPath || [],
           effective = effectiveKey(n.id),
           info = communityInfo(effective),
-          effectivePath = overrides.nodeAssignments[n.id] ? [effective] : detected.slice(0, Math.max(0, detected.indexOf(effective)) + 1),
-          kindColor = n.kind === "project" ? "#58A6FF" : n.kind === "package" ? "#8B949E" : "#F0883E";
+          effectivePath = overrides.nodeAssignments[n.id]
+            ? [effective]
+            : detected.slice(0, Math.max(0, detected.indexOf(effective)) + 1),
+          kindColor =
+            n.kind === "project"
+              ? "#58A6FF"
+              : n.kind === "package"
+                ? "#8B949E"
+                : "#F0883E";
         return {
           data: {
             ...n,
-            canonicalIds: [n.id, ...[...producer.entries()].filter(([, producerId]) => producerId === n.id).map(([packageId]) => packageId)].sort(),
+            canonicalIds: [
+              n.id,
+              ...[...producer.entries()]
+                .filter(([, producerId]) => producerId === n.id)
+                .map(([packageId]) => packageId),
+            ].sort(),
             size: nodeDiameter(n),
             rank: ranks.get(n.id),
             detectedCommunityPath: detected,
             effectiveCommunityPath: effectivePath,
             effectiveCommunity: effective,
-            assignmentSource: overrides.nodeAssignments[n.id] ? "manual" :
-              (analysis.nodeAssignments[n.id]?.assignmentSource || "automatic"),
+            assignmentSource: overrides.nodeAssignments[n.id]
+              ? "manual"
+              : analysis.nodeAssignments[n.id]?.assignmentSource || "automatic",
             communityName: info.name,
             color: state.colorMode === "community" ? info.color : kindColor,
-            borderColor: state.colorMode === "community" ? info.borderColor : "#F0F6FC",
+            borderColor:
+              state.colorMode === "community" ? info.borderColor : "#F0F6FC",
           },
         };
       }),
@@ -339,8 +473,8 @@
     container: $("cy"),
     elements: elements(),
     pixelRatio: "auto",
-    wheelSensitivity: .18,
-    minZoom: .04,
+    wheelSensitivity: 0.18,
+    minZoom: 0.04,
     maxZoom: 4,
     textureOnViewport: true,
     motionBlur: false,
@@ -350,13 +484,13 @@
         selector: "node",
         style: {
           "background-color": "data(color)",
-          "width": "data(size)",
-          "height": "data(size)",
+          width: "data(size)",
+          height: "data(size)",
           "border-width": 3,
           "border-color": "data(borderColor)",
-          "label": "",
+          label: "",
           "font-size": 10,
-          "color": "#e6edf3",
+          color: "#e6edf3",
           "text-outline-width": 2,
           "text-outline-color": "#0d1117",
           "text-max-width": 180,
@@ -381,7 +515,11 @@
       },
       {
         selector: "node[versionSkew = true]",
-        style: { "underlay-color": "#F85149", "underlay-opacity": .24, "underlay-padding": 2 },
+        style: {
+          "underlay-color": "#F85149",
+          "underlay-opacity": 0.24,
+          "underlay-padding": 2,
+        },
       },
       {
         selector: "node.show-label,node:selected",
@@ -395,7 +533,7 @@
         selector: "node:selected",
         style: {
           "overlay-color": "#58a6ff",
-          "overlay-opacity": .24,
+          "overlay-opacity": 0.24,
           "overlay-padding": 9,
         },
       },
@@ -403,7 +541,7 @@
         selector: "node.search-match",
         style: {
           "overlay-color": "#d29922",
-          "overlay-opacity": .2,
+          "overlay-opacity": 0.2,
           "overlay-padding": 6,
         },
       },
@@ -412,12 +550,17 @@
         style: { "border-style": "dashed", "border-width": 3 },
       },
       {
-        selector: 'node[architecturalRole="cross-community bridge"],node[architecturalRole="shared infrastructure"]',
+        selector:
+          'node[architecturalRole="cross-community bridge"],node[architecturalRole="shared infrastructure"]',
         style: { "border-width": 4.5 },
       },
       {
         selector: "node.community-highlight",
-        style: { "overlay-color": "#F0F6FC", "overlay-opacity": .18, "overlay-padding": 7 },
+        style: {
+          "overlay-color": "#F0F6FC",
+          "overlay-opacity": 0.18,
+          "overlay-padding": 7,
+        },
       },
       {
         selector: "edge",
@@ -427,8 +570,8 @@
           "target-arrow-color": "#8c98a5",
           "target-arrow-shape": "none",
           "curve-style": "bezier",
-          "opacity": .48,
-          "arrow-scale": .7,
+          opacity: 0.48,
+          "arrow-scale": 0.7,
         },
       },
       {
@@ -446,7 +589,7 @@
           "line-color": "#e3b341",
           "target-arrow-color": "#e3b341",
           width: 1.2,
-          opacity: .6,
+          opacity: 0.6,
         },
       },
       {
@@ -455,10 +598,10 @@
           "line-style": "dotted",
           "line-color": "#bc8cff",
           "target-arrow-color": "#bc8cff",
-          opacity: .38,
+          opacity: 0.38,
         },
       },
-      { selector: ".faded", style: { opacity: .035 } },
+      { selector: ".faded", style: { opacity: 0.035 } },
       {
         selector: "edge.upstream",
         style: {
@@ -486,7 +629,7 @@
         style: {
           "target-arrow-shape": "triangle",
           width: 1.5,
-          opacity: .85,
+          opacity: 0.85,
           "z-index": 9,
         },
       },
@@ -495,16 +638,30 @@
         style: {
           "curve-style": "haystack",
           "target-arrow-shape": "none",
-          width: .75,
-          opacity: .12,
+          width: 0.75,
+          opacity: 0.12,
         },
       },
       { selector: "edge.manual-hidden", style: { display: "none" } },
       {
         selector: "edge.manual-hidden.manual-reveal",
-        style: { display: "element", "line-style": "dashed", "line-color": "#f2cc60", "target-arrow-color": "#f2cc60", opacity: .9, width: 2 },
+        style: {
+          display: "element",
+          "line-style": "dashed",
+          "line-color": "#f2cc60",
+          "target-arrow-color": "#f2cc60",
+          opacity: 0.9,
+          width: 2,
+        },
       },
-      { selector: "node.manual-muted", style: { "underlay-color": "#f2cc60", "underlay-opacity": .42, "underlay-padding": 5 } },
+      {
+        selector: "node.manual-muted",
+        style: {
+          "underlay-color": "#f2cc60",
+          "underlay-opacity": 0.42,
+          "underlay-padding": 5,
+        },
+      },
     ],
     layout: { name: "preset" },
   });
@@ -516,15 +673,18 @@
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(n);
     });
-    const ordered = [...groups.entries()].sort((a, b) =>
-      b[1].length - a[1].length ||
-      a[0].localeCompare(b[0], undefined, { numeric: true })
+    const ordered = [...groups.entries()].sort(
+      (a, b) =>
+        b[1].length - a[1].length ||
+        a[0].localeCompare(b[0], undefined, { numeric: true }),
     );
     const columns = Math.max(1, Math.ceil(Math.sqrt(ordered.length))),
       cell = Math.max(
         320,
         Math.sqrt(Math.max(1, ...ordered.map((x) => x[1].length))) *
-            physics.linkDistance * 1.1 + 220,
+          physics.linkDistance *
+          1.1 +
+          220,
       );
     for (let i = 0; i < ordered.length; i++) {
       const members = ordered[i][1],
@@ -540,8 +700,9 @@
     const seed = (payload.defaults.seed || 42) + state.run * 7919,
       h = hash(node.id, seed),
       angle = ((h % 3600) / 3600) * Math.PI * 2;
-    const radius = (randomize ? 35 : 16) +
-      Math.sqrt(index + 1) * physics.linkDistance * .8 +
+    const radius =
+      (randomize ? 35 : 16) +
+      Math.sqrt(index + 1) * physics.linkDistance * 0.8 +
       ((h >>> 12) % Math.max(20, physics.linkDistance));
     node.x = node.cx + Math.cos(angle) * radius;
     node.y = node.cy + Math.sin(angle) * radius;
@@ -559,7 +720,10 @@
         if (!node.community) return;
         const key = `${node.component}|${node.community}`;
         const group = groups.get(key) || { x: 0, y: 0, count: 0 };
-        group.x += node.x; group.y += node.y; group.count++; groups.set(key, group);
+        group.x += node.x;
+        group.y += node.y;
+        group.count++;
+        groups.set(key, group);
       });
       nodes.forEach((node) => {
         if (!node.community) return;
@@ -569,7 +733,9 @@
         node.vy += (group.y / group.count - node.y) * strength * alpha;
       });
     }
-    force.initialize = (value) => { nodes = value; };
+    force.initialize = (value) => {
+      nodes = value;
+    };
     return force;
   }
   function forceOptions(simulation) {
@@ -582,51 +748,70 @@
     simulation
       .force(
         "link",
-        d3.forceLink(links).id((d) => d.id).distance((link) => {
-          const a = typeof link.source === "object"
-              ? link.source
-              : byId.get(link.source),
-            b = typeof link.target === "object"
-              ? link.target
-              : byId.get(link.target),
-            degreeSpace = Math.min(
-              70,
-              Math.sqrt(Math.max(a?.degree || 0, b?.degree || 0)) * 7,
+        d3
+          .forceLink(links)
+          .id((d) => d.id)
+          .distance((link) => {
+            const a =
+                typeof link.source === "object"
+                  ? link.source
+                  : byId.get(link.source),
+              b =
+                typeof link.target === "object"
+                  ? link.target
+                  : byId.get(link.target),
+              degreeSpace = Math.min(
+                70,
+                Math.sqrt(Math.max(a?.degree || 0, b?.degree || 0)) * 7,
+              );
+            return (
+              physics.linkDistance +
+              (a?.size || 18) / 2 +
+              (b?.size || 18) / 2 +
+              degreeSpace +
+              (link.kind === "contracted-path" ? 35 : 0)
             );
-          return physics.linkDistance + (a?.size || 18) / 2 +
-            (b?.size || 18) / 2 + degreeSpace +
-            (link.kind === "contracted-path" ? 35 : 0);
-        }).strength((link) =>
-          physics.linkStrength /
-          (1 +
-            Math.sqrt(
-                Math.max(link.source.degree || 0, link.target.degree || 0),
-              ) / 5)
-        ).iterations(1),
+          })
+          .strength(
+            (link) =>
+              physics.linkStrength /
+              (1 +
+                Math.sqrt(
+                  Math.max(link.source.degree || 0, link.target.degree || 0),
+                ) /
+                  5),
+          )
+          .iterations(1),
       )
       .force(
         "charge",
-        d3.forceManyBody().strength((d) =>
-          -physics.repulsion * (.75 + Math.min(40, d.degree || 0) / 80)
-        ).distanceMin(8).distanceMax(1400).theta(.9),
+        d3
+          .forceManyBody()
+          .strength(
+            (d) =>
+              -physics.repulsion * (0.75 + Math.min(40, d.degree || 0) / 80),
+          )
+          .distanceMin(8)
+          .distanceMax(1400)
+          .theta(0.9),
       )
       .force(
         "collision",
-        d3.forceCollide((d) => d.size / 2 + physics.collisionPadding).strength(
-          1,
-        ).iterations(6),
+        d3
+          .forceCollide((d) => d.size / 2 + physics.collisionPadding)
+          .strength(1)
+          .iterations(6),
       )
-      .force("x", d3.forceX((d) => d.cx).strength(physics.gravity)).force(
-        "y",
-        d3.forceY((d) => d.cy).strength(physics.gravity),
-      ).force("community", communityCentroidForce(physics.communityAttraction));
+      .force("x", d3.forceX((d) => d.cx).strength(physics.gravity))
+      .force("y", d3.forceY((d) => d.cy).strength(physics.gravity))
+      .force("community", communityCentroidForce(physics.communityAttraction));
   }
   function refreshPositions() {
     cy.batch(() =>
       state.forceNodes.forEach((d) => {
         const n = cy.$id(d.id);
         if (n.length) n.position({ x: d.x, y: d.y });
-      })
+      }),
     );
   }
   function overlapCount() {
@@ -667,46 +852,53 @@
     state.fitted = false;
     state.paused = false;
     $("pause").textContent = "Pause physics";
-    const simulation = d3.forceSimulation(nodes).alpha(1).alphaMin(
-      physics.alphaMin,
-    ).alphaDecay(physics.alphaDecay).velocityDecay(.42);
+    const simulation = d3
+      .forceSimulation(nodes)
+      .alpha(1)
+      .alphaMin(physics.alphaMin)
+      .alphaDecay(physics.alphaDecay)
+      .velocityDecay(0.42);
     forceOptions(simulation);
     state.simulation = simulation;
     cy.edges().addClass("physics-active");
-    let ticks = 0, lastPaint = 0;
-    simulation.on("tick", () => {
-      ticks++;
-      const now = performance.now();
-      if (now - lastPaint > 45) {
+    let ticks = 0,
+      lastPaint = 0;
+    simulation
+      .on("tick", () => {
+        ticks++;
+        const now = performance.now();
+        if (now - lastPaint > 45) {
+          refreshPositions();
+          lastPaint = now;
+        }
+        if (ticks <= 90 && ticks % 30 === 0) {
+          cy.fit(cy.elements(":visible"), 55);
+          state.fitted = true;
+          updateLabels();
+        }
+        if (ticks % 20 === 0) {
+          setStatus(
+            `Physics settling · ${Math.round(simulation.alpha() * 100)}%`,
+          );
+        }
+      })
+      .on("end", () => {
         refreshPositions();
-        lastPaint = now;
-      }
-      if (ticks <= 90 && ticks % 30 === 0) {
+        cy.edges().removeClass("physics-active");
         cy.fit(cy.elements(":visible"), 55);
-        state.fitted = true;
         updateLabels();
-      }
-      if (ticks % 20 === 0) {
-        setStatus(
-          `Physics settling · ${Math.round(simulation.alpha() * 100)}%`,
-        );
-      }
-    }).on("end", () => {
-      refreshPositions();
-      cy.edges().removeClass("physics-active");
-      cy.fit(cy.elements(":visible"), 55);
-      updateLabels();
-      setStatus(`Physics settled · ${overlapCount()} overlaps`);
-    });
+        setStatus(`Physics settled · ${overlapCount()} overlaps`);
+      });
     setStatus("Physics settling");
   }
-  function reheat(alpha = .55) {
+  function reheat(alpha = 0.55) {
     if (!state.simulation) return;
     forceOptions(state.simulation);
     cy.edges().addClass("physics-active");
-    state.simulation.alphaTarget(0).alpha(
-      Math.max(alpha, state.simulation.alpha()),
-    ).restart();
+    state.simulation
+      .alphaTarget(0)
+      .alpha(Math.max(alpha, state.simulation.alpha()))
+      .restart();
     state.paused = false;
     $("pause").textContent = "Pause physics";
     setStatus("Physics reheated");
@@ -724,11 +916,14 @@
   }
 
   function populate(id, values) {
-    const s = $(id), old = s.value;
+    const s = $(id),
+      old = s.value;
     s.replaceChildren(new Option("All", ""));
-    [...values].sort((a, b) =>
-      String(a).localeCompare(String(b), undefined, { numeric: true })
-    ).forEach((v) => s.add(new Option(String(v), String(v))));
+    [...values]
+      .sort((a, b) =>
+        String(a).localeCompare(String(b), undefined, { numeric: true }),
+      )
+      .forEach((v) => s.add(new Option(String(v), String(v))));
     s.value = old;
   }
   function populateFilters() {
@@ -754,8 +949,9 @@
       if (!groups.has(n.component)) groups.set(n.component, []);
       groups.get(n.component).push(n);
     });
-    [...groups.entries()].sort((a, b) => b[1].length - a[1].length).forEach(
-      ([id, nodes]) => {
+    [...groups.entries()]
+      .sort((a, b) => b[1].length - a[1].length)
+      .forEach(([id, nodes]) => {
         const b = document.createElement("button");
         b.className = "component-link";
         b.textContent = `${id}: ${nodes.length} nodes · ${
@@ -763,157 +959,455 @@
         }`;
         b.onclick = () =>
           cy.fit(
-            cy.nodes().filter((n) =>
-              String(n.data("component")) === String(id)
-            ),
+            cy
+              .nodes()
+              .filter((n) => String(n.data("component")) === String(id)),
             70,
           );
         box.appendChild(b);
-      },
-    );
+      });
   }
   function downloadJson(name, value) {
     const a = document.createElement("a");
     a.download = name;
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }));
-    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    a.href = URL.createObjectURL(
+      new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }),
+    );
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
   function effectiveGroups() {
     const groups = new Map();
     graph().nodes.forEach((node) => {
-      const key = effectiveKey(node.id); if (!key) return;
+      const key = effectiveKey(node.id);
+      if (!key) return;
       const values = groups.get(key) || [];
-      values.push(node); groups.set(key, values);
+      values.push(node);
+      groups.set(key, values);
     });
     return groups;
   }
   function renderCommunityLegend() {
-    const container = $("community-legend-rows"), query = $("community-search").value.trim().toLowerCase();
+    const container = $("community-legend-rows"),
+      query = $("community-search").value.trim().toLowerCase();
     container.replaceChildren();
     if (state.colorMode !== "community") {
-      const message = document.createElement("p"); message.textContent = "Colors currently represent node kind: project, package, or unresolved."; container.appendChild(message); return;
+      const message = document.createElement("p");
+      message.textContent =
+        "Colors currently represent node kind: project, package, or unresolved.";
+      container.appendChild(message);
+      return;
     }
-    const groups = [...effectiveGroups().entries()].map(([key, nodes]) => ({ key, nodes, info: communityInfo(key) }))
-      .filter(item => !query || item.info.name.toLowerCase().includes(query) || item.nodes.some(node => node.label.toLowerCase().includes(query)))
+    const groups = [...effectiveGroups().entries()]
+      .map(([key, nodes]) => ({ key, nodes, info: communityInfo(key) }))
+      .filter(
+        (item) =>
+          !query ||
+          item.info.name.toLowerCase().includes(query) ||
+          item.nodes.some((node) => node.label.toLowerCase().includes(query)),
+      )
       .sort((a, b) => {
-        const aPath = analysis.nodeAssignments[a.nodes[0].id]?.detectedCommunityPath?.join("/") || a.key,
-          bPath = analysis.nodeAssignments[b.nodes[0].id]?.detectedCommunityPath?.join("/") || b.key;
-        return aPath.localeCompare(bPath) || b.nodes.length - a.nodes.length || a.info.name.localeCompare(b.info.name);
+        const aPath =
+            analysis.nodeAssignments[
+              a.nodes[0].id
+            ]?.detectedCommunityPath?.join("/") || a.key,
+          bPath =
+            analysis.nodeAssignments[
+              b.nodes[0].id
+            ]?.detectedCommunityPath?.join("/") || b.key;
+        return (
+          aPath.localeCompare(bPath) ||
+          b.nodes.length - a.nodes.length ||
+          a.info.name.localeCompare(b.info.name)
+        );
       });
     groups.forEach(({ key, nodes, info }) => {
-      const row = document.createElement("div"); row.className = "community-row"; row.dataset.community = key;
+      const row = document.createElement("div");
+      row.className = "community-row";
+      row.dataset.community = key;
       if (state.selectedCommunities.has(key)) row.classList.add("selected");
-      const swatch = document.createElement("span"); swatch.className = "community-swatch"; swatch.style.backgroundColor = info.color; swatch.style.borderColor = info.borderColor || generatedBorder(key);
+      const swatch = document.createElement("span");
+      swatch.className = "community-swatch";
+      swatch.style.backgroundColor = info.color;
+      swatch.style.borderColor = info.borderColor || generatedBorder(key);
       row.style.marginLeft = `${Math.min(2, info.depth || 0) * 9}px`;
-      const label = document.createElement("button"); label.className = "community-name";
-      const projects = nodes.filter(node => node.kind === "project").length,
-        packages = nodes.filter(node => node.kind === "package").length,
-        runnable = nodes.filter(node => ["executable", "web-application", "azure-functions"].includes(node.classification)).length;
+      const label = document.createElement("button");
+      label.className = "community-name";
+      const projects = nodes.filter((node) => node.kind === "project").length,
+        packages = nodes.filter((node) => node.kind === "package").length,
+        runnable = nodes.filter((node) =>
+          ["executable", "web-application", "azure-functions"].includes(
+            node.classification,
+          ),
+        ).length;
       label.textContent = `${info.name} — ${nodes.length}`;
       label.title = `${projects} projects · ${packages} packages · ${runnable} runnable${info.manual ? " · manual changes" : ""}`;
       label.onclick = (event) => {
         if (!event.ctrlKey && !event.metaKey) state.selectedCommunities.clear();
-        state.selectedCommunities.has(key) ? state.selectedCommunities.delete(key) : state.selectedCommunities.add(key);
-        showCommunityDetails(key); renderCommunityLegend(); applyFilters();
+        state.selectedCommunities.has(key)
+          ? state.selectedCommunities.delete(key)
+          : state.selectedCommunities.add(key);
+        showCommunityDetails(key);
+        renderCommunityLegend();
+        applyFilters();
       };
       row.onmouseenter = () => highlightCommunity(key);
-      row.onmouseleave = () => { cy.nodes().removeClass("community-highlight"); if (!state.selected) clearFocus(); };
-      const edit = document.createElement("button"); edit.textContent = "Edit"; edit.title = "Rename or recolor"; edit.onclick = () => editCommunity(key);
-      const restore = document.createElement("button"); restore.textContent = "↶"; restore.title = "Restore automatic community values and membership"; restore.onclick = () => restoreCommunity(key);
-      const members = document.createElement("details"); members.className = "community-members";
-      const memberSummary = document.createElement("summary"); memberSummary.textContent = "Members / children"; members.appendChild(memberSummary);
-      (info.directChildKeys || []).forEach(childKey => { const child = document.createElement("div"); child.textContent = `↳ ${communityInfo(childKey).name}`; members.appendChild(child); });
-      nodes.sort((a, b) => (b.centrality || 0) - (a.centrality || 0) || a.label.localeCompare(b.label)).slice(0, 5).forEach(node => { const member = document.createElement("button"); member.textContent = node.label; member.onclick = () => { const target = cy.$id(node.id); if (target.length) { target.select(); detail(target); cy.fit(target, 100); } }; members.appendChild(member); });
-      row.append(swatch, label, edit, restore, members); container.appendChild(row);
+      row.onmouseleave = () => {
+        cy.nodes().removeClass("community-highlight");
+        if (!state.selected) clearFocus();
+      };
+      const edit = document.createElement("button");
+      edit.textContent = "Edit";
+      edit.title = "Rename or recolor";
+      edit.onclick = () => editCommunity(key);
+      const restore = document.createElement("button");
+      restore.textContent = "↶";
+      restore.title = "Restore automatic community values and membership";
+      restore.onclick = () => restoreCommunity(key);
+      const members = document.createElement("details");
+      members.className = "community-members";
+      const memberSummary = document.createElement("summary");
+      memberSummary.textContent = "Members / children";
+      members.appendChild(memberSummary);
+      (info.directChildKeys || []).forEach((childKey) => {
+        const child = document.createElement("div");
+        child.textContent = `↳ ${communityInfo(childKey).name}`;
+        members.appendChild(child);
+      });
+      nodes
+        .sort(
+          (a, b) =>
+            (b.centrality || 0) - (a.centrality || 0) ||
+            a.label.localeCompare(b.label),
+        )
+        .slice(0, 5)
+        .forEach((node) => {
+          const member = document.createElement("button");
+          member.textContent = node.label;
+          member.onclick = () => {
+            const target = cy.$id(node.id);
+            if (target.length) {
+              target.select();
+              detail(target);
+              cy.fit(target, 100);
+            }
+          };
+          members.appendChild(member);
+        });
+      row.append(swatch, label, edit, restore, members);
+      container.appendChild(row);
     });
   }
   function highlightCommunity(key) {
     cy.nodes().removeClass("community-highlight");
-    cy.nodes().filter(node => node.data("effectiveCommunity") === key).addClass("community-highlight");
+    cy.nodes()
+      .filter((node) => node.data("effectiveCommunity") === key)
+      .addClass("community-highlight");
   }
   function editCommunity(key) {
-    const info = communityInfo(key), name = prompt("Community name", info.name); if (name === null || !name.trim()) return;
-    const color = prompt("Community color (#RRGGBB)", info.color); if (color === null) return;
-    if (!validColor(color)) { showNotice("Community color must use #RRGGBB format."); return; }
-    const manual = overrides.manualCommunities.find(community => community.id === key);
-    if (manual) { manual.name = name.trim(); manual.color = color.toUpperCase(); }
-    else {
-      let style = overrides.communityOverrides.find(item => item.communityKey === key);
-      if (!style) { style = { communityKey: key, detectedAnchorNodeId: automaticCommunities.get(key)?.memberNodeIds?.[0] || "", name: null, color: null }; overrides.communityOverrides.push(style); }
-      style.name = name.trim(); style.color = color.toUpperCase();
+    const info = communityInfo(key),
+      name = prompt("Community name", info.name);
+    if (name === null || !name.trim()) return;
+    const color = prompt("Community color (#RRGGBB)", info.color);
+    if (color === null) return;
+    if (!validColor(color)) {
+      showNotice("Community color must use #RRGGBB format.");
+      return;
     }
-    saveOverrides(); replace();
+    const manual = overrides.manualCommunities.find(
+      (community) => community.id === key,
+    );
+    if (manual) {
+      manual.name = name.trim();
+      manual.color = color.toUpperCase();
+    } else {
+      let style = overrides.communityOverrides.find(
+        (item) => item.communityKey === key,
+      );
+      if (!style) {
+        style = {
+          communityKey: key,
+          detectedAnchorNodeId:
+            automaticCommunities.get(key)?.memberNodeIds?.[0] || "",
+          name: null,
+          color: null,
+        };
+        overrides.communityOverrides.push(style);
+      }
+      style.name = name.trim();
+      style.color = color.toUpperCase();
+    }
+    saveOverrides();
+    replace();
   }
   function restoreCommunity(key) {
-    overrides.communityOverrides = overrides.communityOverrides.filter(item => item.communityKey !== key && !automaticCommunities.get(key)?.memberNodeIds?.includes(item.detectedAnchorNodeId));
-    for (const [nodeId, assigned] of Object.entries(overrides.nodeAssignments)) if (assigned === key) delete overrides.nodeAssignments[nodeId];
-    const manual = overrides.manualCommunities.find(community => community.id === key);
-    if (manual) { for (const [nodeId, assigned] of Object.entries(overrides.nodeAssignments)) if (assigned === key) delete overrides.nodeAssignments[nodeId]; overrides.manualCommunities = overrides.manualCommunities.filter(community => community.id !== key); }
-    state.selectedCommunities.delete(key); saveOverrides(); replace();
+    overrides.communityOverrides = overrides.communityOverrides.filter(
+      (item) =>
+        item.communityKey !== key &&
+        !automaticCommunities
+          .get(key)
+          ?.memberNodeIds?.includes(item.detectedAnchorNodeId),
+    );
+    for (const [nodeId, assigned] of Object.entries(overrides.nodeAssignments))
+      if (assigned === key) delete overrides.nodeAssignments[nodeId];
+    const manual = overrides.manualCommunities.find(
+      (community) => community.id === key,
+    );
+    if (manual) {
+      for (const [nodeId, assigned] of Object.entries(
+        overrides.nodeAssignments,
+      ))
+        if (assigned === key) delete overrides.nodeAssignments[nodeId];
+      overrides.manualCommunities = overrides.manualCommunities.filter(
+        (community) => community.id !== key,
+      );
+    }
+    state.selectedCommunities.delete(key);
+    saveOverrides();
+    replace();
   }
   function createManual(name, color) {
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "community";
-    let id = `manual:${slug}`, suffix = 2; const known = new Set(overrides.manualCommunities.map(item => item.id));
+    const slug =
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "community";
+    let id = `manual:${slug}`,
+      suffix = 2;
+    const known = new Set(overrides.manualCommunities.map((item) => item.id));
     while (known.has(id)) id = `manual:${slug}-${suffix++}`;
-    overrides.manualCommunities.push({ id, name, color }); return id;
+    overrides.manualCommunities.push({ id, name, color });
+    return id;
   }
   function rememberNodeSelection(id) {
-    state.selectionOrder = state.selectionOrder.filter(selected => selected !== id);
+    state.selectionOrder = state.selectionOrder.filter(
+      (selected) => selected !== id,
+    );
     state.selectionOrder.push(id);
   }
   function selectedNodeIds() {
-    const selected = new Set(cy.nodes(":selected").map(node => node.id()));
-    state.selectionOrder = state.selectionOrder.filter(id => selected.has(id));
-    selected.forEach(id => {
+    const selected = new Set(cy.nodes(":selected").map((node) => node.id()));
+    state.selectionOrder = state.selectionOrder.filter((id) =>
+      selected.has(id),
+    );
+    selected.forEach((id) => {
       if (!state.selectionOrder.includes(id)) state.selectionOrder.push(id);
     });
     return [...state.selectionOrder];
   }
   function createFromSelection() {
-    const nodes = selectedNodeIds(); if (!nodes.length && state.selected) nodes.push(state.selected);
-    if (!nodes.length) { showNotice("Select one or more nodes first."); return; }
-    const name = prompt("New manual community name", "Manual community"); if (!name?.trim()) return;
-    const color = prompt("Community color (#RRGGBB)", "#F0883E"); if (!validColor(color)) { showNotice("Community color must use #RRGGBB format."); return; }
-    const id = createManual(name.trim(), color.toUpperCase()); nodes.forEach(nodeId => overrides.nodeAssignments[nodeId] = id); saveOverrides(); replace();
+    const nodes = selectedNodeIds();
+    if (!nodes.length && state.selected) nodes.push(state.selected);
+    if (!nodes.length) {
+      showNotice("Select one or more nodes first.");
+      return;
+    }
+    const name = prompt("New manual community name", "Manual community");
+    if (!name?.trim()) return;
+    const color = prompt("Community color (#RRGGBB)", "#F0883E");
+    if (!validColor(color)) {
+      showNotice("Community color must use #RRGGBB format.");
+      return;
+    }
+    const id = createManual(name.trim(), color.toUpperCase());
+    nodes.forEach((nodeId) => (overrides.nodeAssignments[nodeId] = id));
+    saveOverrides();
+    replace();
   }
   function mergeSelectedCommunities() {
-    if (state.selectedCommunities.size < 2) { showNotice("Select at least two legend communities with Ctrl/Cmd-click."); return; }
-    const name = prompt("Merged effective community name", "Merged community"); if (!name?.trim()) return;
-    const color = prompt("Community color (#RRGGBB)", "#BC8CFF"); if (!validColor(color)) { showNotice("Community color must use #RRGGBB format."); return; }
-    const selected = new Set(state.selectedCommunities), id = createManual(name.trim(), color.toUpperCase());
-    graph().nodes.forEach(node => { if (selected.has(effectiveKey(node.id))) overrides.nodeAssignments[node.id] = id; });
-    state.selectedCommunities.clear(); saveOverrides(); replace();
+    if (state.selectedCommunities.size < 2) {
+      showNotice("Select at least two legend communities with Ctrl/Cmd-click.");
+      return;
+    }
+    const name = prompt("Merged effective community name", "Merged community");
+    if (!name?.trim()) return;
+    const color = prompt("Community color (#RRGGBB)", "#BC8CFF");
+    if (!validColor(color)) {
+      showNotice("Community color must use #RRGGBB format.");
+      return;
+    }
+    const selected = new Set(state.selectedCommunities),
+      id = createManual(name.trim(), color.toUpperCase());
+    graph().nodes.forEach((node) => {
+      if (selected.has(effectiveKey(node.id)))
+        overrides.nodeAssignments[node.id] = id;
+    });
+    state.selectedCommunities.clear();
+    saveOverrides();
+    replace();
   }
   function effectiveMatrix() {
     const rows = new Map();
-    cy.edges().forEach(edge => {
+    cy.edges().forEach((edge) => {
       if (edge.data("kind") === "produces-package") return;
-      const source = effectiveKey(edge.source().id()), target = effectiveKey(edge.target().id()); if (!source || !target || source === target) return;
-      const key = `${source}\n${target}`, row = rows.get(key) || { sourceCommunity: source, targetCommunity: target, edgeCount: 0, edgeKinds: {} };
-      row.edgeCount++; row.edgeKinds[edge.data("kind")] = (row.edgeKinds[edge.data("kind")] || 0) + 1; rows.set(key, row);
+      const source = effectiveKey(edge.source().id()),
+        target = effectiveKey(edge.target().id());
+      if (!source || !target || source === target) return;
+      const key = `${source}\n${target}`,
+        row = rows.get(key) || {
+          sourceCommunity: source,
+          targetCommunity: target,
+          edgeCount: 0,
+          edgeKinds: {},
+        };
+      row.edgeCount++;
+      row.edgeKinds[edge.data("kind")] =
+        (row.edgeKinds[edge.data("kind")] || 0) + 1;
+      rows.set(key, row);
     });
-    return [...rows.values()].sort((a, b) => b.edgeCount - a.edgeCount || a.sourceCommunity.localeCompare(b.sourceCommunity));
+    return [...rows.values()].sort(
+      (a, b) =>
+        b.edgeCount - a.edgeCount ||
+        a.sourceCommunity.localeCompare(b.sourceCommunity),
+    );
   }
   function showCommunityDetails(key) {
-    const info = communityInfo(key), nodes = graph().nodes.filter(node => effectiveKey(node.id) === key), panel = $("details"); panel.replaceChildren();
-    const title = document.createElement("h2"); title.textContent = info.name; panel.appendChild(title);
+    const info = communityInfo(key),
+      nodes = graph().nodes.filter((node) => effectiveKey(node.id) === key),
+      panel = $("details");
+    panel.replaceChildren();
+    const title = document.createElement("h2");
+    title.textContent = info.name;
+    panel.appendChild(title);
     const detected = automaticCommunities.get(key);
-    const values = { "Effective nodes": nodes.length, Projects: nodes.filter(n => n.kind === "project").length, Packages: nodes.filter(n => n.kind === "package").length,
-      "Detected quality": detected?.quality ?? "manual/effective partition", Stability: detected?.stability ?? "—", "Manual assignments": nodes.filter(n => overrides.nodeAssignments[n.id]).length };
-    Object.entries(values).forEach(([name, value]) => { const row = document.createElement("div"); row.className = "detail"; const b = document.createElement("b"); b.textContent = name; const span = document.createElement("span"); span.textContent = String(value); row.append(b, span); panel.appendChild(row); });
-    const matrix = document.createElement("div"); matrix.className = "detail"; const heading = document.createElement("b"); heading.textContent = "Cross-community dependencies (effective view)"; matrix.appendChild(heading);
-    effectiveMatrix().filter(row => row.sourceCommunity === key || row.targetCommunity === key).slice(0, 20).forEach(row => { const line = document.createElement("button"); line.className = "matrix-row"; line.textContent = `${communityInfo(row.sourceCommunity).name} → ${communityInfo(row.targetCommunity).name}: ${row.edgeCount}`; line.onclick = () => { cy.edges().addClass("faded"); cy.edges().filter(edge => effectiveKey(edge.source().id()) === row.sourceCommunity && effectiveKey(edge.target().id()) === row.targetCommunity).removeClass("faded"); }; matrix.appendChild(line); }); panel.appendChild(matrix);
+    const values = {
+      "Effective nodes": nodes.length,
+      Projects: nodes.filter((n) => n.kind === "project").length,
+      Packages: nodes.filter((n) => n.kind === "package").length,
+      "Detected quality": detected?.quality ?? "manual/effective partition",
+      Stability: detected?.stability ?? "—",
+      "Manual assignments": nodes.filter((n) => overrides.nodeAssignments[n.id])
+        .length,
+    };
+    Object.entries(values).forEach(([name, value]) => {
+      const row = document.createElement("div");
+      row.className = "detail";
+      const b = document.createElement("b");
+      b.textContent = name;
+      const span = document.createElement("span");
+      span.textContent = String(value);
+      row.append(b, span);
+      panel.appendChild(row);
+    });
+    const matrix = document.createElement("div");
+    matrix.className = "detail";
+    const heading = document.createElement("b");
+    heading.textContent = "Cross-community dependencies (effective view)";
+    matrix.appendChild(heading);
+    effectiveMatrix()
+      .filter(
+        (row) => row.sourceCommunity === key || row.targetCommunity === key,
+      )
+      .slice(0, 20)
+      .forEach((row) => {
+        const line = document.createElement("button");
+        line.className = "matrix-row";
+        line.textContent = `${communityInfo(row.sourceCommunity).name} → ${communityInfo(row.targetCommunity).name}: ${row.edgeCount}`;
+        line.onclick = () => {
+          cy.edges().addClass("faded");
+          cy.edges()
+            .filter(
+              (edge) =>
+                effectiveKey(edge.source().id()) === row.sourceCommunity &&
+                effectiveKey(edge.target().id()) === row.targetCommunity,
+            )
+            .removeClass("faded");
+        };
+        matrix.appendChild(line);
+      });
+    panel.appendChild(matrix);
   }
   function showCommunityMap() {
-    const panel = $("details"); panel.replaceChildren(); const title = document.createElement("h2"); title.textContent = "Effective community graph"; panel.appendChild(title);
-    const groups = [...effectiveGroups().keys()].sort((a, b) => communityInfo(a).name.localeCompare(communityInfo(b).name)), size = 270, center = size / 2, radius = 100;
-    const positions = new Map(groups.map((key, index) => [key, { x: center + Math.cos(index / Math.max(1, groups.length) * Math.PI * 2) * radius, y: center + Math.sin(index / Math.max(1, groups.length) * Math.PI * 2) * radius }]));
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.setAttribute("viewBox", `0 0 ${size} ${size}`); svg.classList.add("community-map");
-    const defs = document.createElementNS(svg.namespaceURI, "defs"), marker = document.createElementNS(svg.namespaceURI, "marker"); marker.setAttribute("id", "community-arrow"); marker.setAttribute("viewBox", "0 0 10 10"); marker.setAttribute("refX", "8"); marker.setAttribute("refY", "5"); marker.setAttribute("markerWidth", "5"); marker.setAttribute("markerHeight", "5"); marker.setAttribute("orient", "auto-start-reverse"); const arrow = document.createElementNS(svg.namespaceURI, "path"); arrow.setAttribute("d", "M 0 0 L 10 5 L 0 10 z"); arrow.setAttribute("fill", "#8B949E"); marker.appendChild(arrow); defs.appendChild(marker); svg.appendChild(defs);
-    effectiveMatrix().forEach(edge => { const a = positions.get(edge.sourceCommunity), b = positions.get(edge.targetCommunity); if (!a || !b) return; const line = document.createElementNS(svg.namespaceURI, "line"); line.setAttribute("x1", a.x); line.setAttribute("y1", a.y); line.setAttribute("x2", b.x); line.setAttribute("y2", b.y); line.setAttribute("stroke", "#8B949E"); line.setAttribute("stroke-width", String(Math.min(4, 1 + Math.log2(edge.edgeCount)))); line.setAttribute("marker-end", "url(#community-arrow)"); svg.appendChild(line); });
-    groups.forEach(key => { const p = positions.get(key), info = communityInfo(key); const circle = document.createElementNS(svg.namespaceURI, "circle"); circle.setAttribute("cx", p.x); circle.setAttribute("cy", p.y); circle.setAttribute("r", "8"); circle.setAttribute("fill", info.color); circle.setAttribute("stroke", info.borderColor || generatedBorder(key)); circle.setAttribute("stroke-width", "3"); circle.onclick = () => showCommunityDetails(key); const label = document.createElementNS(svg.namespaceURI, "text"); label.setAttribute("x", p.x + 10); label.setAttribute("y", p.y + 4); label.textContent = info.name.length > 18 ? `${info.name.slice(0, 17)}…` : info.name; svg.append(circle, label); });
-    panel.appendChild(svg); const heading = document.createElement("h2"); heading.textContent = "Directed coupling matrix"; panel.appendChild(heading);
-    effectiveMatrix().forEach(row => { const line = document.createElement("button"); line.className = "matrix-row"; line.textContent = `${communityInfo(row.sourceCommunity).name} → ${communityInfo(row.targetCommunity).name}: ${row.edgeCount}`; line.onclick = () => showCommunityDetails(row.sourceCommunity); panel.appendChild(line); });
+    const panel = $("details");
+    panel.replaceChildren();
+    const title = document.createElement("h2");
+    title.textContent = "Effective community graph";
+    panel.appendChild(title);
+    const groups = [...effectiveGroups().keys()].sort((a, b) =>
+        communityInfo(a).name.localeCompare(communityInfo(b).name),
+      ),
+      size = 270,
+      center = size / 2,
+      radius = 100;
+    const positions = new Map(
+      groups.map((key, index) => [
+        key,
+        {
+          x:
+            center +
+            Math.cos((index / Math.max(1, groups.length)) * Math.PI * 2) *
+              radius,
+          y:
+            center +
+            Math.sin((index / Math.max(1, groups.length)) * Math.PI * 2) *
+              radius,
+        },
+      ]),
+    );
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
+    svg.classList.add("community-map");
+    const defs = document.createElementNS(svg.namespaceURI, "defs"),
+      marker = document.createElementNS(svg.namespaceURI, "marker");
+    marker.setAttribute("id", "community-arrow");
+    marker.setAttribute("viewBox", "0 0 10 10");
+    marker.setAttribute("refX", "8");
+    marker.setAttribute("refY", "5");
+    marker.setAttribute("markerWidth", "5");
+    marker.setAttribute("markerHeight", "5");
+    marker.setAttribute("orient", "auto-start-reverse");
+    const arrow = document.createElementNS(svg.namespaceURI, "path");
+    arrow.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+    arrow.setAttribute("fill", "#8B949E");
+    marker.appendChild(arrow);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+    effectiveMatrix().forEach((edge) => {
+      const a = positions.get(edge.sourceCommunity),
+        b = positions.get(edge.targetCommunity);
+      if (!a || !b) return;
+      const line = document.createElementNS(svg.namespaceURI, "line");
+      line.setAttribute("x1", a.x);
+      line.setAttribute("y1", a.y);
+      line.setAttribute("x2", b.x);
+      line.setAttribute("y2", b.y);
+      line.setAttribute("stroke", "#8B949E");
+      line.setAttribute(
+        "stroke-width",
+        String(Math.min(4, 1 + Math.log2(edge.edgeCount))),
+      );
+      line.setAttribute("marker-end", "url(#community-arrow)");
+      svg.appendChild(line);
+    });
+    groups.forEach((key) => {
+      const p = positions.get(key),
+        info = communityInfo(key);
+      const circle = document.createElementNS(svg.namespaceURI, "circle");
+      circle.setAttribute("cx", p.x);
+      circle.setAttribute("cy", p.y);
+      circle.setAttribute("r", "8");
+      circle.setAttribute("fill", info.color);
+      circle.setAttribute("stroke", info.borderColor || generatedBorder(key));
+      circle.setAttribute("stroke-width", "3");
+      circle.onclick = () => showCommunityDetails(key);
+      const label = document.createElementNS(svg.namespaceURI, "text");
+      label.setAttribute("x", p.x + 10);
+      label.setAttribute("y", p.y + 4);
+      label.textContent =
+        info.name.length > 18 ? `${info.name.slice(0, 17)}…` : info.name;
+      svg.append(circle, label);
+    });
+    panel.appendChild(svg);
+    const heading = document.createElement("h2");
+    heading.textContent = "Directed coupling matrix";
+    panel.appendChild(heading);
+    effectiveMatrix().forEach((row) => {
+      const line = document.createElement("button");
+      line.className = "matrix-row";
+      line.textContent = `${communityInfo(row.sourceCommunity).name} → ${communityInfo(row.targetCommunity).name}: ${row.edgeCount}`;
+      line.onclick = () => showCommunityDetails(row.sourceCommunity);
+      panel.appendChild(line);
+    });
   }
   function applyFilters() {
     cy.elements().removeClass("faded search-match").style("display", "element");
@@ -928,10 +1422,12 @@
       q = $("search").value.trim().toLowerCase();
     cy.nodes().forEach((n) => {
       const d = n.data(),
-        match = (!kind || d.kind === kind) &&
+        match =
+          (!kind || d.kind === kind) &&
           (!component || String(d.component) === component) &&
           (!community || d.effectiveCommunity === community) &&
-          (!state.selectedCommunities.size || state.selectedCommunities.has(d.effectiveCommunity)) &&
+          (!state.selectedCommunities.size ||
+            state.selectedCommunities.has(d.effectiveCommunity)) &&
           (!tfm || (d.targetFrameworks || []).includes(tfm)) &&
           (!rid || (d.runtimeIdentifiers || []).includes(rid)) &&
           (d.runnableDependentCount || 0) >= runnableMin &&
@@ -940,18 +1436,21 @@
       if (
         q &&
         (d.label.toLowerCase().includes(q) || d.id.toLowerCase().includes(q))
-      ) n.addClass("search-match");
+      )
+        n.addClass("search-match");
     });
     cy.edges().forEach((e) => {
       if (
         (ek && e.data("kind") !== ek) ||
         e.source().style("display") === "none" ||
         e.target().style("display") === "none"
-      ) e.style("display", "none");
+      )
+        e.style("display", "none");
     });
     const hops = Number($("hops").value);
     if (hops && state.selected) {
-      let keep = cy.$id(state.selected), front = keep;
+      let keep = cy.$id(state.selected),
+        front = keep;
       for (let i = 0; i < hops; i++) {
         front = front.neighborhood();
         keep = keep.union(front);
@@ -984,8 +1483,8 @@
       }
     });
 
-    let screenLabels = visibleNodes.filter((n) =>
-      n.data("rank") < viewerPreferences.importantLabelCount
+    let screenLabels = visibleNodes.filter(
+      (n) => n.data("rank") < viewerPreferences.importantLabelCount,
     );
     screenLabels.addClass("show-label screen-label");
 
@@ -1012,7 +1511,7 @@
     // Cytoscape font sizes are graph-space values. Dividing by zoom keeps
     // these interaction labels at a stable CSS-pixel size; pixelRatio then
     // handles the display's device-pixel density.
-    const labelScale = 1 / Math.max(zoom, .01);
+    const labelScale = 1 / Math.max(zoom, 0.01);
     screenLabels.style({
       "font-size": 12 * labelScale,
       "text-outline-width": 2 * labelScale,
@@ -1068,7 +1567,10 @@
       Frameworks: (d.targetFrameworks || []).join(", ") || "—",
       RIDs: (d.runtimeIdentifiers || []).join(", ") || "—",
       Component: d.component,
-      "Detected community path": (d.detectedCommunityPath || []).map(key => communityInfo(key).name).join(" → ") || "—",
+      "Detected community path":
+        (d.detectedCommunityPath || [])
+          .map((key) => communityInfo(key).name)
+          .join(" → ") || "—",
       "Effective community": d.communityName,
       "Assignment source": d.assignmentSource,
       "Direct dependencies": d.directDependencies,
@@ -1098,25 +1600,46 @@
     const b = document.createElement("b");
     b.textContent = "Immediate relationships";
     rel.appendChild(b);
-    [...up.nodes(), ...down.nodes()].sort((a, b) =>
-      a.data("label").localeCompare(b.data("label"))
-    ).forEach((x) => {
-      const p = document.createElement("div");
-      p.textContent = (up.contains(x) ? "dependent: " : "dependency: ") +
-        x.data("label");
-      rel.appendChild(p);
-    });
+    [...up.nodes(), ...down.nodes()]
+      .sort((a, b) => a.data("label").localeCompare(b.data("label")))
+      .forEach((x) => {
+        const p = document.createElement("div");
+        p.textContent =
+          (up.contains(x) ? "dependent: " : "dependency: ") + x.data("label");
+        rel.appendChild(p);
+      });
     panel.appendChild(rel);
-    const assignment = document.createElement("div"); assignment.className = "detail";
-    const assignmentHeading = document.createElement("b"); assignmentHeading.textContent = "Effective assignment";
+    const assignment = document.createElement("div");
+    assignment.className = "detail";
+    const assignmentHeading = document.createElement("b");
+    assignmentHeading.textContent = "Effective assignment";
     const select = document.createElement("select");
-    [...effectiveGroups().keys()].sort((a, b) => communityInfo(a).name.localeCompare(communityInfo(b).name)).forEach(key => select.add(new Option(communityInfo(key).name, key)));
+    [...effectiveGroups().keys()]
+      .sort((a, b) =>
+        communityInfo(a).name.localeCompare(communityInfo(b).name),
+      )
+      .forEach((key) => select.add(new Option(communityInfo(key).name, key)));
     select.value = d.effectiveCommunity;
-    const move = document.createElement("button"); move.textContent = "Assign selected"; move.onclick = () => { const ids = selectedNodeIds(); if (!ids.length) ids.push(d.id); ids.forEach(id => overrides.nodeAssignments[id] = select.value); saveOverrides(); replace(); };
-    const restore = document.createElement("button"); restore.textContent = "Restore node"; restore.onclick = () => { delete overrides.nodeAssignments[d.id]; saveOverrides(); replace(); };
-    assignment.append(assignmentHeading, select, move, restore); panel.appendChild(assignment);
-    const diagnostics = (graph().diagnostics || []).filter((x) =>
-      x.projectId === d.id
+    const move = document.createElement("button");
+    move.textContent = "Assign selected";
+    move.onclick = () => {
+      const ids = selectedNodeIds();
+      if (!ids.length) ids.push(d.id);
+      ids.forEach((id) => (overrides.nodeAssignments[id] = select.value));
+      saveOverrides();
+      replace();
+    };
+    const restore = document.createElement("button");
+    restore.textContent = "Restore node";
+    restore.onclick = () => {
+      delete overrides.nodeAssignments[d.id];
+      saveOverrides();
+      replace();
+    };
+    assignment.append(assignmentHeading, select, move, restore);
+    panel.appendChild(assignment);
+    const diagnostics = (graph().diagnostics || []).filter(
+      (x) => x.projectId === d.id,
     );
     if (diagnostics.length) {
       const warnings = document.createElement("div");
@@ -1134,21 +1657,69 @@
   }
   function explainSelectedPath() {
     const selected = selectedNodeIds();
-    if (selected.length !== 2) { showNotice("Select exactly two nodes (Ctrl/Cmd-click) to explain a directed dependency path."); return; }
-    const [source, target] = selected, queue = [source], previous = new Map([[source, null]]);
+    if (selected.length !== 2) {
+      showNotice(
+        "Select exactly two nodes (Ctrl/Cmd-click) to explain a directed dependency path.",
+      );
+      return;
+    }
+    const [source, target] = selected,
+      queue = [source],
+      previous = new Map([[source, null]]);
     while (queue.length && !previous.has(target)) {
       const current = queue.shift();
-      cy.$id(current).outgoers("edge:visible").sort((a, b) => a.id().localeCompare(b.id())).forEach(edge => {
-        if (edge.data("kind") === "produces-package") return;
-        const next = edge.target().id(); if (!previous.has(next)) { previous.set(next, edge); queue.push(next); }
-      });
+      cy.$id(current)
+        .outgoers("edge:visible")
+        .sort((a, b) => a.id().localeCompare(b.id()))
+        .forEach((edge) => {
+          if (edge.data("kind") === "produces-package") return;
+          const next = edge.target().id();
+          if (!previous.has(next)) {
+            previous.set(next, edge);
+            queue.push(next);
+          }
+        });
     }
-    const panel = $("details"); panel.replaceChildren(); const title = document.createElement("h2"); title.textContent = "Shortest dependency path"; panel.appendChild(title);
-    if (!previous.has(target)) { const p = document.createElement("p"); p.textContent = "No directed dependency path exists in the active view. Try reversing the selection order or switching view."; panel.appendChild(p); return; }
-    const path = []; let cursor = target; while (cursor !== source) { const edge = previous.get(cursor); path.push({ node: cursor, edge }); cursor = edge.source().id(); } path.push({ node: source, edge: null }); path.reverse();
-    path.forEach((step, index) => { const row = document.createElement("div"); row.className = "detail"; const node = cy.$id(step.node); row.textContent = index === 0 ? node.data("label") : `${step.edge.data("kind")} → ${node.data("label")}${step.edge.data("derived") ? " (contracted/derived)" : ""}`; panel.appendChild(row); });
-    const persisted = analysis.runnableImpactPaths.find(item => item.source === source && item.target === target);
-    const note = document.createElement("p"); note.className = "legend-help"; note.textContent = persisted ? "This runnable-impact path was computed and persisted by the .NET analysis." : "This active-view path was resolved from persisted canonical edges; alternatives are intentionally bounded."; panel.appendChild(note);
+    const panel = $("details");
+    panel.replaceChildren();
+    const title = document.createElement("h2");
+    title.textContent = "Shortest dependency path";
+    panel.appendChild(title);
+    if (!previous.has(target)) {
+      const p = document.createElement("p");
+      p.textContent =
+        "No directed dependency path exists in the active view. Try reversing the selection order or switching view.";
+      panel.appendChild(p);
+      return;
+    }
+    const path = [];
+    let cursor = target;
+    while (cursor !== source) {
+      const edge = previous.get(cursor);
+      path.push({ node: cursor, edge });
+      cursor = edge.source().id();
+    }
+    path.push({ node: source, edge: null });
+    path.reverse();
+    path.forEach((step, index) => {
+      const row = document.createElement("div");
+      row.className = "detail";
+      const node = cy.$id(step.node);
+      row.textContent =
+        index === 0
+          ? node.data("label")
+          : `${step.edge.data("kind")} → ${node.data("label")}${step.edge.data("derived") ? " (contracted/derived)" : ""}`;
+      panel.appendChild(row);
+    });
+    const persisted = analysis.runnableImpactPaths.find(
+      (item) => item.source === source && item.target === target,
+    );
+    const note = document.createElement("p");
+    note.className = "legend-help";
+    note.textContent = persisted
+      ? "This runnable-impact path was computed and persisted by the .NET analysis."
+      : "This active-view path was resolved from persisted canonical edges; alternatives are intentionally bounded.";
+    panel.appendChild(note);
   }
   function syncControls() {
     const importantLabelCount = $("important-label-count");
@@ -1177,7 +1748,7 @@
     $(`${id}-value`).value = $(id).value;
     savePhysics();
     clearTimeout(sliderTimer);
-    sliderTimer = setTimeout(() => reheat(.65), 160);
+    sliderTimer = setTimeout(() => reheat(0.65), 160);
   }
 
   cy.on("select", "node", (e) => {
@@ -1185,7 +1756,9 @@
   });
   cy.on("unselect", "node", (e) => {
     const id = e.target.id();
-    state.selectionOrder = state.selectionOrder.filter(selected => selected !== id);
+    state.selectionOrder = state.selectionOrder.filter(
+      (selected) => selected !== id,
+    );
   });
   cy.on("tap", "node", (e) => {
     if (state.mode === "manual") return;
@@ -1237,11 +1810,13 @@
           current.x - gesture.renderedPosition.x,
           current.y - gesture.renderedPosition.y,
         ) < physics.dragThreshold
-      ) return;
+      )
+        return;
       gesture.active = true;
-      state.simulation?.alphaTarget(.12).alpha(
-        Math.max(.35, state.simulation.alpha()),
-      ).restart();
+      state.simulation
+        ?.alphaTarget(0.12)
+        .alpha(Math.max(0.35, state.simulation.alpha()))
+        .restart();
       setStatus("Physics reheated by drag");
     }
     d.fx = e.target.position("x");
@@ -1265,9 +1840,10 @@
     }
     d.fx = null;
     d.fy = null;
-    state.simulation?.alphaTarget(0).alpha(
-      Math.max(.28, state.simulation.alpha()),
-    ).restart();
+    state.simulation
+      ?.alphaTarget(0)
+      .alpha(Math.max(0.28, state.simulation.alpha()))
+      .restart();
   });
   [
     "search",
@@ -1281,7 +1857,7 @@
     "runnable-min",
     "hops",
   ].forEach((id) =>
-    $(id).addEventListener(id === "search" ? "input" : "change", applyFilters)
+    $(id).addEventListener(id === "search" ? "input" : "change", applyFilters),
   );
   $("view").value = state.view;
   $("collapse").checked = state.collapsed;
@@ -1294,35 +1870,101 @@
     replace();
   };
   $("granularity").value = state.granularity;
-  $("granularity").onchange = (e) => { state.granularity = e.target.value; state.selectedCommunities.clear(); replace(); };
+  $("granularity").onchange = (e) => {
+    state.granularity = e.target.value;
+    state.selectedCommunities.clear();
+    replace();
+  };
   $("color-mode").value = state.colorMode;
-  $("color-mode").onchange = (e) => { state.colorMode = e.target.value; replace(); };
+  $("color-mode").onchange = (e) => {
+    state.colorMode = e.target.value;
+    replace();
+  };
   $("size-metric").value = state.sizeMetric;
-  $("size-metric").onchange = (e) => { state.sizeMetric = e.target.value; replace(); };
+  $("size-metric").onchange = (e) => {
+    state.sizeMetric = e.target.value;
+    replace();
+  };
   $("community-search").addEventListener("input", renderCommunityLegend);
   $("community-create").onclick = createFromSelection;
   $("community-merge").onclick = mergeSelectedCommunities;
-  $("community-export").onclick = () => downloadJson("community-overrides.json", overrides);
-  $("community-effective").onclick = () => downloadJson("effective-community-mapping.json", {
-    version: 1, graphFingerprint: analysis.graphFingerprint, granularity: state.granularity,
-    assignments: Object.fromEntries(payload.raw.nodes.map(node => { const detected = analysis.nodeAssignments[node.id]?.detectedCommunityPath || [], effective = effectiveKey(node.id); return [node.id, { detectedCommunityPath: detected, effectiveCommunityPath: overrides.nodeAssignments[node.id] ? [effective] : detected.slice(0, Math.max(0, detected.indexOf(effective)) + 1), assignmentSource: overrides.nodeAssignments[node.id] ? "manual" : (analysis.nodeAssignments[node.id]?.assignmentSource || "automatic") }]; }))
-  });
-  const communityMapButton = document.createElement("button"); communityMapButton.id = "community-map"; communityMapButton.textContent = "Community graph"; communityMapButton.onclick = showCommunityMap; $("community-reset").before(communityMapButton);
+  $("community-export").onclick = () =>
+    downloadJson("community-overrides.json", overrides);
+  $("community-effective").onclick = () =>
+    downloadJson("effective-community-mapping.json", {
+      version: 1,
+      graphFingerprint: analysis.graphFingerprint,
+      granularity: state.granularity,
+      assignments: Object.fromEntries(
+        payload.raw.nodes.map((node) => {
+          const detected =
+              analysis.nodeAssignments[node.id]?.detectedCommunityPath || [],
+            effective = effectiveKey(node.id);
+          return [
+            node.id,
+            {
+              detectedCommunityPath: detected,
+              effectiveCommunityPath: overrides.nodeAssignments[node.id]
+                ? [effective]
+                : detected.slice(
+                    0,
+                    Math.max(0, detected.indexOf(effective)) + 1,
+                  ),
+              assignmentSource: overrides.nodeAssignments[node.id]
+                ? "manual"
+                : analysis.nodeAssignments[node.id]?.assignmentSource ||
+                  "automatic",
+            },
+          ];
+        }),
+      ),
+    });
+  const communityMapButton = document.createElement("button");
+  communityMapButton.id = "community-map";
+  communityMapButton.textContent = "Community graph";
+  communityMapButton.onclick = showCommunityMap;
+  $("community-reset").before(communityMapButton);
   $("community-import").onclick = () => $("community-import-file").click();
   $("community-import-file").onchange = (event) => {
-    const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader();
-    reader.onload = () => { try { overrides = validateOverrides(JSON.parse(String(reader.result))); saveOverrides(); replace(); } catch (error) { showNotice(`Community override import failed: ${error.message}`); } };
-    reader.readAsText(file); event.target.value = "";
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        overrides = validateOverrides(JSON.parse(String(reader.result)));
+        saveOverrides();
+        replace();
+      } catch (error) {
+        showNotice(`Community override import failed: ${error.message}`);
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = "";
   };
-  $("community-reset").onclick = () => { if (!confirm("Reset every community override for this graph?")) return; overrides = emptyOverrides(); try { localStorage.removeItem(overrideStorageKey); } catch {} state.selectedCommunities.clear(); replace(); };
+  $("community-reset").onclick = () => {
+    if (!confirm("Reset every community override for this graph?")) return;
+    overrides = emptyOverrides();
+    try {
+      localStorage.removeItem(overrideStorageKey);
+    } catch {}
+    state.selectedCommunities.clear();
+    replace();
+  };
   $("explain-path").onclick = explainSelectedPath;
   $("fit").onclick = () => cy.fit(cy.elements(":visible"), 55);
   $("reset").onclick = () => {
     state.selected = null;
     state.hovered = null;
     state.selectionOrder = [];
-    ["search", "kind", "edgeKind", "component", "community", "tfm", "rid"]
-      .forEach((x) => $(x).value = "");
+    [
+      "search",
+      "kind",
+      "edgeKind",
+      "component",
+      "community",
+      "tfm",
+      "rid",
+    ].forEach((x) => ($(x).value = ""));
     $("skew").checked = false;
     $("hops").value = "0";
     clearFocus();
@@ -1334,7 +1976,7 @@
     if (state.paused) {
       state.paused = false;
       $("pause").textContent = "Pause physics";
-      reheat(.3);
+      reheat(0.3);
     } else {
       state.paused = true;
       state.simulation.stop();
@@ -1353,7 +1995,7 @@
       localStorage.removeItem(storageKey);
     } catch {}
     syncControls();
-    reheat(.8);
+    reheat(0.8);
   };
   $("important-label-count").addEventListener("input", () => {
     viewerPreferences = {
@@ -1386,7 +2028,7 @@
     ["gravity", "gravity"],
     ["communityAttraction", "community-attraction"],
   ].forEach(([key, id]) =>
-    $(id).addEventListener("input", () => sliderChanged(key, id))
+    $(id).addEventListener("input", () => sliderChanged(key, id)),
   );
   $("png").onclick = () => {
     const a = document.createElement("a");
@@ -1397,12 +2039,18 @@
   $("json").onclick = () => {
     const rawEdges = new Map(graph().edges.map((e) => [e.id, e])),
       edges = cy.edges(":visible").map((e) => {
-        const d = e.data(), raw = rawEdges.get(d.rawId) || {};
+        const d = e.data(),
+          raw = rawEdges.get(d.rawId) || {};
         return { ...raw, id: d.id, source: d.source, target: d.target };
       });
     const shown = {
       schemaVersion: "display-2.0",
-      projection: { view: state.view, collapseLocalPackages: state.collapsed, communityGranularity: state.granularity, effectiveOverrides: Object.keys(overrides.nodeAssignments).length > 0 },
+      projection: {
+        view: state.view,
+        collapseLocalPackages: state.collapsed,
+        communityGranularity: state.granularity,
+        effectiveOverrides: Object.keys(overrides.nodeAssignments).length > 0,
+      },
       nodes: cy.nodes(":visible").map((n) => n.data()),
       edges,
     };
@@ -1418,55 +2066,127 @@
     const a = document.createElement("a");
     a.href = "diagnostics.json";
     a.textContent = "Open diagnostics";
-    showWarning("Incomplete extraction — some projects lack authoritative data. ", a);
+    showWarning(
+      "Incomplete extraction — some projects lack authoritative data. ",
+      a,
+    );
   }
   function manualSpec() {
-    const nodes = cy.nodes().map(node => ({
-      id: node.id(), label: node.data("label"),
+    const nodes = cy.nodes().map((node) => ({
+      id: node.id(),
+      label: node.data("label"),
       canonicalIds: node.data("canonicalIds") || [node.id()],
       radius: node.data("size") / 2 + 5,
-      x: node.position("x"), y: node.position("y"),
+      x: node.position("x"),
+      y: node.position("y"),
     }));
     const grouped = new Map();
-    nodes.forEach(node => {
-      const assignments = new Set(node.canonicalIds.map(effectiveKey).filter(Boolean));
+    nodes.forEach((node) => {
+      const assignments = new Set(
+        node.canonicalIds.map(effectiveKey).filter(Boolean),
+      );
       const key = assignments.size === 1 ? [...assignments][0] : "unassigned";
-      if (!grouped.has(key)) grouped.set(key, []); grouped.get(key).push(node.id);
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(node.id);
     });
     const groups = [...grouped].map(([key, nodeIds]) => {
-      const info = key === "unassigned" ? { name: "Unassigned", color: "#6e7681" } : communityInfo(key);
+      const info =
+        key === "unassigned"
+          ? { name: "Unassigned", color: "#6e7681" }
+          : communityInfo(key);
       return { key, name: info.name, color: info.color, nodeIds };
     });
-    const edgeIdentity = cy.edges().map(edge => `${edge.source().id()}>${edge.target().id()}:${(edge.data("supportingRawEdgeIds") || [edge.data("rawId")]).join(",")}`).sort().join("|");
-    const identity = `${state.view}|${state.collapsed}|${nodes.map(node => `${node.id}:${node.canonicalIds.join(",")}`).sort().join("|")}|${edgeIdentity}`;
+    const edgeIdentity = cy
+      .edges()
+      .map(
+        (edge) =>
+          `${edge.source().id()}>${edge.target().id()}:${(edge.data("supportingRawEdgeIds") || [edge.data("rawId")]).join(",")}`,
+      )
+      .sort()
+      .join("|");
+    const identity = `${state.view}|${state.collapsed}|${nodes
+      .map((node) => `${node.id}:${node.canonicalIds.join(",")}`)
+      .sort()
+      .join("|")}|${edgeIdentity}`;
     return {
       graphFingerprint: analysis.graphFingerprint,
-      projectionFingerprint: hash(identity, 0x91e10da5).toString(16).padStart(8, "0"),
-      sourceView: { view: state.view, collapseLocalPackages: state.collapsed, nodeCount: nodes.length, edgeCount: cy.edges().length },
+      projectionFingerprint: hash(identity, 0x91e10da5)
+        .toString(16)
+        .padStart(8, "0"),
+      sourceView: {
+        view: state.view,
+        collapseLocalPackages: state.collapsed,
+        nodeCount: nodes.length,
+        edgeCount: cy.edges().length,
+      },
       sourceGranularity: state.granularity,
-      viewport: { pan: { ...cy.pan() }, zoom: cy.zoom() }, nodes, groups,
+      viewport: { pan: { ...cy.pan() }, zoom: cy.zoom() },
+      nodes,
+      groups,
     };
   }
   function captureExplore() {
     return {
-      viewport: { pan: { ...cy.pan() }, zoom: cy.zoom() }, selected: cy.nodes(":selected").map(node => node.id()),
-      nodes: Object.fromEntries(cy.nodes().map(node => [node.id(), { position: { ...node.position() }, color: node.data("color"), borderColor: node.data("borderColor") }])),
+      viewport: { pan: { ...cy.pan() }, zoom: cy.zoom() },
+      selected: cy.nodes(":selected").map((node) => node.id()),
+      nodes: Object.fromEntries(
+        cy
+          .nodes()
+          .map((node) => [
+            node.id(),
+            {
+              position: { ...node.position() },
+              color: node.data("color"),
+              borderColor: node.data("borderColor"),
+            },
+          ]),
+      ),
     };
   }
   function restoreExplore(snapshot) {
     if (!snapshot) return;
     cy.batch(() => {
-      cy.nodes().forEach(node => { const saved = snapshot.nodes[node.id()]; if (!saved) return; node.position(saved.position); node.data("color", saved.color); node.data("borderColor", saved.borderColor); node.removeClass("manual-muted"); node.removeData("manualGroup"); node.removeData("manualMuted"); node.unselect(); });
-      snapshot.selected.forEach(id => cy.$id(id).select()); cy.edges().removeClass("manual-hidden manual-reveal physics-active");
+      cy.nodes().forEach((node) => {
+        const saved = snapshot.nodes[node.id()];
+        if (!saved) return;
+        node.position(saved.position);
+        node.data("color", saved.color);
+        node.data("borderColor", saved.borderColor);
+        node.removeClass("manual-muted");
+        node.removeData("manualGroup");
+        node.removeData("manualMuted");
+        node.unselect();
+      });
+      snapshot.selected.forEach((id) => cy.$id(id).select());
+      cy.edges().removeClass("manual-hidden manual-reveal physics-active");
     });
-    cy.viewport(snapshot.viewport); state.paused = true; $("pause").textContent = "Resume physics"; setStatus("Explore restored · physics paused"); updateLabels();
+    cy.viewport(snapshot.viewport);
+    state.paused = true;
+    $("pause").textContent = "Resume physics";
+    setStatus("Explore restored · physics paused");
+    updateLabels();
   }
-  function stopExplore() { state.simulation?.stop(); state.paused = true; cy.edges().removeClass("physics-active"); }
+  function stopExplore() {
+    state.simulation?.stop();
+    state.paused = true;
+    cy.edges().removeClass("physics-active");
+  }
   const manualView = new window.DepGraphManualView({
-    cy, getSpec: manualSpec, captureExplore, restoreExplore, stopExplore,
-    setMode: mode => { state.mode = mode; }, notice: showNotice,
+    cy,
+    getSpec: manualSpec,
+    captureExplore,
+    restoreExplore,
+    stopExplore,
+    setMode: (mode) => {
+      state.mode = mode;
+    },
+    notice: showNotice,
   });
-  const updateManualScope = () => { const spec = manualSpec(); $("manual-scope").textContent = `Manual layout: ${spec.nodes.length} nodes from ${spec.sourceView.view}${spec.sourceView.collapseLocalPackages ? " · local producers collapsed" : ""}`; };
+  const updateManualScope = () => {
+    const spec = manualSpec();
+    $("manual-scope").textContent =
+      `Manual layout: ${spec.nodes.length} nodes from ${spec.sourceView.view}${spec.sourceView.collapseLocalPackages ? " · local producers collapsed" : ""}`;
+  };
   $("tab-manual").addEventListener("click", updateManualScope);
   window.__depgraphDebug = {
     cy,

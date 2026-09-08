@@ -18,7 +18,9 @@ body {
   grid-template-rows: auto 1fr;
   background: var(--bg);
   color: var(--text);
-  font: 13px system-ui,sans-serif;
+  font:
+    13px system-ui,
+    sans-serif;
   overflow: hidden;
 }
 header {
@@ -72,7 +74,7 @@ button:hover {
   border-color: var(--accent);
 }
 #search {
-  width: min(360px,30vw);
+  width: min(360px, 30vw);
 }
 #physics-status,
 #manual-save-status {
@@ -169,7 +171,7 @@ button:hover {
 #warning-close {
   flex: 0 0 auto;
   padding: 1px 8px 3px;
-  border-color: rgba(255,255,255,.55);
+  border-color: rgba(255, 255, 255, 0.55);
   background: transparent;
   color: #fff;
   font-size: 18px;
@@ -194,8 +196,8 @@ summary {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
-#labels input[type=range],
-#physics input[type=range] {
+#labels input[type="range"],
+#physics input[type="range"] {
   display: block;
   width: 100%;
   padding: 0;
@@ -387,9 +389,9 @@ a {
   color: #f2cc60;
 }
 .manual-region-body {
-  stroke: rgba(255,255,255,.52);
+  stroke: rgba(255, 255, 255, 0.52);
   stroke-width: 2px;
-  fill-opacity: .14;
+  fill-opacity: 0.14;
   vector-effect: non-scaling-stroke;
 }
 .manual-region.selected .manual-region-body,
@@ -398,8 +400,8 @@ a {
   stroke-width: 4px;
 }
 .manual-region-header {
-  fill: rgba(22,27,34,.9);
-  stroke: rgba(255,255,255,.55);
+  fill: rgba(22, 27, 34, 0.9);
+  stroke: rgba(255, 255, 255, 0.55);
   stroke-width: 1px;
   vector-effect: non-scaling-stroke;
   cursor: move;
@@ -440,7 +442,7 @@ a {
   border-left-color: #d29922;
   background: #3a2500;
 }
-@media (max-width:900px) {
+@media (max-width: 900px) {
   body {
     grid-template-columns: 190px 1fr;
     grid-template-rows: auto 1fr 200px;
