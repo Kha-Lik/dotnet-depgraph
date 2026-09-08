@@ -5,6 +5,43 @@
   const clone = value => structuredClone(value);
   const color = value => /^#[0-9a-f]{6}$/i.test(value || "");
   const id = prefix => `${prefix}:${crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
+  function translateGroup(board, groupId, dx, dy) {
+    const group = board.groups[groupId];
+    if (group.shape === "circle") { group.cx += dx; group.cy += dy; } else { group.x += dx; group.y += dy; }
+    Object.values(board.placements).filter(placement => placement.groupId === groupId).forEach(placement => { placement.x += dx; placement.y += dy; });
+  }
+  function repackForShape(board, groupId, shape) {
+    const group = board.groups[groupId], env = G.envelope(group), memberIds = Object.entries(board.placements).filter(([, placement]) => placement.groupId === groupId).map(([entityId]) => entityId), header = shape === "circle" ? 24 : 28;
+    if (shape === "circle") {
+      delete group.x; delete group.y; delete group.width; delete group.height;
+      Object.assign(group, { shape, cx: (env.left + env.right) / 2, cy: (env.top + group.header + env.bottom) / 2, radius: Math.max(55, Math.min(env.right - env.left, env.bottom - env.top - group.header) / 2), header });
+    } else {
+      delete group.cx; delete group.cy; delete group.radius;
+      Object.assign(group, { shape, x: env.left, y: env.top, width: Math.max(90, env.right - env.left), height: Math.max(header + 60, env.bottom - env.top), header });
+    }
+    let points = null;
+    for (let attempt = 0; attempt < 16 && !points; attempt++) {
+      const pinned = memberIds.filter(entityId => board.placements[entityId].pinned), movable = memberIds.filter(entityId => !board.placements[entityId].pinned);
+      if (shape === "circle") {
+        group.radius = Math.max(group.radius, ...pinned.map(entityId => Math.hypot(board.placements[entityId].x - group.cx, board.placements[entityId].y - group.cy) + board.entities[entityId].radius + 8), 55);
+      } else if (pinned.length) {
+        const left = Math.min(group.x, ...pinned.map(entityId => board.placements[entityId].x - board.entities[entityId].radius - 8)), right = Math.max(group.x + group.width, ...pinned.map(entityId => board.placements[entityId].x + board.entities[entityId].radius + 8)),
+          top = Math.min(group.y, ...pinned.map(entityId => board.placements[entityId].y - board.entities[entityId].radius - header - 8)), bottom = Math.max(group.y + group.height, ...pinned.map(entityId => board.placements[entityId].y + board.entities[entityId].radius + 8));
+        Object.assign(group, { x: left, y: top, width: right - left, height: bottom - top });
+      }
+      const occupied = pinned.map(entityId => ({ ...board.placements[entityId], radius: board.entities[entityId].radius })), candidate = G.slots(group, movable.map(entityId => board.entities[entityId].radius), occupied);
+      if (candidate.every(Boolean)) points = { movable, candidate };
+      else if (shape === "circle") group.radius *= 1.18;
+      else { group.width *= 1.18; group.height = header + (group.height - header) * 1.18; }
+    }
+    if (!points) throw new Error("The members cannot be packed into that shape while preserving pins.");
+    points.movable.forEach((entityId, index) => Object.assign(board.placements[entityId], points.candidate[index]));
+    const others = Object.values(board.groups).filter(candidate => candidate.id !== groupId);
+    if (others.some(candidate => !G.separated(group, candidate))) {
+      const current = G.envelope(group), left = Math.max(...others.map(candidate => G.envelope(candidate).right)) + 40;
+      translateGroup(board, groupId, left - current.left, 0);
+    }
+  }
   class ManualState {
     constructor(board, onChange) { this.board = board; this.undoStack = []; this.redoStack = []; this.onChange = onChange; }
     transact(label, change) {
@@ -44,11 +81,7 @@
         const group = board.groups[groupId]; if (!group) throw new Error("Choose a group first.");
         if (values.name != null) { const name = values.name.trim(); if (!name) throw new Error("Group name cannot be empty."); group.name = name; }
         if (values.color != null) { if (!color(values.color)) throw new Error("Group color must be #RRGGBB."); group.color = values.color; }
-        if (values.shape && values.shape !== group.shape) {
-          const env = G.envelope(group);
-          if (values.shape === "circle") Object.assign(group, { shape: "circle", cx: (env.left + env.right) / 2, cy: (env.top + group.header + env.bottom) / 2, radius: Math.max(env.right - env.left, env.bottom - env.top - group.header) / 2 });
-          else Object.assign(group, { shape: "rectangle", x: env.left, y: env.top, width: env.right - env.left, height: env.bottom - env.top, header: group.header });
-        }
+        if (values.shape && values.shape !== group.shape) repackForShape(board, groupId, values.shape);
       });
     }
     fitGroup(groupId) {

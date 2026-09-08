@@ -4,6 +4,7 @@
     <ProjectReference Include="../../src/DotNetDependencyGraph.Core/DotNetDependencyGraph.Core.csproj" />
     <ProjectReference Include="../../src/DotNetDependencyGraph.Cli/DotNetDependencyGraph.Cli.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Playwright" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio"><PrivateAssets>all</PrivateAssets></PackageReference>
   </ItemGroup>

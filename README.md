@@ -14,6 +14,7 @@ Requires the .NET 10 SDK. The checked-in browser bundle means Node.js is not nee
 ```bash
 dotnet restore DotNetDependencyGraph.slnx
 dotnet build DotNetDependencyGraph.slnx --no-restore
+pwsh tests/DotNetDependencyGraph.IntegrationTests/bin/Debug/net10.0/playwright.ps1 install chromium
 dotnet test DotNetDependencyGraph.slnx --no-build
 dotnet pack src/DotNetDependencyGraph.Cli -c Release -o artifacts/packages
 dotnet tool install --global dotnet-depgraph --add-source artifacts/packages
@@ -135,7 +136,7 @@ Pass `--config examples/dotnet-depgraph.config.json`. Configuration schema `1.0`
 
 ## Fixtures, performance, and limitations
 
-`fixtures/build-representative.sh` builds a private local package chain (`Feature → Storage → Serialization`) and restores a repository containing multi-target conditions, central package management, local producers, ambiguities, duplicate names, disconnected tools, and isolated projects. A committed lock file covers RID target extraction. Tests validate graph facts and report safety, not screenshots.
+`fixtures/build-representative.sh` builds a private local package chain (`Feature → Storage → Serialization`) and restores a repository containing multi-target conditions, central package management, local producers, ambiguities, duplicate names, disconnected tools, and isolated projects. A committed lock file covers RID target extraction. The integration suite generates a real offline report and uses Playwright against Chromium for manual-view pointer, selection, editing, persistence, and layout interactions; it does not rely on screenshot comparisons.
 
 The viewer targets roughly 2,000 nodes and 10,000 edges. Overview edges use high-contrast colors, while a configurable number of the visually largest nodes remain labeled at every zoom level. Hovered, selected, and searched labels stay a readable screen-space size instead of shrinking with graph zoom. Filters and neighborhoods reduce render work. The core uses linear graph passes except exact per-node reachability counts, which trade memory for straightforward bounded behavior at this scale.
 
