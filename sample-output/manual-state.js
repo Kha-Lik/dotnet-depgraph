@@ -84,6 +84,29 @@
         if (values.shape && values.shape !== group.shape) repackForShape(board, groupId, values.shape);
       });
     }
+    resizeGroup(groupId, requested) {
+      this.transact("Resize group", board => {
+        const group = board.groups[groupId], original = clone(group), memberIds = Object.entries(board.placements).filter(([, placement]) => placement.groupId === groupId).map(([entityId]) => entityId);
+        if (!group || requested.shape !== group.shape) throw new Error("The resized group is invalid.");
+        if (group.shape === "circle") group.radius = Math.max(45, Number(requested.radius));
+        else { group.width = Math.max(90, Number(requested.width)); group.height = Math.max(group.header + 60, Number(requested.height)); }
+        if (memberIds.every(entityId => G.contains(group, board.placements[entityId], board.entities[entityId].radius))) return;
+        const pinned = memberIds.filter(entityId => board.placements[entityId].pinned), movable = memberIds.filter(entityId => !board.placements[entityId].pinned);
+        let packed = null;
+        for (let attempt = 0; attempt < 20 && !packed; attempt++) {
+          const pinsFit = pinned.every(entityId => G.contains(group, board.placements[entityId], board.entities[entityId].radius));
+          if (pinsFit) {
+            const occupied = pinned.map(entityId => ({ ...board.placements[entityId], radius: board.entities[entityId].radius })), points = G.slots(group, movable.map(entityId => board.entities[entityId].radius), occupied);
+            if (points.every(Boolean)) packed = points;
+          }
+          if (packed) break;
+          if (group.shape === "circle") group.radius = Math.min(original.radius, Math.max(group.radius + 8, group.radius * 1.1));
+          else { group.width = Math.min(original.width, Math.max(group.width + 12, group.width * 1.08)); group.height = Math.min(original.height, Math.max(group.height + 12, group.height * 1.08)); }
+        }
+        if (!packed) throw new Error("The requested size cannot accommodate this group, even after attempting a compact repack. Release pins or choose a larger size.");
+        movable.forEach((entityId, index) => Object.assign(board.placements[entityId], packed[index]));
+      });
+    }
     fitGroup(groupId) {
       this.transact("Fit group to members", board => {
         const group = board.groups[groupId], members = Object.entries(board.placements).filter(([, p]) => p.groupId === groupId);

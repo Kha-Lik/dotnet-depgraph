@@ -214,9 +214,15 @@
       automatic.memberNodeIds?.includes(item.detectedAnchorNodeId));
     return { ...automatic, name: style?.name || automatic.name, color: style?.color || automatic.color, manual: !!style };
   }
-  function showNotice(message) {
-    const warning = $("warning"); warning.hidden = false; warning.textContent = message;
+  let warningTimer;
+  function hideNotice() { clearTimeout(warningTimer); $("warning").hidden = true; }
+  function showWarning(...content) {
+    const warning = $("warning"), message = document.createElement("span"), close = document.createElement("button");
+    message.id = "warning-message"; content.forEach(item => message.append(item instanceof Node ? item : document.createTextNode(String(item))));
+    close.id = "warning-close"; close.type = "button"; close.setAttribute("aria-label", "Dismiss warning"); close.textContent = "×"; close.onclick = hideNotice;
+    warning.replaceChildren(message, close); warning.hidden = false; clearTimeout(warningTimer); warningTimer = setTimeout(hideNotice, 6500);
   }
+  function showNotice(message) { showWarning(message); }
 
   function savePhysics() {
     try {
@@ -1409,17 +1415,10 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
   if (!payload.raw.completeness.complete) {
-    const w = $("warning");
-    w.hidden = false;
-    w.replaceChildren(
-      document.createTextNode(
-        "Incomplete extraction — some projects lack authoritative data. ",
-      ),
-    );
     const a = document.createElement("a");
     a.href = "diagnostics.json";
     a.textContent = "Open diagnostics";
-    w.appendChild(a);
+    showWarning("Incomplete extraction — some projects lack authoritative data. ", a);
   }
   function manualSpec() {
     const nodes = cy.nodes().map(node => ({

@@ -132,6 +132,64 @@ public sealed class ManualViewInteractionTests
     }
 
     [Fact]
+    public async Task GroupCanBeDraggedAfterLayoutSettles()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page);
+        await page.Locator("#manual-run").ClickAsync();
+        await page.WaitForFunctionAsync("document.getElementById('manual-run-status').textContent !== 'Layout running'", null, new() { Timeout = 15_000 });
+        Assert.Empty(await BoardErrorsAsync(page));
+        var groupId = await page.EvaluateAsync<string>("Object.keys(__depgraphDebug.manualView.model.board.groups)[0]");
+        var before = await GroupGeometryAsync(page, groupId);
+        await DragAsync(page, page.Locator($".manual-region[data-group-id='{groupId}'] .manual-region-header"), 55, 35);
+        var after = await GroupGeometryAsync(page, groupId);
+        Assert.NotEqual(before.Left, after.Left); Assert.NotEqual(before.Top, after.Top);
+        Assert.Empty(await BoardErrorsAsync(page));
+    }
+
+    [Fact]
+    public async Task PauseButtonTogglesResumeAndRegionBodySelectsGroup()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        await page.Locator("#manual-run").ClickAsync();
+        await page.Locator("#manual-pause").ClickAsync();
+        Assert.Equal("Resume layout", await page.Locator("#manual-pause").TextContentAsync());
+        Assert.Contains("paused", await page.Locator("#manual-run-status").TextContentAsync() ?? "", StringComparison.OrdinalIgnoreCase);
+        await page.Locator("#manual-pause").ClickAsync();
+        Assert.Equal("Pause layout", await page.Locator("#manual-pause").TextContentAsync());
+        await page.Locator("#manual-pause").ClickAsync();
+
+        var point = await page.EvaluateAsync<NodePoint>("() => { const g=__depgraphDebug.manualView.model.board.groups['group:unassigned'], p=g.shape==='circle'?{x:g.cx,y:g.cy}:{x:g.x+g.width-12,y:g.y+g.header+12}, r=document.getElementById('cy').getBoundingClientRect(), z=__depgraphDebug.cy.zoom(), pan=__depgraphDebug.cy.pan(); return {id:'group:unassigned',x:r.left+pan.x+p.x*z,y:r.top+pan.y+p.y*z}; }");
+        await page.Mouse.ClickAsync(point.X, point.Y);
+        Assert.Equal("group:unassigned", await page.EvaluateAsync<string>("__depgraphDebug.manualView.selectedGroupId"));
+    }
+
+    [Fact]
+    public async Task WarningCanBeDismissedAndResizeRepacksForSmallerRegion()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        await page.Locator("#manual-new-group").ClickAsync();
+        Assert.True(await page.Locator("#warning").IsVisibleAsync());
+        await page.Locator("#warning-close").ClickAsync();
+        Assert.False(await page.Locator("#warning").IsVisibleAsync());
+
+        await page.Locator("#manual-run").ClickAsync();
+        await page.WaitForFunctionAsync("document.getElementById('manual-run-status').textContent !== 'Layout running'", null, new() { Timeout = 15_000 });
+        var before = await GroupGeometryAsync(page, "group:unassigned");
+        var positions = await page.EvaluateAsync<string>("JSON.stringify(__depgraphDebug.manualView.model.board.placements)");
+        await DragAsync(page, page.Locator(".manual-region[data-group-id='group:unassigned'] .manual-resize-handle"), -90, -75);
+        var after = await GroupGeometryAsync(page, "group:unassigned");
+        Assert.True(after.Width < before.Width || after.Height < before.Height);
+        Assert.NotEqual(positions, await page.EvaluateAsync<string>("JSON.stringify(__depgraphDebug.manualView.model.board.placements)"));
+        Assert.Empty(await BoardErrorsAsync(page));
+    }
+
+    [Fact]
     public async Task TabSwitchRestoresIndependentSelectionAndGeometry()
     {
         await using var session = await BrowserSession.CreateAsync();

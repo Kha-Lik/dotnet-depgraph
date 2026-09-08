@@ -3,9 +3,9 @@
   "use strict";
   const G = window.DepGraphManualGeometry;
   class ManualLayout {
-    constructor(cy, state, onPaint, onStop) { this.cy = cy; this.state = state; this.onPaint = onPaint; this.onStop = onStop; this.running = new Map(); this.frame = 0; this.before = null; }
+    constructor(cy, state, onPaint, onStop) { this.cy = cy; this.state = state; this.onPaint = onPaint; this.onStop = onStop; this.running = new Map(); this.frame = 0; this.before = null; this.paused = false; }
     start(groupIds) {
-      this.stop(false); this.before = structuredClone(this.state.board);
+      this.stop(false); this.paused = false; this.before = structuredClone(this.state.board);
       const board = this.state.board, muted = new Set(board.mutedEntityIds), requested = new Set(groupIds || Object.keys(board.groups));
       for (const groupId of requested) {
         const members = Object.entries(board.placements).filter(([, p]) => p.groupId === groupId).map(([id, p]) => ({ id, x: p.x, y: p.y, vx: 0, vy: 0, fx: p.pinned ? p.x : null, fy: p.pinned ? p.y : null, radius: board.entities[id].radius }));
@@ -22,6 +22,7 @@
       if (this.running.size) this.frame = requestAnimationFrame(() => this.tick()); else this.onStop?.("No groups to relax");
     }
     tick() {
+      if (this.paused) return;
       const board = this.state.board; let active = 0, constrained = false;
       for (const [groupId, run] of this.running) {
         if (run.simulation.alpha() < .002) continue; active++; const region = board.groups[groupId];
@@ -37,9 +38,11 @@
       }
       this.onPaint();
       if (active && [...this.running.values()].some(run => run.simulation.alpha() >= .002)) this.frame = requestAnimationFrame(() => this.tick());
-      else { this.running.clear(); this.frame = 0; this.state.undoStack.push({ label: "Run layout", board: this.before }); this.state.redoStack.length = 0; this.state.onChange?.("Layout settled"); this.onStop?.(constrained ? "Layout constrained; enlarge group or release pins" : "Paused"); }
+      else { const before = this.before; this.running.clear(); this.frame = 0; this.before = null; this.paused = false; if (before) { this.state.undoStack.push({ label: "Run layout", board: before }); this.state.redoStack.length = 0; this.state.onChange?.("Layout settled"); } this.onStop?.(constrained ? "Layout constrained; enlarge group or release pins" : "Layout complete · Paused"); }
     }
-    stop(commit = true) { if (this.frame) cancelAnimationFrame(this.frame); this.frame = 0; this.running.forEach(run => run.simulation.stop()); this.running.clear(); if (commit && this.before) { this.state.undoStack.push({ label: "Run layout", board: this.before }); this.state.redoStack.length = 0; this.state.onChange?.("Layout paused"); } this.before = null; }
+    pause() { if (!this.running.size || this.paused) return false; if (this.frame) cancelAnimationFrame(this.frame); this.frame = 0; this.paused = true; return true; }
+    resume() { if (!this.running.size || !this.paused) return false; this.paused = false; this.frame = requestAnimationFrame(() => this.tick()); return true; }
+    stop(commit = true) { const wasActive = this.running.size > 0; if (this.frame) cancelAnimationFrame(this.frame); this.frame = 0; this.running.forEach(run => run.simulation.stop()); this.running.clear(); if (commit && this.before) { this.state.undoStack.push({ label: "Run layout", board: this.before }); this.state.redoStack.length = 0; this.state.onChange?.("Layout paused"); } this.before = null; this.paused = false; if (commit && wasActive) this.onStop?.("Layout stopped · Paused"); }
   }
   window.DepGraphManualLayout = ManualLayout;
 })();

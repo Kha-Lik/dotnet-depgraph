@@ -12,7 +12,7 @@
   function contains(region, point, radius = 0) {
     const area = usable(region);
     if (area.shape === "circle") return Math.hypot(point.x - area.cx, point.y - area.cy) <= area.radius - radius + 1e-7;
-    return point.x >= area.left + radius && point.x <= area.right - radius && point.y >= area.top + radius && point.y <= area.bottom - radius;
+    return point.x >= area.left + radius - 1e-6 && point.x <= area.right - radius + 1e-6 && point.y >= area.top + radius - 1e-6 && point.y <= area.bottom - radius + 1e-6;
   }
   function project(region, point, radius = 0) {
     const area = usable(region);
