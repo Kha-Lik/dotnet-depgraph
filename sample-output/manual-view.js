@@ -16,11 +16,13 @@
       this.explore = null;
       this.drag = null;
       this.manualSelection = [];
+      this.contextNodeId = null;
       this.layer = document.getElementById("manual-regions");
       this.groupLayer = svgElement("g");
       this.layer.append(this.groupLayer);
       this.setRegionsVisible(false);
       this.installGroupInspector();
+      this.installContextMenu();
       this.bind();
     }
     installGroupInspector() {
@@ -62,6 +64,28 @@
         ...buttons,
       );
       document.querySelector("#manual-workspace .manual-actions").after(panel);
+    }
+    installContextMenu() {
+      const menu = document.createElement("div");
+      menu.id = "manual-node-menu";
+      menu.setAttribute("role", "menu");
+      menu.hidden = true;
+      const title = document.createElement("strong");
+      title.id = "manual-node-menu-title";
+      const remove = document.createElement("button");
+      remove.id = "manual-node-remove-group";
+      remove.setAttribute("role", "menuitem");
+      remove.textContent = "Remove from group";
+      remove.onclick = () => this.moveContextNode("group:unassigned");
+      const moveLabel = document.createElement("span");
+      moveLabel.className = "manual-node-menu-label";
+      moveLabel.textContent = "Move to group";
+      const options = document.createElement("div");
+      options.id = "manual-node-move-options";
+      menu.append(title, remove, moveLabel, options);
+      menu.addEventListener("contextmenu", (event) => event.preventDefault());
+      document.body.append(menu);
+      this.contextMenu = menu;
     }
     bind() {
       document.getElementById("tab-explore").onclick = () => this.leave();
@@ -145,14 +169,21 @@
         }
       });
       this.cy.on("select unselect", "node", () => {
-        if (this.active) this.renderInspector();
+        if (this.active) {
+          this.renderInspector();
+          this.updateSelectionFocus();
+        }
       });
       this.cy.on("tap", "node", (event) => this.nodeTap(event));
+      this.cy.on("cxttap", "node", (event) => this.openContextMenu(event));
       this.cy.on("tap", (event) => {
         if (!this.active || event.target !== this.cy || !this.model) return;
         const group = [...Object.values(this.model.board.groups)]
           .reverse()
-          .find((candidate) => G.contains(candidate, event.position));
+          .find(
+            (candidate) =>
+              !candidate.collapsed && G.contains(candidate, event.position),
+          );
         if (group) this.selectGroup(group.id);
         else {
           this.selectedGroupId = null;
@@ -164,6 +195,7 @@
       this.cy.on("drag", "node", (event) => this.nodeDrag(event));
       this.cy.on("free", "node", (event) => this.nodeFree(event));
       window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") this.hideContextMenu();
         if (!this.active || !(event.ctrlKey || event.metaKey)) return;
         if (event.key.toLowerCase() === "z") {
           event.preventDefault();
@@ -174,6 +206,13 @@
           this.model?.redo();
           this.paint();
         }
+      });
+      document.addEventListener("pointerdown", (event) => {
+        if (
+          !this.contextMenu.hidden &&
+          !this.contextMenu.contains(event.target)
+        )
+          this.hideContextMenu();
       });
       this.setLayoutControls("Paused", false, false);
     }
@@ -224,6 +263,8 @@
       if (this.model) this.storage.checkpoint(this.model.board);
       this.active = false;
       this.preview = null;
+      this.hideContextMenu();
+      this.clearSelectionFocus();
       this.setRegionsVisible(false);
       document.body.classList.remove("manual-mode");
       document
@@ -327,20 +368,62 @@
         this.cy.nodes().forEach((node) => {
           const placement = board.placements[node.id()];
           if (!placement) return;
-          const group = board.groups[placement.groupId];
-          node.position({ x: placement.x, y: placement.y });
+          const group = board.groups[placement.groupId],
+            position = group.collapsed
+              ? this.groupAnchor(group)
+              : { x: placement.x, y: placement.y };
+          node.position(position);
           node.data("color", group.color);
           node.data("manualGroup", placement.groupId);
           node.data("manualMuted", muted.has(node.id()));
           node.toggleClass("manual-muted", muted.has(node.id()));
+          node.toggleClass("manual-collapsed-member", !!group.collapsed);
         });
         this.cy.edges().forEach((edge) => {
-          const hidden =
-            muted.has(edge.source().id()) || muted.has(edge.target().id());
+          const sourceId = edge.source().id(),
+            targetId = edge.target().id(),
+            sourceGroupId = board.placements[sourceId]?.groupId,
+            targetGroupId = board.placements[targetId]?.groupId,
+            sourceGroup = board.groups[sourceGroupId],
+            targetGroup = board.groups[targetGroupId],
+            outer = sourceGroupId !== targetGroupId,
+            groupHidden =
+              outer &&
+              (sourceGroup?.outerEdgeMode === "hidden" ||
+                targetGroup?.outerEdgeMode === "hidden"),
+            groupHighlighted =
+              outer &&
+              !groupHidden &&
+              (sourceGroup?.outerEdgeMode === "highlighted" ||
+                targetGroup?.outerEdgeMode === "highlighted"),
+            hidden = muted.has(sourceId) || muted.has(targetId),
+            collapsedInternal = !outer && !!sourceGroup?.collapsed;
           edge.toggleClass("manual-hidden", hidden);
+          edge.toggleClass("manual-collapsed-internal", collapsedInternal);
+          edge.toggleClass("manual-group-outer-hidden", groupHidden);
+          edge.toggleClass("manual-outer-highlight", groupHighlighted);
           edge.removeClass("manual-reveal");
         });
       });
+    }
+    groupAnchor(group) {
+      if (group.collapsed)
+        return group.shape === "circle"
+          ? {
+              x: group.cx,
+              y: group.cy - group.radius - group.header / 2,
+            }
+          : {
+              x: group.x + group.width / 2,
+              y: group.y + group.header / 2,
+            };
+      const area = G.usable(group);
+      return area.shape === "circle"
+        ? { x: area.cx, y: area.cy }
+        : {
+            x: (area.left + area.right) / 2,
+            y: (area.top + area.bottom) / 2,
+          };
     }
     paint(updateGraph = true) {
       if (!this.model) return;
@@ -350,6 +433,7 @@
       this.renderInspector();
       this.transform();
       this.updateUndo();
+      this.updateSelectionFocus();
     }
     transform() {
       const pan = this.cy.pan(),
@@ -365,11 +449,13 @@
         const root = svgElement("g");
         root.dataset.groupId = group.id;
         root.classList.add("manual-region");
+        if (group.collapsed) root.classList.add("collapsed");
         if (group.id === this.selectedGroupId) root.classList.add("selected");
         const shape = svgElement(group.shape === "circle" ? "circle" : "rect"),
           header = svgElement("rect"),
           label = svgElement("text"),
           handle = svgElement("rect");
+        let headerX, headerY, headerWidth;
         if (group.shape === "circle") {
           shape.setAttribute("cx", group.cx);
           shape.setAttribute("cy", group.cy);
@@ -382,6 +468,9 @@
           label.setAttribute("y", group.cy - group.radius - 8);
           handle.setAttribute("x", group.cx + group.radius - 8);
           handle.setAttribute("y", group.cy + group.radius - 8);
+          headerX = group.cx - group.radius;
+          headerY = group.cy - group.radius - group.header;
+          headerWidth = group.radius * 2;
         } else {
           shape.setAttribute("x", group.x);
           shape.setAttribute("y", group.y);
@@ -395,6 +484,9 @@
           label.setAttribute("y", group.y + 19);
           handle.setAttribute("x", group.x + group.width - 8);
           handle.setAttribute("y", group.y + group.height - 8);
+          headerX = group.x;
+          headerY = group.y;
+          headerWidth = group.width;
         }
         shape.classList.add("manual-region-body");
         shape.style.fill = group.color;
@@ -402,7 +494,10 @@
         handle.classList.add("manual-resize-handle");
         handle.setAttribute("width", 16);
         handle.setAttribute("height", 16);
-        label.textContent = `${group.name} · ${Object.values(board.placements).filter((p) => p.groupId === group.id).length}`;
+        const memberCount = Object.values(board.placements).filter(
+          (p) => p.groupId === group.id,
+        ).length;
+        label.textContent = `${group.name} · ${memberCount}`;
         header.addEventListener("pointerdown", (event) =>
           this.regionPointerDown(event, group.id, false),
         );
@@ -411,9 +506,106 @@
         );
         header.addEventListener("click", () => this.selectGroup(group.id));
         root.append(shape, header, label, handle);
+        const actions = [
+          {
+            action: "collapse",
+            active: !!group.collapsed,
+            label: group.collapsed ? "Expand group" : "Collapse group",
+            path: group.collapsed
+              ? "M3 9h12M3 9l3-3M3 9l3 3M15 9l-3-3M15 9l-3 3"
+              : "M3 9h12M7 6 4 9l3 3M11 6l3 3-3 3",
+          },
+          {
+            action: "hide-outer",
+            active: group.outerEdgeMode === "hidden",
+            label:
+              group.outerEdgeMode === "hidden"
+                ? "Show outer edges"
+                : "Hide outer edges",
+            path: "M3 5h5M10 13h5M4 14 14 4",
+          },
+          {
+            action: "highlight-outer",
+            active: group.outerEdgeMode === "highlighted",
+            label:
+              group.outerEdgeMode === "highlighted"
+                ? "Clear outer-edge highlight"
+                : "Highlight outer edges",
+            path: "M9 2v3M9 13v3M2 9h3M13 9h3M4 4l2 2M12 12l2 2M14 4l-2 2M6 12l-2 2",
+          },
+        ];
+        actions.forEach((action, index) =>
+          root.append(
+            this.regionAction(
+              group.id,
+              action,
+              headerX + headerWidth - 62 + index * 20,
+              headerY + Math.max(2, (group.header - 18) / 2),
+            ),
+          ),
+        );
         this.groupLayer.append(root);
       });
       this.transform();
+    }
+    regionAction(groupId, action, x, y) {
+      const root = svgElement("g"),
+        background = svgElement("rect"),
+        icon = svgElement("path"),
+        title = svgElement("title");
+      root.classList.add("manual-region-action");
+      if (action.active) root.classList.add("active");
+      root.dataset.action = action.action;
+      root.setAttribute("role", "button");
+      root.setAttribute("tabindex", "0");
+      root.setAttribute("aria-label", action.label);
+      root.setAttribute("aria-pressed", action.active ? "true" : "false");
+      root.setAttribute("transform", `translate(${x} ${y})`);
+      background.setAttribute("width", 18);
+      background.setAttribute("height", 18);
+      background.setAttribute("rx", 3);
+      icon.setAttribute("d", action.path);
+      title.textContent = action.label;
+      const activate = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this.toggleGroupControl(groupId, action.action);
+      };
+      root.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      });
+      root.addEventListener("click", activate);
+      root.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") activate(event);
+      });
+      root.append(background, icon, title);
+      return root;
+    }
+    toggleGroupControl(groupId, action) {
+      const group = this.model?.board.groups[groupId];
+      if (!group) return;
+      try {
+        this.layout.stop();
+        this.selectedGroupId = groupId;
+        if (action === "collapse") {
+          if (!group.collapsed)
+            this.cy
+              .nodes(":selected")
+              .filter(
+                (node) =>
+                  this.model.board.placements[node.id()]?.groupId === groupId,
+              )
+              .unselect();
+          this.model.toggleGroupCollapsed(groupId);
+        } else
+          this.model.toggleGroupOuterEdges(
+            groupId,
+            action === "hide-outer" ? "hidden" : "highlighted",
+          );
+      } catch (error) {
+        this.notice(error.message);
+      }
     }
     regionPointerDown(event, groupId, resize) {
       if (!this.model) return;
@@ -489,6 +681,80 @@
         .nodes(":selected")
         .map((node) => node.id())
         .filter((id) => this.model?.board.entities[id]);
+    }
+    clearSelectionFocus() {
+      this.cy.elements().removeClass("faded upstream downstream hover-edge");
+    }
+    updateSelectionFocus() {
+      this.clearSelectionFocus();
+      if (!this.active || !this.model) return;
+      const selected = this.cy.nodes(":selected");
+      if (!selected.length) return;
+      let related = selected;
+      selected.forEach((node) => {
+        const incoming = node.incomers(),
+          outgoing = node.outgoers();
+        related = related.union(incoming).union(outgoing);
+        incoming.edges().addClass("upstream");
+        outgoing.edges().addClass("downstream");
+      });
+      this.cy.elements().difference(related).addClass("faded");
+    }
+    openContextMenu(event) {
+      if (!this.active || !this.model) return;
+      event.originalEvent?.preventDefault();
+      const node = event.target,
+        nodeId = node.id(),
+        placement = this.model.board.placements[nodeId],
+        currentGroupId = placement?.groupId;
+      if (!placement) return;
+      this.contextNodeId = nodeId;
+      this.cy.nodes().unselect();
+      node.select();
+      document.getElementById("manual-node-menu-title").textContent =
+        this.model.board.entities[nodeId].label;
+      const remove = document.getElementById("manual-node-remove-group");
+      remove.disabled = currentGroupId === "group:unassigned";
+      remove.title = remove.disabled ? "This node is already unassigned." : "";
+      const options = document.getElementById("manual-node-move-options");
+      options.replaceChildren();
+      Object.values(this.model.board.groups)
+        .filter((group) => group.id !== currentGroupId)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach((group) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.setAttribute("role", "menuitem");
+          button.dataset.groupId = group.id;
+          button.textContent = group.name;
+          button.onclick = () => this.moveContextNode(group.id);
+          options.append(button);
+        });
+      this.contextMenu.hidden = false;
+      const canvas = document.getElementById("canvas").getBoundingClientRect(),
+        x = canvas.left + event.renderedPosition.x + 8,
+        y = canvas.top + event.renderedPosition.y + 8;
+      this.contextMenu.style.left = `${Math.max(8, Math.min(x, window.innerWidth - this.contextMenu.offsetWidth - 8))}px`;
+      this.contextMenu.style.top = `${Math.max(8, Math.min(y, window.innerHeight - this.contextMenu.offsetHeight - 8))}px`;
+    }
+    hideContextMenu() {
+      if (!this.contextMenu) return;
+      this.contextMenu.hidden = true;
+      this.contextNodeId = null;
+    }
+    moveContextNode(groupId) {
+      const nodeId = this.contextNodeId;
+      if (!nodeId || !this.model?.board.groups[groupId]) return;
+      try {
+        this.layout.stop();
+        this.model.assign([nodeId], groupId);
+        this.cy.nodes().unselect();
+        this.cy.$id(nodeId).select();
+      } catch (error) {
+        this.notice(error.message);
+      } finally {
+        this.hideContextMenu();
+      }
     }
     nodeGrab(event) {
       if (!this.active || !this.model) return;

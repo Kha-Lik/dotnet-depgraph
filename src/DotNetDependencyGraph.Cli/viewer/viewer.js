@@ -662,6 +662,32 @@
           "underlay-padding": 5,
         },
       },
+      {
+        selector: "node.manual-collapsed-member",
+        style: {
+          opacity: 0,
+          events: "no",
+          label: "",
+          "overlay-opacity": 0,
+          "underlay-opacity": 0,
+        },
+      },
+      {
+        selector:
+          "edge.manual-collapsed-internal,edge.manual-group-outer-hidden",
+        style: { display: "none" },
+      },
+      {
+        selector: "edge.manual-outer-highlight",
+        style: {
+          "line-color": "#f2cc60",
+          "target-arrow-color": "#f2cc60",
+          "target-arrow-shape": "triangle",
+          opacity: 1,
+          width: 3,
+          "z-index": 12,
+        },
+      },
     ],
     layout: { name: "preset" },
   });
@@ -2130,16 +2156,14 @@
       viewport: { pan: { ...cy.pan() }, zoom: cy.zoom() },
       selected: cy.nodes(":selected").map((node) => node.id()),
       nodes: Object.fromEntries(
-        cy
-          .nodes()
-          .map((node) => [
-            node.id(),
-            {
-              position: { ...node.position() },
-              color: node.data("color"),
-              borderColor: node.data("borderColor"),
-            },
-          ]),
+        cy.nodes().map((node) => [
+          node.id(),
+          {
+            position: { ...node.position() },
+            color: node.data("color"),
+            borderColor: node.data("borderColor"),
+          },
+        ]),
       ),
     };
   }
@@ -2152,13 +2176,15 @@
         node.position(saved.position);
         node.data("color", saved.color);
         node.data("borderColor", saved.borderColor);
-        node.removeClass("manual-muted");
+        node.removeClass("manual-muted manual-collapsed-member");
         node.removeData("manualGroup");
         node.removeData("manualMuted");
         node.unselect();
       });
       snapshot.selected.forEach((id) => cy.$id(id).select());
-      cy.edges().removeClass("manual-hidden manual-reveal physics-active");
+      cy.edges().removeClass(
+        "manual-hidden manual-reveal manual-collapsed-internal manual-group-outer-hidden manual-outer-highlight physics-active",
+      );
     });
     cy.viewport(snapshot.viewport);
     state.paused = true;

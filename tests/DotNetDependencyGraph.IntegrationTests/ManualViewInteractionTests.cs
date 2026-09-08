@@ -30,6 +30,26 @@ public sealed class ManualViewInteractionTests
     }
 
     [Fact]
+    public async Task SelectedManualNodeHighlightsItsDependencyEdges()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var nodeId = await page.EvaluateAsync<string>("__depgraphDebug.cy.edges()[0].source().id()");
+        var node = await NodePointAsync(page, nodeId);
+
+        await page.Mouse.ClickAsync(node.X, node.Y);
+
+        Assert.Equal(nodeId, await page.EvaluateAsync<string>("__depgraphDebug.cy.nodes(':selected')[0].id()"));
+        Assert.True(await page.EvaluateAsync<bool>("([id]) => { const edges=__depgraphDebug.cy.$id(id).connectedEdges(); return edges.length > 0 && edges.every(edge => edge.hasClass('upstream') || edge.hasClass('downstream')); }", new object[] { nodeId }));
+        Assert.True(await page.EvaluateAsync<bool>("__depgraphDebug.cy.elements('.faded').length > 0"));
+
+        await page.EvaluateAsync("__depgraphDebug.cy.nodes().unselect()");
+
+        Assert.Equal(0, await page.EvaluateAsync<int>("__depgraphDebug.cy.elements('.upstream,.downstream,.faded').length"));
+    }
+
+    [Fact]
     public async Task GroupHeaderDragAndResizeHandleCommitGeometry()
     {
         await using var session = await BrowserSession.CreateAsync();
@@ -116,6 +136,80 @@ public sealed class ManualViewInteractionTests
         Assert.NotEmpty(await page.EvaluateAsync<string[]>("__depgraphDebug.manualView.model.board.mutedEntityIds"));
         await page.Locator("#manual-load-file").SetInputFilesAsync(path);
         await page.WaitForFunctionAsync("__depgraphDebug.manualView.model.board.mutedEntityIds.length === 0");
+        Assert.Empty(await BoardErrorsAsync(page));
+    }
+
+    [Fact]
+    public async Task NodeContextMenuRemovesAndMovesNodeBetweenGroups()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 2).map(node => node.id())");
+        await CreateGroupAsync(page, "Feature One", ids[0]);
+        var firstGroup = await page.EvaluateAsync<string>("Object.keys(__depgraphDebug.manualView.model.board.groups).find(id => id !== 'group:unassigned')");
+        await CreateGroupAsync(page, "Feature Two", ids[1]);
+        var secondGroup = await page.EvaluateAsync<string>("([first]) => Object.keys(__depgraphDebug.manualView.model.board.groups).find(id => id !== 'group:unassigned' && id !== first)", new object[] { firstGroup });
+        var node = await NodePointAsync(page, ids[0]);
+
+        await page.Mouse.ClickAsync(node.X, node.Y, new() { Button = MouseButton.Right });
+
+        Assert.True(await page.Locator("#manual-node-menu").IsVisibleAsync());
+        Assert.Equal(ids[0], await page.EvaluateAsync<string>("__depgraphDebug.cy.nodes(':selected')[0].id()"));
+        await page.Locator("#manual-node-remove-group").ClickAsync();
+        Assert.Equal("group:unassigned", await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.placements[id].groupId", new object[] { ids[0] }));
+        Assert.False(await page.Locator("#manual-node-menu").IsVisibleAsync());
+
+        node = await NodePointAsync(page, ids[0]);
+        await page.Mouse.ClickAsync(node.X, node.Y, new() { Button = MouseButton.Right });
+        Assert.True(await page.Locator("#manual-node-remove-group").IsDisabledAsync());
+        await page.Locator($"#manual-node-move-options button[data-group-id='{secondGroup}']").ClickAsync();
+
+        Assert.Equal(secondGroup, await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.placements[id].groupId", new object[] { ids[0] }));
+        Assert.Empty(await BoardErrorsAsync(page));
+    }
+
+    [Fact]
+    public async Task GroupHeaderControlsCollapseAndControlOuterEdgesPersistently()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var endpoints = await page.EvaluateAsync<string[]>("[__depgraphDebug.cy.edges()[0].source().id(), __depgraphDebug.cy.edges()[0].target().id()]");
+        await CreateGroupAsync(page, "Source Feature", endpoints[0]);
+        await CreateGroupAsync(page, "Target Feature", endpoints[1]);
+        await page.EvaluateAsync("__depgraphDebug.manualView.fitBoard(__depgraphDebug.manualView.model.board)");
+        var sourceGroup = await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.placements[id].groupId", new object[] { endpoints[0] });
+        var outerEdge = $"([ids]) => __depgraphDebug.cy.$id(ids[0]).edgesWith(__depgraphDebug.cy.$id(ids[1]))";
+
+        await page.Locator($".manual-region[data-group-id='{sourceGroup}'] .manual-region-action[data-action='highlight-outer']").ClickAsync();
+        Assert.Equal("highlighted", await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.groups[id].outerEdgeMode", new object[] { sourceGroup }));
+        Assert.True(await page.EvaluateAsync<bool>($"([ids]) => ({outerEdge})(ids).every(edge => edge.hasClass('manual-outer-highlight'))", new object[] { endpoints }));
+
+        await page.Locator($".manual-region[data-group-id='{sourceGroup}'] .manual-region-action[data-action='collapse']").ClickAsync();
+        Assert.True(await page.EvaluateAsync<bool>("([id]) => __depgraphDebug.manualView.model.board.groups[id].collapsed", new object[] { sourceGroup }));
+        Assert.True(await page.EvaluateAsync<bool>("([id]) => __depgraphDebug.cy.$id(id).hasClass('manual-collapsed-member')", new object[] { endpoints[0] }));
+        Assert.True(await page.EvaluateAsync<bool>($"([ids]) => ({outerEdge})(ids).every(edge => edge.style('display') === 'element')", new object[] { endpoints }));
+        Assert.False(await page.Locator($".manual-region[data-group-id='{sourceGroup}'] .manual-region-body").IsVisibleAsync());
+        Assert.False(await page.Locator($".manual-region[data-group-id='{sourceGroup}'] .manual-resize-handle").IsVisibleAsync());
+        Assert.True(await page.Locator($".manual-region[data-group-id='{sourceGroup}'] .manual-region-header").IsVisibleAsync());
+        Assert.True(await page.EvaluateAsync<bool>("([id]) => { const group=__depgraphDebug.manualView.model.board.groups[__depgraphDebug.manualView.model.board.placements[id].groupId], point=__depgraphDebug.cy.$id(id).position(); return Math.abs(point.x-(group.x+group.width/2)) < 0.001 && Math.abs(point.y-(group.y+group.header/2)) < 0.001; }", new object[] { endpoints[0] }));
+
+        var download = await page.RunAndWaitForDownloadAsync(() => page.Locator("#manual-save").ClickAsync());
+        var path = await download.PathAsync();
+        await page.Locator($".manual-region[data-group-id='{sourceGroup}'] .manual-region-action[data-action='collapse']").ClickAsync();
+        await page.Locator($".manual-region[data-group-id='{sourceGroup}'] .manual-region-action[data-action='highlight-outer']").ClickAsync();
+        await page.Locator("#manual-load-file").SetInputFilesAsync(path);
+        await page.WaitForFunctionAsync("([id]) => __depgraphDebug.manualView.model.board.groups[id]?.collapsed && __depgraphDebug.manualView.model.board.groups[id].outerEdgeMode === 'highlighted'", new object[] { sourceGroup });
+
+        await page.Locator($".manual-region[data-group-id='{sourceGroup}'] .manual-region-action[data-action='hide-outer']").ClickAsync();
+        Assert.Equal("hidden", await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.groups[id].outerEdgeMode", new object[] { sourceGroup }));
+        Assert.True(await page.EvaluateAsync<bool>($"([ids]) => ({outerEdge})(ids).every(edge => edge.hasClass('manual-group-outer-hidden') && edge.style('display') === 'none')", new object[] { endpoints }));
+        Assert.False(await page.EvaluateAsync<bool>($"([ids]) => ({outerEdge})(ids).some(edge => edge.hasClass('manual-outer-highlight'))", new object[] { endpoints }));
+
+        await page.Locator($".manual-region[data-group-id='{sourceGroup}'] .manual-region-action[data-action='hide-outer']").ClickAsync();
+        Assert.Equal("visible", await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.groups[id].outerEdgeMode", new object[] { sourceGroup }));
+        Assert.True(await page.EvaluateAsync<bool>($"([ids]) => ({outerEdge})(ids).every(edge => edge.style('display') === 'element')", new object[] { endpoints }));
         Assert.Empty(await BoardErrorsAsync(page));
     }
 
@@ -299,6 +393,7 @@ public sealed class ManualViewInteractionTests
     }
 
     private static async Task<NodePoint> NodePointAsync(IPage page, int index) => await page.EvaluateAsync<NodePoint>("([index]) => { const n=__depgraphDebug.cy.nodes()[index], p=n.renderedPosition(), r=document.getElementById('cy').getBoundingClientRect(); return {id:n.id(),x:r.left+p.x,y:r.top+p.y}; }", new object[] { index });
+    private static async Task<NodePoint> NodePointAsync(IPage page, string id) => await page.EvaluateAsync<NodePoint>("([id]) => { const n=__depgraphDebug.cy.$id(id), p=n.renderedPosition(), r=document.getElementById('cy').getBoundingClientRect(); return {id:n.id(),x:r.left+p.x,y:r.top+p.y}; }", new object[] { id });
     private static async Task<string[]> BoardErrorsAsync(IPage page) => await page.EvaluateAsync<string[]>("DepGraphManualGeometry.validate(__depgraphDebug.manualView.model.board)");
     private static async Task<GroupGeometry> GroupGeometryAsync(IPage page, string groupId) => await page.EvaluateAsync<GroupGeometry>("([id]) => { const e=DepGraphManualGeometry.envelope(__depgraphDebug.manualView.model.board.groups[id]); return {left:e.left,top:e.top,width:e.right-e.left,height:e.bottom-e.top}; }", new object[] { groupId });
     private static async Task DragAsync(IPage page, ILocator locator, float dx, float dy)

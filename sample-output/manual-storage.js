@@ -71,9 +71,14 @@
       if (
         group.id !== groupId ||
         typeof group.name !== "string" ||
-        !window.DepGraphManualState.color(group.color)
+        !window.DepGraphManualState.color(group.color) ||
+        (group.collapsed != null && typeof group.collapsed !== "boolean") ||
+        (group.outerEdgeMode != null &&
+          !["visible", "hidden", "highlighted"].includes(group.outerEdgeMode))
       )
         throw new Error(`Invalid group ${groupId}.`);
+      group.collapsed = !!group.collapsed;
+      group.outerEdgeMode = group.outerEdgeMode || "visible";
     }
     const muted = new Set(normalized.mutedEntityIds);
     if (

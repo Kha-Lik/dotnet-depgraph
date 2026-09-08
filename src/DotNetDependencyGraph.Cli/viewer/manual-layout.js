@@ -21,6 +21,7 @@
         muted = new Set(board.mutedEntityIds),
         requested = new Set(groupIds || Object.keys(board.groups));
       for (const groupId of requested) {
+        if (board.groups[groupId]?.collapsed) continue;
         const members = Object.entries(board.placements)
           .filter(([, p]) => p.groupId === groupId)
           .map(([id, p]) => ({

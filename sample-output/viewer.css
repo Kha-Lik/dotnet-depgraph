@@ -181,6 +181,50 @@ button:hover {
   font-size: 18px;
   line-height: 1;
 }
+#manual-node-menu {
+  position: fixed;
+  z-index: 6;
+  width: 220px;
+  max-height: min(420px, calc(100vh - 16px));
+  padding: 8px;
+  overflow: auto;
+  border: 1px solid #6e7681;
+  border-radius: 7px;
+  background: #161b22;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+#manual-node-menu[hidden] {
+  display: none;
+}
+#manual-node-menu strong,
+.manual-node-menu-label {
+  display: block;
+  padding: 5px 7px;
+}
+#manual-node-menu strong {
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.manual-node-menu-label {
+  margin-top: 5px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+#manual-node-menu button {
+  display: block;
+  width: 100%;
+  margin: 2px 0;
+  text-align: left;
+}
+#manual-node-menu button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
 section,
 details {
   border-top: 1px solid var(--line);
@@ -403,6 +447,12 @@ a {
   stroke: #f0f6fc;
   stroke-width: 4px;
 }
+.manual-region.collapsed .manual-region-body {
+  display: none;
+}
+.manual-region.collapsed .manual-resize-handle {
+  display: none;
+}
 .manual-region-header {
   fill: rgba(22, 27, 34, 0.9);
   stroke: rgba(255, 255, 255, 0.55);
@@ -416,6 +466,36 @@ a {
   font-size: 13px;
   font-weight: 650;
   pointer-events: none;
+}
+.manual-region-action {
+  cursor: pointer;
+  pointer-events: all;
+}
+.manual-region-action rect {
+  fill: #0d1117;
+  stroke: #6e7681;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+.manual-region-action path {
+  fill: none;
+  stroke: #c9d1d9;
+  stroke-width: 1.6px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.manual-region-action:hover rect,
+.manual-region-action:focus rect {
+  stroke: var(--accent);
+  stroke-width: 2px;
+}
+.manual-region-action.active rect {
+  fill: #1f6feb;
+  stroke: #79c0ff;
+}
+.manual-region-action.active path {
+  stroke: #fff;
 }
 .manual-resize-handle {
   fill: var(--accent);

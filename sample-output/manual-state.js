@@ -237,6 +237,8 @@
                 height: 220,
                 header: 28,
               };
+        group.collapsed = false;
+        group.outerEdgeMode = "visible";
         while (
           Object.values(board.groups).some(
             (existing) => !G.separated(existing, group),
@@ -284,6 +286,22 @@
         entityIds.forEach((key, index) =>
           Object.assign(board.placements[key], slots[index], { groupId }),
         );
+      });
+    }
+    toggleGroupCollapsed(groupId) {
+      this.transact("Toggle group collapse", (board) => {
+        const group = board.groups[groupId];
+        if (!group) throw new Error("Choose an existing group.");
+        group.collapsed = !group.collapsed;
+      });
+    }
+    toggleGroupOuterEdges(groupId, mode) {
+      if (!["hidden", "highlighted"].includes(mode))
+        throw new Error("Unknown outer-edge mode.");
+      this.transact("Change group outer edges", (board) => {
+        const group = board.groups[groupId];
+        if (!group) throw new Error("Choose an existing group.");
+        group.outerEdgeMode = group.outerEdgeMode === mode ? "visible" : mode;
       });
     }
     updateGroup(groupId, values) {
@@ -563,6 +581,8 @@
         width: side,
         height: side,
         header: 28,
+        collapsed: false,
+        outerEdgeMode: "visible",
       };
       groups[groupId] = group;
       const slots = G.slots(
@@ -593,6 +613,8 @@
           width: Math.max(230, Math.ceil(Math.sqrt(missing.length)) * 72 + 50),
           height: Math.max(230, Math.ceil(Math.sqrt(missing.length)) * 72 + 50),
           header: 28,
+          collapsed: false,
+          outerEdgeMode: "visible",
         };
       groups[groupId] = group;
       const points = G.slots(
