@@ -41,6 +41,7 @@
     colorMode: "community",
     sizeMetric: "transitive",
     selectedCommunities: new Set(),
+    selectionOrder: [],
   };
   const borderPalette = ["#79C0FF", "#FFB77C", "#7EE787", "#D2A8FF", "#FF9492", "#E3B341", "#76E3EA", "#F778BA", "#B1BAC4", "#1F6FEB", "#A40E26", "#238636"];
   const physicsDefaults = Object.freeze({ ...payload.defaults.physics });
@@ -694,6 +695,7 @@
   function replace() {
     state.selected = null;
     state.hovered = null;
+    state.selectionOrder = [];
     cy.elements().remove();
     cy.add(elements());
     populateFilters();
@@ -836,7 +838,14 @@
     while (known.has(id)) id = `manual:${slug}-${suffix++}`;
     overrides.manualCommunities.push({ id, name, color }); return id;
   }
-  function selectedNodeIds() { return cy.nodes(":selected").map(node => node.id()); }
+  function selectedNodeIds() {
+    const selected = new Set(cy.nodes(":selected").map(node => node.id()));
+    state.selectionOrder = state.selectionOrder.filter(id => selected.has(id));
+    selected.forEach(id => {
+      if (!state.selectionOrder.includes(id)) state.selectionOrder.push(id);
+    });
+    return [...state.selectionOrder];
+  }
   function createFromSelection() {
     const nodes = selectedNodeIds(); if (!nodes.length && state.selected) nodes.push(state.selected);
     if (!nodes.length) { showNotice("Select one or more nodes first."); return; }
@@ -1148,6 +1157,15 @@
     sliderTimer = setTimeout(() => reheat(.65), 160);
   }
 
+  cy.on("select", "node", (e) => {
+    const id = e.target.id();
+    state.selectionOrder = state.selectionOrder.filter(selected => selected !== id);
+    state.selectionOrder.push(id);
+  });
+  cy.on("unselect", "node", (e) => {
+    const id = e.target.id();
+    state.selectionOrder = state.selectionOrder.filter(selected => selected !== id);
+  });
   cy.on("tap", "node", (e) => detail(e.target));
   cy.on("tap", (e) => {
     if (e.target === cy) {
@@ -1271,6 +1289,7 @@
   $("reset").onclick = () => {
     state.selected = null;
     state.hovered = null;
+    state.selectionOrder = [];
     ["search", "kind", "edgeKind", "component", "community", "tfm", "rid"]
       .forEach((x) => $(x).value = "");
     $("skew").checked = false;

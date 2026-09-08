@@ -11,7 +11,7 @@ Open `index.html` in a modern browser. The report is self-contained and works of
 - **Community granularity** switches between coarse, standard, and fine detected partitions without changing dependency edges. **Color by** can show effective communities or node kinds.
 - **Size by** scales nodes using all transitive dependents or runnable dependents. The remaining filters narrow by neighborhood, kind, edge kind, component, community, TFM, RID, version skew, or minimum runnable-dependent count.
 - The **Communities** legend supports navigation and manual rename, recolor, create, reassign, merge, restore, import, and export operations. Manual changes affect presentation only; they do not rewrite dependencies or automatic analysis.
-- Select two nodes and use **Explain path** to show a directed dependency path. **Fit all** restores the overview, while the Physics/Layout and Labels panels tune presentation.
+- Select the first node, then **Ctrl-click** the second (**Cmd-click** on macOS), and use **Explain path** to show a directed dependency path. **Fit all** restores the overview, while the Physics/Layout and Labels panels tune presentation.
 - **PNG** exports the current canvas. **Displayed JSON** exports the currently selected and filtered projection; `graph.json` remains the canonical machine-readable graph.
 
 Communities and architectural roles are dependency-topology heuristics, not confirmed business domains or design violations.
