@@ -101,6 +101,9 @@ button:disabled {
 #search {
   width: min(360px, 30vw);
 }
+#manual-search {
+  width: 100%;
+}
 #physics-status,
 #manual-save-status {
   margin-left: auto;

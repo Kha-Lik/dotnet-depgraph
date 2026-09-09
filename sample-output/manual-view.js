@@ -26,10 +26,19 @@
       this.groupLayer = svgElement("g");
       this.layer.append(this.groupLayer);
       this.setRegionsVisible(false);
+      this.installSearch();
       this.installGroupInspector();
       this.installContextMenu();
       this.installButtonIcons();
       this.bind();
+    }
+    installSearch() {
+      if (document.getElementById("manual-search")) return;
+      const search = document.createElement("input");
+      search.id = "manual-search";
+      search.placeholder = "Search nodes (3+ characters)…";
+      search.setAttribute("aria-label", "Search Manual layout nodes");
+      document.getElementById("manual-groups").prepend(search);
     }
     installGroupInspector() {
       const panel = document.createElement("section");
@@ -143,6 +152,9 @@
         this.previewBoard(true);
       document.getElementById("manual-create-unassigned").onclick = () =>
         this.previewBoard(false);
+      document.getElementById("manual-search").addEventListener("input", () =>
+        this.updateSearch(),
+      );
       document.getElementById("manual-preview-accept").onclick = () =>
         this.acceptPreview();
       document.getElementById("manual-preview-cancel").onclick = () =>
@@ -327,6 +339,7 @@
       this.active = false;
       this.preview = null;
       this.hideContextMenu();
+      this.cy.nodes().removeClass("manual-search-match");
       this.clearSelectionFocus();
       this.setRegionsVisible(false);
       document.body.classList.remove("manual-mode");
@@ -352,6 +365,7 @@
       document.getElementById("manual-preview-actions").hidden = false;
       document.getElementById("manual-empty-copy").hidden = true;
       this.renderRegions(this.preview);
+      this.updateSearch();
       this.fitBoard(this.preview);
     }
     acceptPreview() {
@@ -384,6 +398,7 @@
         (status) => this.setLayoutControls(status, false, false),
       );
       this.paint();
+      this.updateSearch();
       this.setLayoutControls("Paused", false, false);
       this.cy.nodes().unselect();
       this.manualSelection.forEach((id) => this.cy.$id(id).select());
@@ -822,6 +837,22 @@
           selected.has(node.id()) ? node.select() : node.unselect(),
         );
       });
+    }
+    updateSearch() {
+      const query = document
+        .getElementById("manual-search")
+        .value.trim()
+        .toLowerCase();
+      this.cy.nodes().removeClass("manual-search-match");
+      if (!this.active || query.length < 3) return;
+      this.cy
+        .nodes()
+        .filter((node) =>
+          String(node.data("label") || "")
+            .toLowerCase()
+            .includes(query),
+        )
+        .addClass("manual-search-match");
     }
     clearSelectionFocus() {
       this.cy.elements().removeClass("faded upstream downstream hover-edge");

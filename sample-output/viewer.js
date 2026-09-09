@@ -561,6 +561,17 @@
         },
       },
       {
+        selector: "node.manual-search-match",
+        style: {
+          label: "data(label)",
+          "z-index": 20,
+          "min-zoomed-font-size": 0,
+          "overlay-color": "#d29922",
+          "overlay-opacity": 0.32,
+          "overlay-padding": 8,
+        },
+      },
+      {
         selector: 'node[assignmentSource="manual"]',
         style: { "border-style": "dashed", "border-width": 3 },
       },

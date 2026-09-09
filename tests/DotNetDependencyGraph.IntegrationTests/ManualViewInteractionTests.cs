@@ -316,11 +316,38 @@ public sealed class ManualViewInteractionTests
         await page.EvaluateAsync("([ids]) => { const [selectedId, mutedId]=ids, view=__depgraphDebug.manualView, muted=__depgraphDebug.cy.$id(mutedId); view.model.board.mutedEntityIds=[mutedId]; view.paint(); view.applyNodeSelection([selectedId]); muted.addClass('faded'); __depgraphDebug.cy.center(muted); }", new object[] { ids });
         Assert.True(await page.EvaluateAsync<bool>("([id]) => __depgraphDebug.cy.$id(id).hasClass('manual-muted') && __depgraphDebug.cy.$id(id).hasClass('faded')", new object[] { ids[1] }));
 
-        var point = await NodePointAsync(page, ids[1]);
-        await page.Mouse.MoveAsync(point.X, point.Y);
+        await page.EvaluateAsync("([id]) => __depgraphDebug.cy.$id(id).emit('mouseover')", new object[] { ids[1] });
 
         Assert.Equal(ids[1], await page.EvaluateAsync<string>("__depgraphDebug.state.hovered"));
         Assert.True(await page.EvaluateAsync<bool>("([id]) => { const node=__depgraphDebug.cy.$id(id); return node.hasClass('hovered') && node.hasClass('show-label') && node.style('label') === node.data('label') && Number(node.style('opacity')) === 1; }", new object[] { ids[1] }));
+    }
+
+    [Fact]
+    public async Task ManualSearchHighlightsNameMatchesAfterThreeCharactersAndPersists()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var label = await page.EvaluateAsync<string>("__depgraphDebug.cy.nodes().map(node => node.data('label')).find(label => label.length >= 4)");
+        var query = label[..3].ToLowerInvariant();
+        var search = page.Locator("#manual-search");
+        Assert.True(await search.EvaluateAsync<bool>("input => input.parentElement.id === 'manual-groups'"));
+
+        await search.FillAsync(query[..2]);
+        Assert.Equal(0, await page.EvaluateAsync<int>("__depgraphDebug.cy.nodes('.manual-search-match').length"));
+        await search.FillAsync(query);
+        var matches = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes('.manual-search-match').map(node => node.id())");
+        var expected = await page.EvaluateAsync<string[]>("([query]) => __depgraphDebug.cy.nodes().filter(node => node.data('label').toLowerCase().includes(query)).map(node => node.id())", new object[] { query });
+        Assert.NotEmpty(matches);
+        Assert.Equal(expected.Order(), matches.Order());
+
+        var selected = await page.EvaluateAsync<string>("__depgraphDebug.cy.nodes().filter(node => !node.hasClass('manual-search-match'))[0]?.id() || __depgraphDebug.cy.nodes()[0].id()");
+        await SelectIdsAsync(page, selected);
+        await page.EvaluateAsync("__depgraphDebug.manualView.paint()");
+        Assert.Equal(matches.Order(), (await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes('.manual-search-match').map(node => node.id())")).Order());
+
+        await search.FillAsync("");
+        Assert.Equal(0, await page.EvaluateAsync<int>("__depgraphDebug.cy.nodes('.manual-search-match').length"));
     }
 
     [Fact]
