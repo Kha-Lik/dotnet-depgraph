@@ -617,6 +617,7 @@
         },
       },
       { selector: ".faded", style: { opacity: 0.035 } },
+      { selector: "node.hovered", style: { opacity: 1 } },
       {
         selector: "edge.upstream",
         style: {
@@ -1823,14 +1824,18 @@
     }
   });
   cy.on("mouseover", "node", (e) => {
-    if (state.mode === "manual") return;
     state.hovered = e.target.id();
-    if (!state.selected) focusNode(e.target, true);
+    e.target.addClass("hovered");
+    if (state.mode !== "manual" && !state.selected) focusNode(e.target, true);
     updateLabels();
   });
-  cy.on("mouseout", "node", () => {
-    if (state.mode === "manual") return;
+  cy.on("mouseout", "node", (e) => {
+    e.target.removeClass("hovered");
     state.hovered = null;
+    if (state.mode === "manual") {
+      updateLabels();
+      return;
+    }
     if (state.selected) focusNode(cy.$id(state.selected));
     else clearFocus();
     updateLabels();

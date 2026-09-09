@@ -537,20 +537,39 @@
                 y: p.y,
                 radius: board.entities[key].radius,
               })),
-            points = G.slots(
-              unassigned,
-              members.map((key) => board.entities[key].radius),
-              occupied,
-            );
-          if (points.some((point) => !point))
-            throw new Error(
-              "Unassigned cannot accommodate this group. Enlarge it and try again.",
-            );
+            radii = members.map((key) => board.entities[key].radius);
+          let points = G.slots(unassigned, radii, clone(occupied));
+          while (points.some((point) => !point)) {
+            if (unassigned.shape === "circle") unassigned.radius *= 1.2;
+            else {
+              unassigned.width *= 1.2;
+              unassigned.height =
+                unassigned.header +
+                (unassigned.height - unassigned.header) * 1.2;
+            }
+            points = G.slots(unassigned, radii, clone(occupied));
+          }
           members.forEach((key, index) =>
             Object.assign(board.placements[key], points[index], {
               groupId: "group:unassigned",
             }),
           );
+          const remaining = Object.values(board.groups).filter(
+            (group) =>
+              group.id !== "group:unassigned" && group.id !== groupId,
+          );
+          if (remaining.some((group) => !G.separated(unassigned, group))) {
+            const current = G.envelope(unassigned),
+              left =
+                Math.max(...remaining.map((group) => G.envelope(group).right)) +
+                40;
+            translateGroup(
+              board,
+              "group:unassigned",
+              left - current.left,
+              0,
+            );
+          }
         }
         delete board.groups[groupId];
       });

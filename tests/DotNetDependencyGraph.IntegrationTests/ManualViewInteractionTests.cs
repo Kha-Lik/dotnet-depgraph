@@ -35,6 +35,97 @@ public sealed class ManualViewInteractionTests
     }
 
     [Fact]
+    public async Task RepeatedCtrlClickTogglesTheClickedNodeWithoutDeselectingOlderNodes()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 4).map(node => node.id())");
+
+        var first = await NodePointAsync(page, ids[0]);
+        await page.Mouse.ClickAsync(first.X, first.Y);
+        await page.Keyboard.DownAsync("Control");
+        foreach (var id in ids.Skip(1))
+        {
+            var point = await NodePointAsync(page, id);
+            await page.Mouse.ClickAsync(point.X, point.Y);
+        }
+
+        Assert.Equal(ids.Order(), (await SelectedIdsAsync(page)).Order());
+        for (var click = 0; click < 3; click++)
+        {
+            var point = await NodePointAsync(page, ids[3]);
+            await page.Mouse.ClickAsync(point.X, point.Y);
+            var expected = click % 2 == 0 ? ids[..3] : ids;
+            Assert.Equal(expected.Order(), (await SelectedIdsAsync(page)).Order());
+        }
+        await page.Keyboard.UpAsync("Control");
+    }
+
+    [Fact]
+    public async Task NodeGrabDoesNotMutateSelectionBeforePointerStateIsCaptured()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 4).map(node => node.id())");
+        await SelectIdsAsync(page, ids);
+
+        await page.EvaluateAsync("([id]) => { const view=__depgraphDebug.manualView; view.pointerAdditive=false; view.nodeGrab({target:__depgraphDebug.cy.$id(id)}); }", new object[] { ids[3] });
+
+        Assert.Equal(ids.Order(), (await SelectedIdsAsync(page)).Order());
+    }
+
+    [Fact]
+    public async Task CtrlClickDeselectsClickedNodeWhenSeveralNodesAreSelected()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 4).map(node => node.id())");
+        var targetId = ids[0];
+        var older = ids[1..];
+        await SelectIdsAsync(page, ids);
+        Assert.Equal(ids.Order(), (await SelectedIdsAsync(page)).Order());
+        await page.EvaluateAsync("([id]) => __depgraphDebug.cy.center(__depgraphDebug.cy.$id(id))", new object[] { targetId });
+        var point = await NodePointAsync(page, targetId);
+
+        await page.Keyboard.DownAsync("Control");
+        await page.Mouse.ClickAsync(point.X, point.Y);
+        await page.Keyboard.UpAsync("Control");
+
+        Assert.Equal(older.Order(), (await SelectedIdsAsync(page)).Order());
+    }
+
+    [Fact]
+    public async Task ExploreRepeatedCtrlClickTogglesTheClickedNodeWithoutDeselectingOlderNodes()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await page.EvaluateAsync("document.getElementById('pause').click()");
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 4).map(node => node.id())");
+
+        var first = await NodePointAsync(page, ids[0]);
+        await page.Mouse.ClickAsync(first.X, first.Y);
+        await page.Keyboard.DownAsync("Control");
+        foreach (var id in ids.Skip(1))
+        {
+            var point = await NodePointAsync(page, id);
+            await page.Mouse.ClickAsync(point.X, point.Y);
+        }
+
+        Assert.Equal(ids.Order(), (await SelectedIdsAsync(page)).Order());
+        for (var click = 0; click < 3; click++)
+        {
+            var point = await NodePointAsync(page, ids[3]);
+            await page.Mouse.ClickAsync(point.X, point.Y);
+            var expected = click % 2 == 0 ? ids[..3] : ids;
+            Assert.Equal(expected.Order(), (await SelectedIdsAsync(page)).Order());
+        }
+        await page.Keyboard.UpAsync("Control");
+    }
+
+    [Fact]
     public async Task SharedSvgIconsPreserveAccessibleButtonLabels()
     {
         await using var session = await BrowserSession.CreateAsync();
@@ -213,6 +304,23 @@ public sealed class ManualViewInteractionTests
         Assert.DoesNotContain(node.Id, await page.EvaluateAsync<string[]>("__depgraphDebug.manualView.model.board.mutedEntityIds"));
         await page.Locator("#manual-redo").ClickAsync();
         Assert.Contains(node.Id, await page.EvaluateAsync<string[]>("__depgraphDebug.manualView.model.board.mutedEntityIds"));
+    }
+
+    [Fact]
+    public async Task HoverShowsMutedNodeLabelWhileAnotherNodeIsSelected()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 2).map(node => node.id())");
+        await page.EvaluateAsync("([ids]) => { const [selectedId, mutedId]=ids, view=__depgraphDebug.manualView, muted=__depgraphDebug.cy.$id(mutedId); view.model.board.mutedEntityIds=[mutedId]; view.paint(); view.applyNodeSelection([selectedId]); muted.addClass('faded'); __depgraphDebug.cy.center(muted); }", new object[] { ids });
+        Assert.True(await page.EvaluateAsync<bool>("([id]) => __depgraphDebug.cy.$id(id).hasClass('manual-muted') && __depgraphDebug.cy.$id(id).hasClass('faded')", new object[] { ids[1] }));
+
+        var point = await NodePointAsync(page, ids[1]);
+        await page.Mouse.MoveAsync(point.X, point.Y);
+
+        Assert.Equal(ids[1], await page.EvaluateAsync<string>("__depgraphDebug.state.hovered"));
+        Assert.True(await page.EvaluateAsync<bool>("([id]) => { const node=__depgraphDebug.cy.$id(id); return node.hasClass('hovered') && node.hasClass('show-label') && node.style('label') === node.data('label') && Number(node.style('opacity')) === 1; }", new object[] { ids[1] }));
     }
 
     [Fact]
@@ -516,6 +624,73 @@ public sealed class ManualViewInteractionTests
         Assert.Empty(await BoardErrorsAsync(page));
     }
 
+    [Fact]
+    public async Task UndoDeletedGroupRestoresItsInternalAndExternalConnections()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var ids = await page.EvaluateAsync<string[]>("() => { const source=__depgraphDebug.cy.nodes().filter(node => node.neighborhood('node').length >= 2)[0], neighbors=source.neighborhood('node'); return [source.id(), neighbors[0].id(), neighbors[1].id()]; }");
+        await CreateGroupAsync(page, "Restored Feature", ids[0], ids[1]);
+        var groupId = await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.placements[id].groupId", new object[] { ids[0] });
+        page.Dialog += async (_, dialog) => await dialog.AcceptAsync();
+
+        await page.Locator("#manual-delete-group").ClickAsync();
+        await page.Locator("#manual-undo").ClickAsync();
+
+        Assert.True(await page.EvaluateAsync<bool>("([id]) => !!__depgraphDebug.manualView.model.board.groups[id]", new object[] { groupId }));
+        Assert.True(await page.EvaluateAsync<bool>("([ids]) => { const cy=__depgraphDebug.cy, internal=cy.$id(ids[0]).edgesWith(cy.$id(ids[1])), external=cy.$id(ids[0]).edgesWith(cy.$id(ids[2])); return internal.length > 0 && external.length > 0 && internal.union(external).every(edge => edge.style('display') === 'element' && Number(edge.style('opacity')) > 0); }", new object[] { ids }));
+    }
+
+    [Fact]
+    public async Task DeletingGroupsExpandsAndRelocatesUnassignedWhenNeeded()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page);
+        var initiallyUnassigned = await page.EvaluateAsync<string[]>("Object.entries(__depgraphDebug.manualView.model.board.placements).filter(([, placement]) => placement.groupId === 'group:unassigned').map(([id]) => id)");
+        if (initiallyUnassigned.Length > 0)
+            await CreateGroupAsync(page, "Formerly Unassigned", initiallyUnassigned);
+        var groupIds = await page.EvaluateAsync<string[]>("Object.keys(__depgraphDebug.manualView.model.board.groups).filter(id => id !== 'group:unassigned')");
+        await page.EvaluateAsync("() => __depgraphDebug.manualView.model.transact('Constrain Unassigned', board => { const group=board.groups['group:unassigned']; group.width=90; group.height=group.header+60; })");
+        var before = await GroupGeometryAsync(page, "group:unassigned");
+        page.Dialog += async (_, dialog) => await dialog.AcceptAsync();
+
+        foreach (var groupId in groupIds)
+        {
+            await page.EvaluateAsync("([id]) => __depgraphDebug.manualView.selectGroup(id)", new object[] { groupId });
+            await page.Locator("#manual-delete-group").ClickAsync();
+        }
+
+        var after = await GroupGeometryAsync(page, "group:unassigned");
+        Assert.True(after.Width > before.Width || after.Height > before.Height);
+        Assert.True(await page.EvaluateAsync<bool>("Object.values(__depgraphDebug.manualView.model.board.placements).every(placement => placement.groupId === 'group:unassigned')"));
+        Assert.Empty(await BoardErrorsAsync(page));
+    }
+
+    [Fact]
+    public async Task StartOverReplacesActiveBoardBeforeSubsequentEdits()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 4).map(node => node.id())");
+        await CreateGroupAsync(page, "Pre-reset group", ids[0], ids[1]);
+        Assert.True(await page.EvaluateAsync<bool>("Object.values(__depgraphDebug.manualView.model.board.groups).some(group => group.name === 'Pre-reset group')"));
+        page.Dialog += async (_, dialog) => await dialog.AcceptAsync();
+
+        await page.Locator("#manual-start-over").ClickAsync();
+
+        Assert.False(await page.EvaluateAsync<bool>("Object.values(__depgraphDebug.manualView.model.board.groups).some(group => group.name === 'Pre-reset group')"));
+        Assert.True(await page.Locator("#manual-preview-actions").IsHiddenAsync());
+        Assert.True(await page.EvaluateAsync<bool>("__depgraphDebug.manualView.preview === null"));
+        await CreateGroupAsync(page, "Post-reset group", ids[2], ids[3]);
+
+        Assert.False(await page.EvaluateAsync<bool>("Object.values(__depgraphDebug.manualView.model.board.groups).some(group => group.name === 'Pre-reset group')"));
+        Assert.True(await page.EvaluateAsync<bool>("Object.values(__depgraphDebug.manualView.model.board.groups).some(group => group.name === 'Post-reset group')"));
+        Assert.Empty(await BoardErrorsAsync(page));
+    }
+
     private static async Task EnterManualAsync(IPage page, bool startUnassigned = false)
     {
         await page.Locator("#tab-manual").ClickAsync();
@@ -525,6 +700,7 @@ public sealed class ManualViewInteractionTests
     }
 
     private static async Task SelectIdsAsync(IPage page, params string[] ids) => await page.EvaluateAsync("([ids]) => { __depgraphDebug.cy.nodes().unselect(); ids.forEach(id => __depgraphDebug.cy.$id(id).select()); }", new object[] { ids });
+    private static async Task<string[]> SelectedIdsAsync(IPage page) => await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes(':selected').map(node => node.id())");
     private static async Task CreateGroupAsync(IPage page, string name, params string[] ids)
     {
         await SelectIdsAsync(page, ids); await page.Locator("#manual-new-group").ClickAsync(); await page.Locator("#manual-group-name").FillAsync(name); await page.Locator("#manual-group-shape").SelectOptionAsync("rectangle"); await page.Locator("#manual-group-create").ClickAsync();

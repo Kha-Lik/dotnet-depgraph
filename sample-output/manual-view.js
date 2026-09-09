@@ -16,7 +16,6 @@
       this.explore = null;
       this.drag = null;
       this.regionBodyDrag = null;
-      this.nodePointerSelection = null;
       this.pointerAdditive = false;
       this.pointerSelection = [];
       this.manualSelection = [];
@@ -249,9 +248,6 @@
           this.paint();
         }
       });
-      this.cy.on("mousedown", "node", (event) =>
-        this.rememberNodePointerSelection(event),
-      );
       this.cy.on("grab", "node", (event) => this.nodeGrab(event));
       this.cy.on("drag", "node", (event) => this.nodeDrag(event));
       this.cy.on("free", "node", (event) => this.nodeFree(event));
@@ -406,7 +402,12 @@
         )
       )
         return;
-      this.previewBoard(true);
+      this.layout.stop();
+      this.preview = null;
+      this.manualSelection = [];
+      const board = S.createBoard(this.getSpec(), true);
+      this.mount(board, true);
+      this.storage.save(board);
     }
     setStatus(text) {
       const status = document.getElementById("manual-run-status");
@@ -814,6 +815,14 @@
         .map((node) => node.id())
         .filter((id) => this.model?.board.entities[id]);
     }
+    applyNodeSelection(ids) {
+      const selected = new Set(ids);
+      this.cy.batch(() => {
+        this.cy.nodes().forEach((node) =>
+          selected.has(node.id()) ? node.select() : node.unselect(),
+        );
+      });
+    }
     clearSelectionFocus() {
       this.cy.elements().removeClass("faded upstream downstream hover-edge");
     }
@@ -888,52 +897,16 @@
         this.hideContextMenu();
       }
     }
-    rememberNodePointerSelection(event) {
-      const originalEvent = event.originalEvent || {};
-      if (originalEvent.button != null && originalEvent.button !== 0) return;
-      this.nodePointerSelection = {
-        id: event.target.id(),
-        additive: !!(
-          originalEvent.ctrlKey ||
-          originalEvent.metaKey ||
-          this.pointerAdditive
-        ),
-        selection: this.cy.nodes(":selected").map((node) => node.id()),
-      };
-    }
     nodeGrab(event) {
       if (!this.active || !this.model) return;
       this.layout.stop();
       const id = event.target.id(),
-        placement = this.model.board.placements[id],
-        pointer =
-          this.nodePointerSelection?.id === id
-            ? this.nodePointerSelection
-            : {
-                additive: this.pointerAdditive,
-                selection: this.cy.nodes(":selected").map((node) => node.id()),
-              },
-        additive = pointer.additive,
-        selectionBefore = pointer.selection;
-      this.nodePointerSelection = null;
-      if (!additive) {
-        this.cy.nodes().unselect();
-        event.target.select();
-      } else {
-        this.cy.nodes().unselect();
-        selectionBefore.forEach((selectedId) =>
-          this.cy.$id(selectedId).select(),
-        );
-        if (!event.target.selected()) event.target.select();
-      }
+        placement = this.model.board.placements[id];
       if (placement)
         this.drag = {
           id,
           before: structuredClone(this.model.board),
           original: { x: placement.x, y: placement.y },
-          selection: this.cy.nodes(":selected").map((node) => node.id()),
-          selectionBefore,
-          additive,
         };
     }
     nodeDrag(event) {
@@ -956,62 +929,34 @@
         final = { ...this.model.board.placements[drag.id] },
         moved = final.x !== drag.original.x || final.y !== drag.original.y;
       this.drag = null;
-      this.lastNodeGesture = {
-        id: drag.id,
-        selectionBefore: drag.selectionBefore,
-        additive: drag.additive,
-        moved,
-      };
+      const selectionBefore = [...this.pointerSelection],
+        additive = this.pointerAdditive;
       this.model.board = drag.before;
-      this.cy.nodes().unselect();
-      drag.selection.forEach((id) => this.cy.$id(id).select());
-      if (!moved) {
-        const selected = new Set(this.pointerSelection);
-        if (this.pointerAdditive)
-          selected.has(drag.id)
-            ? selected.delete(drag.id)
-            : selected.add(drag.id);
-        else {
-          selected.clear();
-          selected.add(drag.id);
-        }
-        this.cy.nodes().unselect();
-        selected.forEach((id) => this.cy.$id(id).select());
-        this.lastNodeGesture = null;
-        return;
-      }
+      if (!moved) return;
+      const selected = new Set(selectionBefore);
+      if (!additive) selected.clear();
+      selected.add(drag.id);
+      this.applyNodeSelection(selected);
       this.model.transact("Move node", (board) =>
         Object.assign(board.placements[drag.id], final),
       );
     }
     nodeTap(event) {
       if (!this.active) return;
-      const gesture =
-        this.lastNodeGesture?.id === event.target.id()
-          ? this.lastNodeGesture
-          : {
-              id: event.target.id(),
-              selectionBefore: this.pointerSelection,
-              additive: this.pointerAdditive,
-              moved: false,
-            };
-      this.lastNodeGesture = null;
-      if (gesture.moved) return;
-      const selected = new Set(gesture.selectionBefore),
+      const id = event.target.id(),
+        selected = new Set(this.pointerSelection),
         additive =
-          gesture.additive ||
           this.pointerAdditive ||
           !!(event.originalEvent?.ctrlKey || event.originalEvent?.metaKey);
       if (additive)
-        selected.has(gesture.id)
-          ? selected.delete(gesture.id)
-          : selected.add(gesture.id);
+        selected.has(id) ? selected.delete(id) : selected.add(id);
       else {
         selected.clear();
-        selected.add(gesture.id);
+        selected.add(id);
       }
-      this.cy.nodes().unselect();
-      selected.forEach((id) => this.cy.$id(id).select());
+      queueMicrotask(() => {
+        if (this.active) this.applyNodeSelection(selected);
+      });
     }
     openGroupEditor() {
       if (!this.selectedIds().length)
