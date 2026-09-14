@@ -23,6 +23,7 @@
       this.pointerSelection = [];
       this.manualSelection = [];
       this.contextNodeId = null;
+      this.contextMenuGroupId = null;
       this.assignmentTargetId = null;
       this.assignmentSelectionKey = "";
       this.contextGroupSelection = [];
@@ -35,6 +36,7 @@
       this.installGroupInspector();
       this.installResetToUnassigned();
       this.installContextMenu();
+      this.installGroupContextMenu();
       this.installContextGroupDialog();
       this.installColorPicker();
       this.installButtonIcons();
@@ -156,6 +158,29 @@
       menu.addEventListener("contextmenu", (event) => event.preventDefault());
       document.body.append(menu);
       this.contextMenu = menu;
+    }
+    installGroupContextMenu() {
+      const menu = document.createElement("div"),
+        title = document.createElement("strong"),
+        remove = document.createElement("button"),
+        moveLabel = document.createElement("span"),
+        options = document.createElement("div");
+      menu.id = "manual-group-menu";
+      menu.setAttribute("role", "menu");
+      menu.hidden = true;
+      title.id = "manual-group-menu-title";
+      remove.id = "manual-group-remove-supergroup";
+      remove.type = "button";
+      remove.setAttribute("role", "menuitem");
+      remove.textContent = "Remove from supergroup";
+      remove.onclick = () => this.moveContextGroupToSupergroup(null);
+      moveLabel.className = "manual-node-menu-label";
+      moveLabel.textContent = "Move to supergroup";
+      options.id = "manual-group-supergroup-options";
+      menu.append(title, remove, moveLabel, options);
+      menu.addEventListener("contextmenu", (event) => event.preventDefault());
+      document.body.append(menu);
+      this.groupContextMenu = menu;
     }
     installContextGroupDialog() {
       if (document.getElementById("manual-context-group-dialog")) return;
@@ -417,7 +442,12 @@
           .reverse()
           .find(
             (candidate) =>
-              !candidate.collapsed && G.contains(candidate, event.position),
+              !candidate.collapsed &&
+              !this.isGroupInCollapsedSupergroup(
+                this.model.board,
+                candidate.id,
+              ) &&
+              G.contains(candidate, event.position),
           );
         if (group) this.selectGroup(group.id);
         else {
@@ -432,7 +462,10 @@
       this.cy.on("drag", "node", (event) => this.nodeDrag(event));
       this.cy.on("free", "node", (event) => this.nodeFree(event));
       window.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") this.hideContextMenu();
+        if (event.key === "Escape") {
+          this.hideContextMenu();
+          this.hideGroupContextMenu();
+        }
         if (!this.active || !(event.ctrlKey || event.metaKey)) return;
         if (event.key.toLowerCase() === "z") {
           event.preventDefault();
@@ -450,6 +483,11 @@
           !this.contextMenu.contains(event.target)
         )
           this.hideContextMenu();
+        if (
+          !this.groupContextMenu.hidden &&
+          !this.groupContextMenu.contains(event.target)
+        )
+          this.hideGroupContextMenu();
       });
       this.setLayoutControls("Paused", false, false);
     }
@@ -507,6 +545,7 @@
       this.active = false;
       this.preview = null;
       this.hideContextMenu();
+      this.hideGroupContextMenu();
       this.cy.nodes().removeClass("manual-search-match");
       this.clearSelectionFocus();
       this.setRegionsVisible(false);
@@ -637,18 +676,28 @@
       status.classList.toggle("warning", !!warning);
     }
     applyBoard(board) {
-      const muted = new Set(board.mutedEntityIds);
+      const muted = new Set(board.mutedEntityIds),
+        supergroupByGroup = new Map();
+      Object.values(board.supergroups || {}).forEach((supergroup) =>
+        supergroup.groupIds.forEach((groupId) =>
+          supergroupByGroup.set(groupId, supergroup),
+        ),
+      );
       this.cy.batch(() => {
         this.applyPositions(board);
         this.cy.nodes().forEach((node) => {
           const placement = board.placements[node.id()];
           if (!placement) return;
-          const group = board.groups[placement.groupId];
+          const group = board.groups[placement.groupId],
+            supergroup = supergroupByGroup.get(placement.groupId);
           node.data("color", group.color);
           node.data("manualGroup", placement.groupId);
           node.data("manualMuted", muted.has(node.id()));
           node.toggleClass("manual-muted", muted.has(node.id()));
-          node.toggleClass("manual-collapsed-member", !!group.collapsed);
+          node.toggleClass(
+            "manual-collapsed-member",
+            !!group.collapsed || !!supergroup?.collapsed,
+          );
         });
         this.cy.edges().forEach((edge) => {
           const sourceId = edge.source().id(),
@@ -657,37 +706,82 @@
             targetGroupId = board.placements[targetId]?.groupId,
             sourceGroup = board.groups[sourceGroupId],
             targetGroup = board.groups[targetGroupId],
+            sourceSupergroup = supergroupByGroup.get(sourceGroupId),
+            targetSupergroup = supergroupByGroup.get(targetGroupId),
             outer = sourceGroupId !== targetGroupId,
+            supergroupOuter = sourceSupergroup !== targetSupergroup,
             groupHidden =
               outer &&
               (sourceGroup?.outerEdgeMode === "hidden" ||
                 targetGroup?.outerEdgeMode === "hidden"),
+            supergroupHidden =
+              supergroupOuter &&
+              (sourceSupergroup?.outerEdgeMode === "hidden" ||
+                targetSupergroup?.outerEdgeMode === "hidden"),
             groupHighlighted =
               outer &&
               !groupHidden &&
+              !supergroupHidden &&
               (sourceGroup?.outerEdgeMode === "highlighted" ||
                 targetGroup?.outerEdgeMode === "highlighted"),
+            supergroupHighlighted =
+              supergroupOuter &&
+              !groupHidden &&
+              !supergroupHidden &&
+              (sourceSupergroup?.outerEdgeMode === "highlighted" ||
+                targetSupergroup?.outerEdgeMode === "highlighted"),
             hidden = muted.has(sourceId) || muted.has(targetId),
-            collapsedInternal = !outer && !!sourceGroup?.collapsed;
+            collapsedInternal =
+              (!outer && !!sourceGroup?.collapsed) ||
+              (!!sourceSupergroup?.collapsed &&
+                sourceSupergroup === targetSupergroup);
           edge.toggleClass("manual-hidden", hidden);
           edge.toggleClass("manual-collapsed-internal", collapsedInternal);
-          edge.toggleClass("manual-group-outer-hidden", groupHidden);
-          edge.toggleClass("manual-outer-highlight", groupHighlighted);
+          edge.toggleClass(
+            "manual-group-outer-hidden",
+            groupHidden || supergroupHidden,
+          );
+          edge.toggleClass(
+            "manual-outer-highlight",
+            groupHighlighted || supergroupHighlighted,
+          );
           edge.removeClass("manual-reveal");
         });
       });
     }
     applyPositions(board) {
+      const supergroupByGroup = new Map();
+      Object.values(board.supergroups || {}).forEach((supergroup) =>
+        supergroup.groupIds.forEach((groupId) =>
+          supergroupByGroup.set(groupId, supergroup),
+        ),
+      );
       this.cy.nodes().forEach((node) => {
         const placement = board.placements[node.id()];
         if (!placement) return;
-        const group = board.groups[placement.groupId];
+        const group = board.groups[placement.groupId],
+          supergroup = supergroupByGroup.get(placement.groupId);
         node.position(
-          group.collapsed
+          supergroup?.collapsed
+            ? this.supergroupAnchor(board, supergroup)
+            : group.collapsed
             ? this.groupAnchor(group)
             : { x: placement.x, y: placement.y },
         );
       });
+    }
+    supergroupAnchor(board, supergroup) {
+      const bounds = S.supergroupBounds(board, supergroup);
+      return {
+        x: bounds.x + bounds.width / 2,
+        y: bounds.y + bounds.header / 2,
+      };
+    }
+    isGroupInCollapsedSupergroup(board, groupId) {
+      return Object.values(board.supergroups || {}).some(
+        (supergroup) =>
+          supergroup.collapsed && supergroup.groupIds.includes(groupId),
+      );
     }
     paintLayoutFrame() {
       if (!this.active || !this.model) return;
@@ -733,14 +827,25 @@
     }
     renderRegions(board) {
       this.groupLayer.replaceChildren();
+      const collapsedSupergroupMembers = new Set(),
+        supergroupByGroup = new Map();
       Object.values(board.supergroups || {}).forEach((supergroup) => {
         const bounds = S.supergroupBounds(board, supergroup),
           root = svgElement("g"),
           body = svgElement("rect"),
           header = svgElement("rect"),
           label = svgElement("text");
+        supergroup.groupIds.forEach((groupId) =>
+          supergroupByGroup.set(groupId, supergroup),
+        );
         root.dataset.supergroupId = supergroup.id;
         root.classList.add("manual-supergroup");
+        if (supergroup.collapsed) {
+          root.classList.add("collapsed");
+          supergroup.groupIds.forEach((groupId) =>
+            collapsedSupergroupMembers.add(groupId),
+          );
+        }
         if (supergroup.id === this.selectedSupergroupId)
           root.classList.add("selected");
         body.classList.add("manual-supergroup-body");
@@ -765,9 +870,55 @@
           this.selectSupergroup(supergroup.id),
         );
         root.append(body, header, label);
+        const actions = [
+          {
+            action: "collapse",
+            icon: supergroup.collapsed ? "expand" : "collapse",
+            active: !!supergroup.collapsed,
+            label: supergroup.collapsed
+              ? "Expand supergroup"
+              : "Collapse supergroup",
+          },
+          {
+            action: "arrange",
+            icon: "arrange",
+            active: false,
+            label: "Arrange groups in supergroup",
+          },
+          {
+            action: "hide-outer",
+            icon: "hide",
+            active: supergroup.outerEdgeMode === "hidden",
+            label:
+              supergroup.outerEdgeMode === "hidden"
+                ? "Show outer edges"
+                : "Hide outer edges",
+          },
+          {
+            action: "highlight-outer",
+            icon: "highlight",
+            active: supergroup.outerEdgeMode === "highlighted",
+            label:
+              supergroup.outerEdgeMode === "highlighted"
+                ? "Clear outer-edge highlight"
+                : "Highlight outer edges",
+          },
+        ];
+        actions.forEach((action, index) =>
+          root.append(
+            this.regionAction(
+              supergroup.id,
+              action,
+              bounds.x + bounds.width - 82 + index * 20,
+              bounds.y + Math.max(2, (bounds.header - 18) / 2),
+              () => this.toggleSupergroupControl(supergroup.id, action.action),
+            ),
+          ),
+        );
         this.groupLayer.append(root);
       });
       Object.values(board.groups).forEach((group) => {
+        if (collapsedSupergroupMembers.has(group.id)) return;
         const root = svgElement("g");
         root.dataset.groupId = group.id;
         root.classList.add("manual-region");
@@ -833,8 +984,25 @@
         header.addEventListener("click", (event) =>
           this.selectGroup(group.id, event.ctrlKey || event.metaKey),
         );
+        header.addEventListener("contextmenu", (event) =>
+          this.openGroupContextMenu(event, group.id),
+        );
         root.append(shape, header, label, handle);
+        const supergroup = supergroupByGroup.get(group.id),
+          pinnedInSupergroup =
+            supergroup?.pinnedGroupIds?.includes(group.id) || false;
         const actions = [
+          {
+            action: "pin-supergroup",
+            icon: pinnedInSupergroup ? "unpin" : "pin",
+            active: pinnedInSupergroup,
+            disabled: !supergroup,
+            label: supergroup
+              ? pinnedInSupergroup
+                ? "Unpin group within supergroup"
+                : "Pin group within supergroup"
+              : "Add group to a supergroup before pinning",
+          },
           {
             action: "collapse",
             icon: group.collapsed ? "expand" : "collapse",
@@ -865,7 +1033,7 @@
             this.regionAction(
               group.id,
               action,
-              headerX + headerWidth - 62 + index * 20,
+              headerX + headerWidth - 82 + index * 20,
               headerY + Math.max(2, (group.header - 18) / 2),
             ),
           ),
@@ -874,15 +1042,23 @@
       });
       this.transform();
     }
-    regionAction(groupId, action, x, y) {
+    regionAction(groupId, action, x, y, activate) {
+      const onActivate = action.disabled
+        ? () => {}
+        : activate || (() => this.toggleGroupControl(groupId, action.action));
       const root = window.DepGraphIcons.svgButton(
         action.icon,
         action.label,
         action.active,
-        () => this.toggleGroupControl(groupId, action.action),
+        onActivate,
       );
       root.classList.add("manual-region-action");
       root.dataset.action = action.action;
+      if (action.disabled) {
+        root.classList.add("disabled");
+        root.setAttribute("aria-disabled", "true");
+        root.setAttribute("tabindex", "-1");
+      }
       root.setAttribute("transform", `translate(${x} ${y})`);
       return root;
     }
@@ -892,7 +1068,9 @@
       try {
         this.layout.stop();
         this.selectedGroupId = groupId;
-        if (action === "collapse") {
+        if (action === "pin-supergroup")
+          this.model.toggleGroupPinnedInSupergroup(groupId);
+        else if (action === "collapse") {
           if (!group.collapsed)
             this.cy
               .nodes(":selected")
@@ -905,6 +1083,36 @@
         } else
           this.model.toggleGroupOuterEdges(
             groupId,
+            action === "hide-outer" ? "hidden" : "highlighted",
+          );
+      } catch (error) {
+        this.notice(error.message);
+      }
+    }
+    toggleSupergroupControl(supergroupId, action) {
+      const supergroup = this.model?.board.supergroups?.[supergroupId];
+      if (!supergroup) return;
+      try {
+        this.layout.stop();
+        this.selectedSupergroupId = supergroupId;
+        if (action === "arrange")
+          this.model.arrangeSupergroup(supergroupId);
+        else if (action === "collapse") {
+          if (!supergroup.collapsed) {
+            const groupIds = new Set(supergroup.groupIds);
+            this.cy
+              .nodes(":selected")
+              .filter((node) =>
+                groupIds.has(
+                  this.model.board.placements[node.id()]?.groupId,
+                ),
+              )
+              .unselect();
+          }
+          this.model.toggleSupergroupCollapsed(supergroupId);
+        } else
+          this.model.toggleSupergroupOuterEdges(
+            supergroupId,
             action === "hide-outer" ? "hidden" : "highlighted",
           );
       } catch (error) {
@@ -1014,7 +1222,12 @@
         .reverse()
         .find(
           (candidate) =>
-            !candidate.collapsed && G.contains(candidate, event.position),
+            !candidate.collapsed &&
+            !this.isGroupInCollapsedSupergroup(
+              this.model.board,
+              candidate.id,
+            ) &&
+            G.contains(candidate, event.position),
         );
       if (!group) return;
       event.originalEvent?.preventDefault();
@@ -1140,6 +1353,7 @@
         placement = this.model.board.placements[nodeId],
         currentGroupId = placement?.groupId;
       if (!placement) return;
+      this.hideGroupContextMenu();
       this.contextNodeId = nodeId;
       if (!node.selected()) {
         this.cy.nodes().unselect();
@@ -1175,6 +1389,67 @@
       if (!this.contextMenu) return;
       this.contextMenu.hidden = true;
       this.contextNodeId = null;
+    }
+    openGroupContextMenu(event, groupId) {
+      if (!this.active || !this.model?.board.groups[groupId]) return;
+      event.preventDefault();
+      event.stopPropagation();
+      this.hideContextMenu();
+      this.contextMenuGroupId = groupId;
+      const group = this.model.board.groups[groupId],
+        supergroups = Object.values(this.model.board.supergroups || {}),
+        current = supergroups.find((supergroup) =>
+          supergroup.groupIds.includes(groupId),
+        ),
+        remove = document.getElementById("manual-group-remove-supergroup"),
+        options = document.getElementById("manual-group-supergroup-options");
+      document.getElementById("manual-group-menu-title").textContent =
+        group.name;
+      remove.disabled = !current;
+      remove.title = current
+        ? `Remove from ${current.name}`
+        : "This group is not inside a supergroup.";
+      options.replaceChildren();
+      supergroups
+        .filter((supergroup) => supergroup.id !== current?.id)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach((supergroup) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.setAttribute("role", "menuitem");
+          button.dataset.supergroupId = supergroup.id;
+          button.textContent = supergroup.name;
+          button.onclick = () =>
+            this.moveContextGroupToSupergroup(supergroup.id);
+          options.append(button);
+        });
+      if (!options.childElementCount) {
+        const empty = document.createElement("button");
+        empty.type = "button";
+        empty.disabled = true;
+        empty.textContent = "No other supergroups";
+        options.append(empty);
+      }
+      this.groupContextMenu.hidden = false;
+      this.groupContextMenu.style.left = `${Math.max(8, Math.min(event.clientX + 8, window.innerWidth - this.groupContextMenu.offsetWidth - 8))}px`;
+      this.groupContextMenu.style.top = `${Math.max(8, Math.min(event.clientY + 8, window.innerHeight - this.groupContextMenu.offsetHeight - 8))}px`;
+    }
+    hideGroupContextMenu() {
+      if (!this.groupContextMenu) return;
+      this.groupContextMenu.hidden = true;
+      this.contextMenuGroupId = null;
+    }
+    moveContextGroupToSupergroup(supergroupId) {
+      const groupId = this.contextMenuGroupId;
+      if (!groupId || !this.model) return;
+      try {
+        this.layout.stop();
+        this.model.moveGroupToSupergroup(groupId, supergroupId);
+      } catch (error) {
+        this.notice(error.message);
+      } finally {
+        this.hideGroupContextMenu();
+      }
     }
     moveContextNode(groupId) {
       const nodeId = this.contextNodeId;
@@ -1634,30 +1909,56 @@
       if (!this.model) return;
       this.layout.stop();
       this.model.transact("Arrange groups", (board) => {
-        const groups = Object.values(board.groups).sort((a, b) =>
-            a.id.localeCompare(b.id),
+        const supergroups = Object.values(board.supergroups || {}),
+          wrappedGroupIds = new Set(
+            supergroups.flatMap((supergroup) => supergroup.groupIds),
           ),
-          columns = Math.ceil(Math.sqrt(groups.length));
-        groups.forEach((group, index) => {
-          const old = G.envelope(group),
-            nx = (index % columns) * 360,
-            ny = Math.floor(index / columns) * 330,
-            dx = nx - old.left,
-            dy = ny - old.top;
-          if (group.shape === "circle") {
-            group.cx += dx;
-            group.cy += dy;
-          } else {
-            group.x += dx;
-            group.y += dy;
-          }
-          Object.entries(board.placements)
-            .filter(([, p]) => p.groupId === group.id)
-            .forEach(([, p]) => {
-              p.x += dx;
-              p.y += dy;
-            });
-        });
+          items = [
+            ...supergroups.map((supergroup) => ({
+              id: supergroup.id,
+              bounds: () => S.supergroupBounds(board, supergroup),
+              move: (dx, dy) =>
+                S.translateSupergroup(board, supergroup.id, dx, dy),
+            })),
+            ...Object.values(board.groups)
+              .filter((group) => !wrappedGroupIds.has(group.id))
+              .map((group) => ({
+                id: group.id,
+                bounds: () => G.envelope(group),
+                move: (dx, dy) => {
+                  if (group.shape === "circle") {
+                    group.cx += dx;
+                    group.cy += dy;
+                  } else {
+                    group.x += dx;
+                    group.y += dy;
+                  }
+                  Object.values(board.placements)
+                    .filter((placement) => placement.groupId === group.id)
+                    .forEach((placement) => {
+                      placement.x += dx;
+                      placement.y += dy;
+                    });
+                },
+              })),
+          ].sort((a, b) => a.id.localeCompare(b.id)),
+          columns = Math.max(1, Math.ceil(Math.sqrt(items.length))),
+          gap = 40;
+        let y = 0;
+        for (let start = 0; start < items.length; start += columns) {
+          const row = items.slice(start, start + columns),
+            bounds = row.map((item) => item.bounds()),
+            rowHeight = Math.max(
+              ...bounds.map((value) => value.bottom - value.top),
+            );
+          let x = 0;
+          row.forEach((item, index) => {
+            const value = bounds[index];
+            item.move(x - value.left, y - value.top);
+            x += value.right - value.left + gap;
+          });
+          y += rowHeight + gap;
+        }
       });
       this.fitBoard(this.model.board);
     }

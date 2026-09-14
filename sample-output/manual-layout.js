@@ -19,9 +19,18 @@
       this.before = structuredClone(this.state.board);
       const board = this.state.board,
         muted = new Set(board.mutedEntityIds),
+        collapsedSupergroupMembers = new Set(
+          Object.values(board.supergroups || {})
+            .filter((supergroup) => supergroup.collapsed)
+            .flatMap((supergroup) => supergroup.groupIds),
+        ),
         requested = new Set(groupIds || Object.keys(board.groups));
       for (const groupId of requested) {
-        if (board.groups[groupId]?.collapsed) continue;
+        if (
+          board.groups[groupId]?.collapsed ||
+          collapsedSupergroupMembers.has(groupId)
+        )
+          continue;
         const members = Object.entries(board.placements)
           .filter(([, p]) => p.groupId === groupId)
           .map(([id, p]) => ({

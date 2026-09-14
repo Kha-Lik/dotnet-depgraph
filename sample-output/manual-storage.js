@@ -88,9 +88,20 @@
         supergroup.id !== supergroupId ||
         typeof supergroup.name !== "string" ||
         !window.DepGraphManualState.color(supergroup.color) ||
-        !Array.isArray(supergroup.groupIds)
+        !Array.isArray(supergroup.groupIds) ||
+        (supergroup.pinnedGroupIds != null &&
+          !Array.isArray(supergroup.pinnedGroupIds)) ||
+        (supergroup.collapsed != null &&
+          typeof supergroup.collapsed !== "boolean") ||
+        (supergroup.outerEdgeMode != null &&
+          !["visible", "hidden", "highlighted"].includes(
+            supergroup.outerEdgeMode,
+          ))
       )
         throw new Error(`Invalid supergroup ${supergroupId}.`);
+      supergroup.collapsed = !!supergroup.collapsed;
+      supergroup.outerEdgeMode = supergroup.outerEdgeMode || "visible";
+      supergroup.pinnedGroupIds ||= [];
     }
     const muted = new Set(normalized.mutedEntityIds);
     if (

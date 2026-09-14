@@ -62,6 +62,13 @@
       value.groupIds = [
         ...new Set(value.groupIds.filter((groupId) => board.groups[groupId])),
       ];
+      value.pinnedGroupIds = [
+        ...new Set(
+          (value.pinnedGroupIds || []).filter((groupId) =>
+            value.groupIds.includes(groupId),
+          ),
+        ),
+      ];
       if (value.groupIds.length < 2) delete board.supergroups[supergroupId];
     });
   }
@@ -586,9 +593,147 @@
           name: name.trim() || "Supergroup",
           color: color(groupColor) ? groupColor : "#8b5cf6",
           groupIds: unique,
+          pinnedGroupIds: [],
+          collapsed: false,
+          outerEdgeMode: "visible",
         };
       });
       return supergroupId;
+    }
+    toggleSupergroupCollapsed(supergroupId) {
+      this.transact("Toggle supergroup collapse", (board) => {
+        const supergroup = board.supergroups?.[supergroupId];
+        if (!supergroup) throw new Error("Choose an existing supergroup.");
+        supergroup.collapsed = !supergroup.collapsed;
+      });
+    }
+    toggleSupergroupOuterEdges(supergroupId, mode) {
+      if (!["hidden", "highlighted"].includes(mode))
+        throw new Error("Unknown outer-edge mode.");
+      this.transact("Change supergroup outer edges", (board) => {
+        const supergroup = board.supergroups?.[supergroupId];
+        if (!supergroup) throw new Error("Choose an existing supergroup.");
+        supergroup.outerEdgeMode =
+          supergroup.outerEdgeMode === mode ? "visible" : mode;
+      });
+    }
+    toggleGroupPinnedInSupergroup(groupId) {
+      this.transact("Toggle group pin in supergroup", (board) => {
+        const supergroup = Object.values(board.supergroups || {}).find(
+          (candidate) => candidate.groupIds.includes(groupId),
+        );
+        if (!supergroup)
+          throw new Error("Only groups inside a supergroup can be pinned.");
+        supergroup.pinnedGroupIds ||= [];
+        if (supergroup.pinnedGroupIds.includes(groupId))
+          supergroup.pinnedGroupIds = supergroup.pinnedGroupIds.filter(
+            (candidate) => candidate !== groupId,
+          );
+        else supergroup.pinnedGroupIds.push(groupId);
+      });
+    }
+    arrangeSupergroup(supergroupId) {
+      this.transact("Arrange groups in supergroup", (board) => {
+        const supergroup = board.supergroups?.[supergroupId];
+        if (!supergroup) throw new Error("Choose an existing supergroup.");
+        const groups = supergroup.groupIds
+            .map((groupId) => board.groups[groupId])
+            .filter(Boolean),
+          pinned = new Set(supergroup.pinnedGroupIds || []),
+          envelopes = groups.map(G.envelope),
+          origin = {
+            x: Math.min(...envelopes.map((value) => value.left)),
+            y: Math.min(...envelopes.map((value) => value.top)),
+          },
+          gap = 24,
+          cellWidth =
+            Math.max(
+              ...envelopes.map((value) => value.right - value.left),
+            ) + gap,
+          cellHeight =
+            Math.max(
+              ...envelopes.map((value) => value.bottom - value.top),
+            ) + gap,
+          columns = Math.max(1, Math.ceil(Math.sqrt(groups.length))),
+          occupied = groups
+            .filter((group) => pinned.has(group.id))
+            .map((group) => group);
+        let slot = 0;
+        groups
+          .filter((group) => !pinned.has(group.id))
+          .sort((a, b) => a.id.localeCompare(b.id))
+          .forEach((group) => {
+            const current = G.envelope(group),
+              width = current.right - current.left,
+              height = current.bottom - current.top;
+            let candidate;
+            do {
+              candidate = {
+                shape: "rectangle",
+                x: origin.x + (slot % columns) * cellWidth,
+                y: origin.y + Math.floor(slot / columns) * cellHeight,
+                width,
+                height,
+                header: 0,
+              };
+              slot++;
+            } while (
+              occupied.some((other) => !G.separated(candidate, other, gap))
+            );
+            translateGroup(
+              board,
+              group.id,
+              candidate.x - current.left,
+              candidate.y - current.top,
+            );
+            occupied.push(group);
+          });
+        const childIds = new Set(supergroup.groupIds),
+          external = Object.values(board.groups).filter(
+            (group) => !childIds.has(group.id),
+          );
+        if (
+          groups.some((group) =>
+            external.some((other) => !G.separated(group, other)),
+          )
+        ) {
+          const bounds = supergroupBounds(board, supergroup),
+            right =
+              Math.max(...external.map((group) => G.envelope(group).right)) +
+              40;
+          translateSupergroup(board, supergroupId, right - bounds.left, 0);
+        }
+      });
+    }
+    moveGroupToSupergroup(groupId, targetSupergroupId) {
+      this.transact(
+        targetSupergroupId
+          ? "Move group to supergroup"
+          : "Remove group from supergroup",
+        (board) => {
+          if (!board.groups[groupId])
+            throw new Error("Choose an existing group.");
+          const source = Object.values(board.supergroups || {}).find(
+            (supergroup) => supergroup.groupIds.includes(groupId),
+          );
+          if (source) {
+            source.groupIds = source.groupIds.filter(
+              (candidate) => candidate !== groupId,
+            );
+            source.pinnedGroupIds = (source.pinnedGroupIds || []).filter(
+              (candidate) => candidate !== groupId,
+            );
+          }
+          if (targetSupergroupId) {
+            const target = board.supergroups?.[targetSupergroupId];
+            if (!target) throw new Error("Choose an existing supergroup.");
+            if (!target.groupIds.includes(groupId))
+              target.groupIds.push(groupId);
+          } else if (!source)
+            throw new Error("This group is not inside a supergroup.");
+          cleanSupergroups(board);
+        },
+      );
     }
     deleteSupergroup(supergroupId) {
       this.transact("Dissolve supergroup", (board) => {

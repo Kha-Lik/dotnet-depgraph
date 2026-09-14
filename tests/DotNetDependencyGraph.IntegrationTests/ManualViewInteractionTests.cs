@@ -872,6 +872,160 @@ public sealed class ManualViewInteractionTests
     }
 
     [Fact]
+    public async Task SupergroupHeaderControlsCollapseAndControlBoundaryEdgesPersistently()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var endpoints = await page.EvaluateAsync<string[]>("[__depgraphDebug.cy.edges()[0].source().id(), __depgraphDebug.cy.edges()[0].target().id()]");
+        var other = await page.EvaluateAsync<string>("([ids]) => __depgraphDebug.cy.nodes().map(node => node.id()).find(id => !ids.includes(id))", new object[] { endpoints });
+        await CreateGroupAsync(page, "Inside One", endpoints[0]);
+        await CreateGroupAsync(page, "Inside Two", other);
+        var groupIds = await page.EvaluateAsync<string[]>("([ids]) => ids.map(id => __depgraphDebug.manualView.model.board.placements[id].groupId)", new object[] { new[] { endpoints[0], other } });
+        var supergroupId = await page.EvaluateAsync<string>("([ids]) => __depgraphDebug.manualView.model.addSupergroup('Product Area', '#6f42c1', ids)", new object[] { groupIds });
+        await page.EvaluateAsync("__depgraphDebug.manualView.fitBoard(__depgraphDebug.manualView.model.board)");
+        await page.WaitForTimeoutAsync(50);
+        var root = $".manual-supergroup[data-supergroup-id='{supergroupId}']";
+        var externalEdge = $"([ids]) => __depgraphDebug.cy.$id(ids[0]).edgesWith(__depgraphDebug.cy.$id(ids[1]))";
+
+        Assert.Equal(4, await page.Locator($"{root} .manual-region-action").CountAsync());
+        await page.Locator($"{root} .manual-region-action[data-action='highlight-outer']").ClickAsync();
+        Assert.Equal("highlighted", await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.supergroups[id].outerEdgeMode", new object[] { supergroupId }));
+        Assert.True(await page.EvaluateAsync<bool>($"([ids]) => ({externalEdge})(ids).every(edge => edge.hasClass('manual-outer-highlight'))", new object[] { endpoints }));
+
+        await page.Locator($"{root} .manual-region-action[data-action='collapse']").ClickAsync();
+        Assert.True(await page.EvaluateAsync<bool>("([id]) => __depgraphDebug.manualView.model.board.supergroups[id].collapsed", new object[] { supergroupId }));
+        Assert.True(await page.EvaluateAsync<bool>("([ids]) => ids.every(id => __depgraphDebug.cy.$id(id).hasClass('manual-collapsed-member'))", new object[] { new[] { endpoints[0], other } }));
+        Assert.Equal(0, await page.Locator($".manual-region[data-group-id='{groupIds[0]}'], .manual-region[data-group-id='{groupIds[1]}']").CountAsync());
+        Assert.False(await page.Locator($"{root} .manual-supergroup-body").IsVisibleAsync());
+        Assert.True(await page.Locator($"{root} .manual-supergroup-header").IsVisibleAsync());
+        Assert.True(await page.EvaluateAsync<bool>($"([ids]) => ({externalEdge})(ids).every(edge => edge.style('display') === 'element')", new object[] { endpoints }));
+        Assert.True(await page.EvaluateAsync<bool>("([ids]) => { const board=__depgraphDebug.manualView.model.board, bounds=DepGraphManualState.supergroupBounds(board, board.supergroups[ids[2]]), expected={x:bounds.x+bounds.width/2,y:bounds.y+bounds.header/2}; return ids.slice(0,2).every(id => { const point=__depgraphDebug.cy.$id(id).position(); return Math.abs(point.x-expected.x)<0.001 && Math.abs(point.y-expected.y)<0.001; }); }", new object[] { new[] { endpoints[0], other, supergroupId } }));
+
+        var download = await page.RunAndWaitForDownloadAsync(() => page.Locator("#manual-save").ClickAsync());
+        var path = await download.PathAsync();
+        await page.Locator($"{root} .manual-region-action[data-action='collapse']").ClickAsync();
+        await page.Locator($"{root} .manual-region-action[data-action='highlight-outer']").ClickAsync();
+        await page.Locator("#manual-load-file").SetInputFilesAsync(path);
+        await page.WaitForFunctionAsync("([id]) => __depgraphDebug.manualView.model.board.supergroups[id]?.collapsed && __depgraphDebug.manualView.model.board.supergroups[id].outerEdgeMode === 'highlighted'", new object[] { supergroupId });
+
+        await page.Locator($"{root} .manual-region-action[data-action='hide-outer']").ClickAsync();
+        Assert.Equal("hidden", await page.EvaluateAsync<string>("([id]) => __depgraphDebug.manualView.model.board.supergroups[id].outerEdgeMode", new object[] { supergroupId }));
+        Assert.True(await page.EvaluateAsync<bool>($"([ids]) => ({externalEdge})(ids).every(edge => edge.hasClass('manual-group-outer-hidden') && edge.style('display') === 'none')", new object[] { endpoints }));
+        Assert.False(await page.EvaluateAsync<bool>($"([ids]) => ({externalEdge})(ids).some(edge => edge.hasClass('manual-outer-highlight'))", new object[] { endpoints }));
+        Assert.Empty(await BoardErrorsAsync(page));
+    }
+
+    [Fact]
+    public async Task ArrangeGroupsTreatsEachSupergroupAsOneUnit()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 2).map(node => node.id())");
+        await CreateGroupAsync(page, "Inside One", ids[0]);
+        await CreateGroupAsync(page, "Inside Two", ids[1]);
+        var groupIds = await page.EvaluateAsync<string[]>("([ids]) => ids.map(id => __depgraphDebug.manualView.model.board.placements[id].groupId)", new object[] { ids });
+        var supergroupId = await page.EvaluateAsync<string>("([ids]) => __depgraphDebug.manualView.model.addSupergroup('Product Area', '#6f42c1', ids)", new object[] { groupIds });
+        var before = await page.EvaluateAsync<Position[]>("([ids]) => ids.map(id => { const value=DepGraphManualGeometry.envelope(__depgraphDebug.manualView.model.board.groups[id]); return {x:value.left,y:value.top}; })", new object[] { groupIds });
+
+        await page.Locator("#manual-arrange").ClickAsync();
+
+        var after = await page.EvaluateAsync<Position[]>("([ids]) => ids.map(id => { const value=DepGraphManualGeometry.envelope(__depgraphDebug.manualView.model.board.groups[id]); return {x:value.left,y:value.top}; })", new object[] { groupIds });
+        Assert.Equal(before[1].X - before[0].X, after[1].X - after[0].X, 6);
+        Assert.Equal(before[1].Y - before[0].Y, after[1].Y - after[0].Y, 6);
+        Assert.True(await page.EvaluateAsync<bool>("([id]) => { const board=__depgraphDebug.manualView.model.board, outer=DepGraphManualState.supergroupBounds(board, board.supergroups[id]); return DepGraphManualGeometry.separated(outer, board.groups['group:unassigned']); }", new object[] { supergroupId }));
+        Assert.Empty(await BoardErrorsAsync(page));
+
+        await page.Locator("#manual-undo").ClickAsync();
+        var undone = await page.EvaluateAsync<Position[]>("([ids]) => ids.map(id => { const value=DepGraphManualGeometry.envelope(__depgraphDebug.manualView.model.board.groups[id]); return {x:value.left,y:value.top}; })", new object[] { groupIds });
+        Assert.Equal(before[0].X, undone[0].X, 6);
+        Assert.Equal(before[0].Y, undone[0].Y, 6);
+        Assert.Equal(before[1].X, undone[1].X, 6);
+        Assert.Equal(before[1].Y, undone[1].Y, 6);
+    }
+
+    [Fact]
+    public async Task SupergroupArrangePreservesPinnedChildGroupPosition()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 3).map(node => node.id())");
+        await CreateGroupAsync(page, "Inside One", ids[0]);
+        await CreateGroupAsync(page, "Inside Two", ids[1]);
+        await CreateGroupAsync(page, "Inside Three", ids[2]);
+        var groupIds = await page.EvaluateAsync<string[]>("([ids]) => ids.map(id => __depgraphDebug.manualView.model.board.placements[id].groupId)", new object[] { ids });
+        var supergroupId = await page.EvaluateAsync<string>("([ids]) => __depgraphDebug.manualView.model.addSupergroup('Product Area', '#6f42c1', ids)", new object[] { groupIds });
+        await page.EvaluateAsync("__depgraphDebug.manualView.fitBoard(__depgraphDebug.manualView.model.board)");
+        await page.WaitForTimeoutAsync(50);
+        var root = $".manual-supergroup[data-supergroup-id='{supergroupId}']";
+        var pin = page.Locator($".manual-region[data-group-id='{groupIds[0]}'] .manual-region-action[data-action='pin-supergroup']");
+
+        Assert.Equal("true", await page.Locator(".manual-region[data-group-id='group:unassigned'] .manual-region-action[data-action='pin-supergroup']").GetAttributeAsync("aria-disabled"));
+        await pin.ClickAsync();
+        Assert.Equal("true", await pin.GetAttributeAsync("aria-pressed"));
+        Assert.Equal(new[] { groupIds[0] }, await page.EvaluateAsync<string[]>("([id]) => __depgraphDebug.manualView.model.board.supergroups[id].pinnedGroupIds", new object[] { supergroupId }));
+        var before = await page.EvaluateAsync<Position[]>("([ids]) => ids.map(id => { const value=DepGraphManualGeometry.envelope(__depgraphDebug.manualView.model.board.groups[id]); return {x:value.left,y:value.top}; })", new object[] { groupIds });
+
+        await page.Locator($"{root} .manual-region-action[data-action='arrange']").ClickAsync();
+
+        var after = await page.EvaluateAsync<Position[]>("([ids]) => ids.map(id => { const value=DepGraphManualGeometry.envelope(__depgraphDebug.manualView.model.board.groups[id]); return {x:value.left,y:value.top}; })", new object[] { groupIds });
+        Assert.Equal(before[0].X, after[0].X, 6);
+        Assert.Equal(before[0].Y, after[0].Y, 6);
+        Assert.Contains(before.Skip(1).Zip(after.Skip(1)), pair => Math.Abs(pair.First.X - pair.Second.X) > 0.001 || Math.Abs(pair.First.Y - pair.Second.Y) > 0.001);
+        Assert.Empty(await BoardErrorsAsync(page));
+
+        var download = await page.RunAndWaitForDownloadAsync(() => page.Locator("#manual-save").ClickAsync());
+        var path = await download.PathAsync();
+        await pin.ClickAsync();
+        await page.Locator("#manual-load-file").SetInputFilesAsync(path);
+        await page.WaitForFunctionAsync("([ids]) => __depgraphDebug.manualView.model.board.supergroups[ids[0]]?.pinnedGroupIds?.includes(ids[1])", new object[] { new[] { supergroupId, groupIds[0] } });
+        Assert.Equal("true", await page.Locator($".manual-region[data-group-id='{groupIds[0]}'] .manual-region-action[data-action='pin-supergroup']").GetAttributeAsync("aria-pressed"));
+    }
+
+    [Fact]
+    public async Task GroupContextMenuMovesAndRemovesExistingSupergroupMembership()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 4).map(node => node.id())");
+        for (var index = 0; index < ids.Length; index++)
+            await CreateGroupAsync(page, $"Group {index + 1}", ids[index]);
+        var groupIds = await page.EvaluateAsync<string[]>("([ids]) => ids.map(id => __depgraphDebug.manualView.model.board.placements[id].groupId)", new object[] { ids });
+        var supergroupIds = await page.EvaluateAsync<string[]>("([ids]) => [__depgraphDebug.manualView.model.addSupergroup('Source Area', '#6f42c1', ids.slice(0,2)), __depgraphDebug.manualView.model.addSupergroup('Target Area', '#2ea043', ids.slice(2,4))]", new object[] { groupIds });
+        await page.EvaluateAsync("__depgraphDebug.manualView.fitBoard(__depgraphDebug.manualView.model.board)");
+        await page.WaitForTimeoutAsync(50);
+        var header = page.Locator($".manual-region[data-group-id='{groupIds[0]}'] .manual-region-header");
+
+        await header.ClickAsync(new() { Button = MouseButton.Right, Position = new() { X = 10, Y = 10 } });
+
+        Assert.True(await page.Locator("#manual-group-menu").IsVisibleAsync());
+        Assert.Equal("Group 1", await page.Locator("#manual-group-menu-title").TextContentAsync());
+        Assert.False(await page.Locator("#manual-group-remove-supergroup").IsDisabledAsync());
+        Assert.Equal(0, await page.Locator($"#manual-group-supergroup-options button[data-supergroup-id='{supergroupIds[0]}']").CountAsync());
+        Assert.Equal(1, await page.Locator($"#manual-group-supergroup-options button[data-supergroup-id='{supergroupIds[1]}']").CountAsync());
+        Assert.DoesNotContain(await page.Locator("#manual-group-menu button").AllTextContentsAsync(), text => text.Contains("create", StringComparison.OrdinalIgnoreCase));
+        await page.Locator($"#manual-group-supergroup-options button[data-supergroup-id='{supergroupIds[1]}']").ClickAsync();
+
+        Assert.False(await page.Locator("#manual-group-menu").IsVisibleAsync());
+        Assert.False(await page.EvaluateAsync<bool>("([id]) => !!__depgraphDebug.manualView.model.board.supergroups[id]", new object[] { supergroupIds[0] }));
+        Assert.Equal(3, await page.EvaluateAsync<int>("([id]) => __depgraphDebug.manualView.model.board.supergroups[id].groupIds.length", new object[] { supergroupIds[1] }));
+        Assert.True(await page.EvaluateAsync<bool>("([ids]) => __depgraphDebug.manualView.model.board.supergroups[ids[0]].groupIds.includes(ids[1])", new object[] { new[] { supergroupIds[1], groupIds[0] } }));
+
+        await page.Locator($".manual-region[data-group-id='{groupIds[0]}'] .manual-region-header").ClickAsync(new() { Button = MouseButton.Right, Position = new() { X = 10, Y = 10 } });
+        await page.Locator("#manual-group-remove-supergroup").ClickAsync();
+
+        Assert.Equal(2, await page.EvaluateAsync<int>("([id]) => __depgraphDebug.manualView.model.board.supergroups[id].groupIds.length", new object[] { supergroupIds[1] }));
+        Assert.False(await page.EvaluateAsync<bool>("([id]) => Object.values(__depgraphDebug.manualView.model.board.supergroups).some(supergroup => supergroup.groupIds.includes(id))", new object[] { groupIds[0] }));
+        Assert.Empty(await BoardErrorsAsync(page));
+
+        await page.Locator("#manual-undo").ClickAsync();
+        Assert.True(await page.EvaluateAsync<bool>("([ids]) => __depgraphDebug.manualView.model.board.supergroups[ids[0]].groupIds.includes(ids[1])", new object[] { new[] { supergroupIds[1], groupIds[0] } }));
+    }
+
+    [Fact]
     public async Task LayoutsWithoutSupergroupsRemainLoadable()
     {
         await using var session = await BrowserSession.CreateAsync();

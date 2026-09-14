@@ -183,7 +183,7 @@ Explore and Manual keep independent node positions, selections, viewports, and p
 - Drag nodes within their bounds.
 - Drag whole regions by the body or header.
 - Resize and repack a region.
-- Rename, recolor, reshape, merge, delete, fit, or automatically arrange groups.
+- Rename, recolor, reshape, merge, delete, fit, or automatically arrange groups. Arrangement treats each supergroup as one unit and preserves the relative positions of its child groups.
 - Ctrl/Cmd-click group names or headers to select several groups, then wrap them in a named, colored supergroup. Drag its header to move all child groups together, or dissolve the wrapper without deleting them.
 - Move multiple nodes with destination preview and automatic target-region growth.
 - Right-click a node to create a group from the current selection in an in-place dialog, move it quickly, or remove it to Unassigned.
@@ -197,7 +197,7 @@ The local layout visibly updates nodes inside region bounds. It can run globally
 2. In the **Supergroups** section of the left sidebar, enter a name and optionally choose a color.
 3. Click **Create supergroup**.
 
-A group can belong to only one supergroup. Drag the supergroup header to move all its child groups together, or use **Dissolve** to remove the wrapper without deleting or merging the child groups.
+A group can belong to only one supergroup. Drag the supergroup header to move all its child groups together. Use the pin control on a child group's header to preserve its relative position, then use the supergroup header's arrange control to grid-pack the remaining child groups around pinned groups. Right-click a group header to remove it from its current supergroup or move it directly into another existing supergroup. The other supergroup header controls can collapse the entire supergroup or hide and highlight dependencies crossing its boundary. Use **Dissolve** to remove the wrapper without deleting or merging the child groups.
 
 #### Reset a board
 
@@ -210,8 +210,8 @@ Both actions replace the current manual board after confirmation. Download the e
 
 - Select a node to emphasize its dependency edges.
 - Hide every edge incident to selected nodes and reveal those connections temporarily.
-- Collapse a region while keeping its header and external connections available.
-- Hide or highlight dependencies that cross a selected region's boundary.
+- Collapse a group or supergroup while keeping its header and external connections available.
+- Hide or highlight dependencies that cross a group or supergroup boundary.
 
 These controls do not rewrite canonical edges, automatic communities, GraphML, reachability, or dependency metrics.
 

@@ -191,6 +191,19 @@
           typeof supergroup?.name !== "string" ||
           !/^#[0-9a-f]{6}$/i.test(supergroup?.color || "") ||
           !Array.isArray(groupIds) ||
+          (supergroup.pinnedGroupIds != null &&
+            (!Array.isArray(supergroup.pinnedGroupIds) ||
+              new Set(supergroup.pinnedGroupIds).size !==
+                supergroup.pinnedGroupIds.length ||
+              supergroup.pinnedGroupIds.some(
+                (groupId) => !groupIds.includes(groupId),
+              ))) ||
+          (supergroup.collapsed != null &&
+            typeof supergroup.collapsed !== "boolean") ||
+          (supergroup.outerEdgeMode != null &&
+            !["visible", "hidden", "highlighted"].includes(
+              supergroup.outerEdgeMode,
+            )) ||
           groupIds.length < 2 ||
           new Set(groupIds).size !== groupIds.length ||
           groupIds.some((groupId) => !board.groups?.[groupId])
