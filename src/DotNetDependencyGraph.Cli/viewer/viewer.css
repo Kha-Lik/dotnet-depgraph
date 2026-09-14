@@ -253,6 +253,54 @@ button:disabled {
   cursor: default;
   opacity: 0.45;
 }
+#manual-context-group-dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 18px;
+  overflow: visible;
+  border: 1px solid #6e7681;
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.58);
+}
+#manual-context-group-dialog::backdrop {
+  background: rgba(1, 4, 9, 0.72);
+}
+#manual-context-group-dialog h3 {
+  margin: 0 0 6px;
+}
+#manual-context-group-dialog p {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+#manual-context-group-dialog > label {
+  display: block;
+  margin-top: 10px;
+}
+#manual-context-group-dialog > label > input,
+#manual-context-group-dialog > label > select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+#manual-context-group-dialog > label > input[type="color"] {
+  height: 36px;
+}
+#manual-context-group-dialog .clr-picker {
+  border: 1px solid #7d8590;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 14px 36px rgba(0, 0, 0, 0.68);
+}
+.manual-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+.manual-dialog-actions button {
+  min-width: 96px;
+}
 section,
 details {
   border-top: 1px solid var(--line);
@@ -500,6 +548,21 @@ a {
   width: 100%;
   display: block;
   margin-top: 3px;
+}
+#manual-start-over,
+#manual-reset-unassigned {
+  display: flex;
+  width: 100%;
+  min-height: 34px;
+  align-items: center;
+  justify-content: flex-start;
+}
+#manual-start-over {
+  margin-top: 12px;
+}
+#manual-reset-unassigned {
+  margin-top: 8px;
+  margin-bottom: 12px;
 }
 #manual-save-status.warning {
   color: #f2cc60;

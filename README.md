@@ -165,7 +165,7 @@ The Physics / Layout panel controls repulsion, link distance and strength, colli
 - Contracted paths are dashed and producer mappings are dotted.
 - **PNG** exports the Explore canvas; **Displayed JSON** exports the active filtered projection.
 
-The report uses bundled Cytoscape.js 3.34.2 and d3-force 3.0.0. Its live simulation preserves dependency neighborhoods, avoids node overlap, and keeps disconnected components as separate islands.
+The report uses bundled Cytoscape.js 3.34.2, d3-force 3.0.0, and Coloris 0.25.0. Its live simulation preserves dependency neighborhoods, avoids node overlap, and keeps disconnected components as separate islands. Coloris provides the offline group-creation color picker with an explicit **OK** action.
 
 ### Manual layout view
 
@@ -186,7 +186,7 @@ Explore and Manual keep independent node positions, selections, viewports, and p
 - Rename, recolor, reshape, merge, delete, fit, or automatically arrange groups.
 - Ctrl/Cmd-click group names or headers to select several groups, then wrap them in a named, colored supergroup. Drag its header to move all child groups together, or dissolve the wrapper without deleting them.
 - Move multiple nodes with destination preview and automatic target-region growth.
-- Right-click a node for quick moves or removal to Unassigned.
+- Right-click a node to create a group from the current selection in an in-place dialog, move it quickly, or remove it to Unassigned.
 - Pin nodes or relax one selected group.
 
 The local layout visibly updates nodes inside region bounds. It can run globally, pause, resume, or apply to one group.
@@ -198,6 +198,13 @@ The local layout visibly updates nodes inside region bounds. It can run globally
 3. Click **Create supergroup**.
 
 A group can belong to only one supergroup. Drag the supergroup header to move all its child groups together, or use **Dissolve** to remove the wrapper without deleting or merging the child groups.
+
+#### Reset a board
+
+- **Start over from Explore** rebuilds the board from the current Explore groups.
+- **Reset to Unassigned** rebuilds it with every node in one Unassigned group.
+
+Both actions replace the current manual board after confirmation. Download the existing layout first if you may need it again.
 
 #### Control dependency visibility
 

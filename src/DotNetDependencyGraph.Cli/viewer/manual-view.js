@@ -25,6 +25,7 @@
       this.contextNodeId = null;
       this.assignmentTargetId = null;
       this.assignmentSelectionKey = "";
+      this.contextGroupSelection = [];
       this.layer = document.getElementById("manual-regions");
       this.groupLayer = svgElement("g");
       this.layer.append(this.groupLayer);
@@ -32,7 +33,10 @@
       this.installSearch();
       this.installSupergroupControls();
       this.installGroupInspector();
+      this.installResetToUnassigned();
       this.installContextMenu();
+      this.installContextGroupDialog();
+      this.installColorPicker();
       this.installButtonIcons();
       this.bind();
     }
@@ -116,6 +120,13 @@
       );
       document.querySelector("#manual-workspace .manual-actions").after(panel);
     }
+    installResetToUnassigned() {
+      if (document.getElementById("manual-reset-unassigned")) return;
+      const button = document.createElement("button");
+      button.id = "manual-reset-unassigned";
+      button.textContent = "Reset to Unassigned…";
+      document.getElementById("manual-start-over").after(button);
+    }
     installContextMenu() {
       const menu = document.createElement("div");
       menu.id = "manual-node-menu";
@@ -123,6 +134,14 @@
       menu.hidden = true;
       const title = document.createElement("strong");
       title.id = "manual-node-menu-title";
+      const create = document.createElement("button");
+      create.id = "manual-node-create-group";
+      create.setAttribute("role", "menuitem");
+      create.textContent = "Create group from selection";
+      create.onclick = () => {
+        this.hideContextMenu();
+        this.openContextGroupDialog();
+      };
       const remove = document.createElement("button");
       remove.id = "manual-node-remove-group";
       remove.setAttribute("role", "menuitem");
@@ -133,10 +152,103 @@
       moveLabel.textContent = "Move to group";
       const options = document.createElement("div");
       options.id = "manual-node-move-options";
-      menu.append(title, remove, moveLabel, options);
+      menu.append(title, create, remove, moveLabel, options);
       menu.addEventListener("contextmenu", (event) => event.preventDefault());
       document.body.append(menu);
       this.contextMenu = menu;
+    }
+    installContextGroupDialog() {
+      if (document.getElementById("manual-context-group-dialog")) return;
+      const dialog = document.createElement("dialog"),
+        heading = document.createElement("h3"),
+        summary = document.createElement("p"),
+        name = document.createElement("input"),
+        color = document.createElement("input"),
+        shape = document.createElement("select"),
+        actions = document.createElement("div"),
+        create = document.createElement("button"),
+        cancel = document.createElement("button"),
+        makeField = (text, input) => {
+          const label = document.createElement("label");
+          label.append(document.createTextNode(text), input);
+          return label;
+        };
+      dialog.id = "manual-context-group-dialog";
+      heading.textContent = "Create group from selection";
+      summary.id = "manual-context-group-summary";
+      name.id = "manual-context-group-name";
+      name.maxLength = 80;
+      color.id = "manual-context-group-color";
+      color.type = "color";
+      color.value = "#58a6ff";
+      shape.id = "manual-context-group-shape";
+      shape.add(new Option("Rectangle", "rectangle"));
+      shape.add(new Option("Circle", "circle"));
+      actions.className = "manual-dialog-actions";
+      create.id = "manual-context-group-create";
+      create.type = "button";
+      create.textContent = "Create";
+      create.onclick = () => this.createContextGroup();
+      cancel.id = "manual-context-group-cancel";
+      cancel.type = "button";
+      cancel.textContent = "Cancel";
+      cancel.onclick = () => dialog.close();
+      actions.append(create, cancel);
+      dialog.append(
+        heading,
+        summary,
+        makeField("Name", name),
+        makeField("Color", color),
+        makeField("Shape", shape),
+        actions,
+      );
+      dialog.addEventListener("close", () => {
+        this.contextGroupSelection = [];
+      });
+      document.body.append(dialog);
+      this.contextGroupDialog = dialog;
+    }
+    installColorPicker() {
+      const configure = () => {
+        const input = document.getElementById("manual-context-group-color");
+        if (!input || input.dataset.colorisReady || !window.Coloris) return;
+        input.type = "text";
+        input.pattern = "#[0-9a-fA-F]{6}";
+        input.spellcheck = false;
+        window.Coloris({
+          el: input,
+          parent: this.contextGroupDialog,
+          themeMode: "dark",
+          format: "hex",
+          alpha: false,
+          closeButton: true,
+          closeLabel: "OK",
+          swatches: [
+            "#58a6ff",
+            "#6f42c1",
+            "#2ea043",
+            "#d29922",
+            "#f85149",
+            "#6e7681",
+          ],
+        });
+        input.dataset.colorisReady = "true";
+      };
+      if (!document.querySelector('link[href="coloris.min.css"]')) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "coloris.min.css";
+        document.head.append(link);
+      }
+      if (window.Coloris) return configure();
+      const existing = document.querySelector('script[src="coloris.min.js"]');
+      if (existing) return existing.addEventListener("load", configure, {
+        once: true,
+      });
+      const script = document.createElement("script");
+      script.src = "coloris.min.js";
+      script.addEventListener("load", configure, { once: true });
+      document.head.append(script);
     }
     installButtonIcons() {
       const I = window.DepGraphIcons;
@@ -157,17 +269,30 @@
         ["manual-reveal", "eye", "Reveal temporarily", false],
         ["manual-relax-group", "refresh", "Relax selected group", false],
         ["manual-group-create", "add", "Create", false],
+        ["manual-context-group-create", "add", "Create", false],
         ["manual-supergroup-create", "add", "Create supergroup", false],
         ["manual-update-group", "save", "Apply group changes", false],
         ["manual-fit-group", "fit", "Fit group to members", false],
         ["manual-merge-groups", "merge", "Merge selected groups", false],
         ["manual-delete-group", "delete", "Delete group", false],
         ["manual-start-over", "refresh", "Start over from Explore", false],
+        [
+          "manual-reset-unassigned",
+          "refresh",
+          "Reset to Unassigned",
+          false,
+        ],
       ].forEach((args) => I.button(...args));
       I.button(
         "manual-node-remove-group",
         "assign",
         "Remove from group",
+        false,
+      );
+      I.button(
+        "manual-node-create-group",
+        "add",
+        "Create group from selection",
         false,
       );
     }
@@ -230,6 +355,8 @@
         this.loadFile(event);
       document.getElementById("manual-start-over").onclick = () =>
         this.startOver();
+      document.getElementById("manual-reset-unassigned").onclick = () =>
+        this.resetToUnassigned();
       document.getElementById("manual-new-group").onclick = () =>
         this.openGroupEditor();
       document.getElementById("manual-group-create").onclick = () =>
@@ -462,6 +589,24 @@
       this.preview = null;
       this.manualSelection = [];
       const board = S.createBoard(this.getSpec(), true);
+      this.mount(board, true);
+      this.storage.save(board);
+    }
+    resetToUnassigned() {
+      if (!this.model) return;
+      if (
+        !confirm(
+          "Replace this manual board with a fresh Unassigned group? Download it first if you need a portable copy.",
+        )
+      )
+        return;
+      this.layout.stop();
+      this.preview = null;
+      this.manualSelection = [];
+      this.selectedGroupId = null;
+      this.selectedGroupIds.clear();
+      this.selectedSupergroupId = null;
+      const board = S.createBoard(this.getSpec(), false);
       this.mount(board, true);
       this.storage.save(board);
     }
@@ -996,8 +1141,10 @@
         currentGroupId = placement?.groupId;
       if (!placement) return;
       this.contextNodeId = nodeId;
-      this.cy.nodes().unselect();
-      node.select();
+      if (!node.selected()) {
+        this.cy.nodes().unselect();
+        node.select();
+      }
       document.getElementById("manual-node-menu-title").textContent =
         this.model.board.entities[nodeId].label;
       const remove = document.getElementById("manual-node-remove-group");
@@ -1122,6 +1269,37 @@
       try {
         this.model.addGroup(name, color, shape, ids);
         document.getElementById("manual-group-editor").hidden = true;
+      } catch (error) {
+        this.notice(error.message);
+      }
+    }
+    openContextGroupDialog() {
+      const ids = this.selectedIds();
+      if (!ids.length) return this.notice("Select one or more nodes first.");
+      this.contextGroupSelection = [...ids];
+      document.getElementById("manual-context-group-summary").textContent =
+        `${ids.length} selected node${ids.length === 1 ? "" : "s"}`;
+      document.getElementById("manual-context-group-name").value = "";
+      const colorInput = document.getElementById("manual-context-group-color");
+      colorInput.value = "#58a6ff";
+      colorInput.dispatchEvent(new Event("input", { bubbles: true }));
+      document.getElementById("manual-context-group-shape").value =
+        "rectangle";
+      this.contextGroupDialog.showModal();
+      document.getElementById("manual-context-group-name").focus();
+    }
+    createContextGroup() {
+      const ids = this.contextGroupSelection.filter(
+          (entityId) => this.model?.board.entities[entityId],
+        ),
+        name = document.getElementById("manual-context-group-name").value.trim(),
+        color = document.getElementById("manual-context-group-color").value,
+        shape = document.getElementById("manual-context-group-shape").value;
+      if (!ids.length || !name)
+        return this.notice("A name and selected nodes are required.");
+      try {
+        this.model.addGroup(name, color, shape, ids);
+        this.contextGroupDialog.close();
       } catch (error) {
         this.notice(error.message);
       }

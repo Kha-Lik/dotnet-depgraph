@@ -435,6 +435,47 @@ public sealed class ManualViewInteractionTests
     }
 
     [Fact]
+    public async Task NodeContextMenuCreatesAGroupFromTheCurrentSelection()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 2).map(node => node.id())");
+        await SelectIdsAsync(page, ids);
+        var node = await NodePointAsync(page, ids[1]);
+
+        await page.Mouse.ClickAsync(node.X, node.Y, new() { Button = MouseButton.Right });
+
+        Assert.Equal(ids.Order(), (await SelectedIdsAsync(page)).Order());
+        await page.Locator("#manual-node-create-group").ClickAsync();
+        Assert.False(await page.Locator("#manual-node-menu").IsVisibleAsync());
+        Assert.True(await page.Locator("#manual-context-group-dialog").IsVisibleAsync());
+        Assert.False(await page.Locator("#manual-group-editor").IsVisibleAsync());
+        Assert.Equal("2 selected nodes", await page.Locator("#manual-context-group-summary").TextContentAsync());
+        await page.WaitForFunctionAsync("document.getElementById('manual-context-group-color').dataset.colorisReady === 'true'");
+        Assert.Equal("text", await page.Locator("#manual-context-group-color").GetAttributeAsync("type"));
+        await page.Locator("#manual-context-group-color").ClickAsync();
+        Assert.True(await page.Locator(".clr-picker").IsVisibleAsync());
+        Assert.True(await page.Locator(".clr-picker").EvaluateAsync<bool>("picker => getComputedStyle(picker).borderTopWidth === '1px' && getComputedStyle(picker).boxShadow !== 'none'"));
+        Assert.True(await page.Locator("#clr-hue-slider").EvaluateAsync<bool>("slider => { const track=slider.parentElement.getBoundingClientRect(), control=slider.getBoundingClientRect(); return Math.abs(control.width - track.width - 32) < 0.5 && getComputedStyle(slider).marginTop === '0px'; }"));
+        Assert.True(await page.Locator("#manual-context-group-dialog").EvaluateAsync<bool>("dialog => { dialog.scrollTop=100; return getComputedStyle(dialog).overflowY === 'visible' && dialog.scrollTop === 0; }"));
+        Assert.Equal("OK", await page.Locator("#clr-close").TextContentAsync());
+        Assert.True(await page.Locator("#clr-close").EvaluateAsync<bool>("element => element.closest('dialog')?.id === 'manual-context-group-dialog'"));
+        await page.Locator("#clr-close").ClickAsync();
+        Assert.False(await page.Locator(".clr-picker").IsVisibleAsync());
+        await page.Locator("#manual-context-group-name").FillAsync("Context group");
+        await page.Locator("#manual-context-group-color").FillAsync("#ff8800");
+        await page.Locator("#manual-context-group-shape").SelectOptionAsync("circle");
+        await page.Locator("#manual-context-group-create").ClickAsync();
+
+        Assert.False(await page.Locator("#manual-context-group-dialog").IsVisibleAsync());
+        Assert.True(await page.EvaluateAsync<bool>("([ids]) => { const board=__depgraphDebug.manualView.model.board, groupId=board.placements[ids[0]].groupId; return groupId !== 'group:unassigned' && board.placements[ids[1]].groupId === groupId && board.groups[groupId].name === 'Context group'; }", new object[] { ids }));
+        Assert.Equal("circle", await page.EvaluateAsync<string>("([id]) => { const board=__depgraphDebug.manualView.model.board; return board.groups[board.placements[id].groupId].shape; }", new object[] { ids[0] }));
+        Assert.Equal("#ff8800", await page.EvaluateAsync<string>("([id]) => { const board=__depgraphDebug.manualView.model.board; return board.groups[board.placements[id].groupId].color; }", new object[] { ids[0] }));
+        Assert.Empty(await BoardErrorsAsync(page));
+    }
+
+    [Fact]
     public async Task GroupHeaderControlsCollapseAndControlOuterEdgesPersistently()
     {
         await using var session = await BrowserSession.CreateAsync();
@@ -742,6 +783,36 @@ public sealed class ManualViewInteractionTests
 
         Assert.False(await page.EvaluateAsync<bool>("Object.values(__depgraphDebug.manualView.model.board.groups).some(group => group.name === 'Pre-reset group')"));
         Assert.True(await page.EvaluateAsync<bool>("Object.values(__depgraphDebug.manualView.model.board.groups).some(group => group.name === 'Post-reset group')"));
+        Assert.Empty(await BoardErrorsAsync(page));
+    }
+
+    [Fact]
+    public async Task ResetToUnassignedReplacesTheBoardAndClearsManualState()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 2).map(node => node.id())");
+        await CreateGroupAsync(page, "Feature One", ids[0]);
+        await CreateGroupAsync(page, "Feature Two", ids[1]);
+        await page.EvaluateAsync("() => { const view=__depgraphDebug.manualView, groupIds=Object.keys(view.model.board.groups).filter(id => id !== 'group:unassigned'); view.model.addSupergroup('Product Area', '#6f42c1', groupIds); }");
+        await SelectIdsAsync(page, ids[0]);
+        await page.Locator("#manual-mute").ClickAsync();
+        var previousLayoutId = await page.EvaluateAsync<string>("__depgraphDebug.manualView.model.board.layoutId");
+        var resetButtonLayout = await page.EvaluateAsync<double[]>("() => { const first=document.getElementById('manual-start-over').getBoundingClientRect(), second=document.getElementById('manual-reset-unassigned').getBoundingClientRect(); return [first.width, second.width, first.height, second.height, second.top-first.bottom]; }");
+        Assert.InRange(Math.Abs(resetButtonLayout[0] - resetButtonLayout[1]), 0, 0.5);
+        Assert.InRange(Math.Abs(resetButtonLayout[2] - resetButtonLayout[3]), 0, 0.5);
+        Assert.True(resetButtonLayout[4] >= 8);
+        page.Dialog += async (_, dialog) => await dialog.AcceptAsync();
+
+        await page.Locator("#manual-reset-unassigned").ClickAsync();
+
+        Assert.NotEqual(previousLayoutId, await page.EvaluateAsync<string>("__depgraphDebug.manualView.model.board.layoutId"));
+        Assert.Equal(new[] { "group:unassigned" }, await page.EvaluateAsync<string[]>("Object.keys(__depgraphDebug.manualView.model.board.groups)"));
+        Assert.True(await page.EvaluateAsync<bool>("Object.values(__depgraphDebug.manualView.model.board.placements).every(placement => placement.groupId === 'group:unassigned')"));
+        Assert.Equal(0, await page.EvaluateAsync<int>("Object.keys(__depgraphDebug.manualView.model.board.supergroups).length"));
+        Assert.Equal(0, await page.EvaluateAsync<int>("__depgraphDebug.manualView.model.board.mutedEntityIds.length"));
+        Assert.Equal(0, await page.EvaluateAsync<int>("__depgraphDebug.cy.nodes(':selected').length"));
         Assert.Empty(await BoardErrorsAsync(page));
     }
 
