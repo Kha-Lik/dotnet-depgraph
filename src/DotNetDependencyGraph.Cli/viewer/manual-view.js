@@ -16,6 +16,9 @@
       this.explore = null;
       this.drag = null;
       this.regionBodyDrag = null;
+      this.selectedGroupId = null;
+      this.selectedGroupIds = new Set();
+      this.selectedSupergroupId = null;
       this.pointerAdditive = false;
       this.pointerSelection = [];
       this.manualSelection = [];
@@ -27,6 +30,7 @@
       this.layer.append(this.groupLayer);
       this.setRegionsVisible(false);
       this.installSearch();
+      this.installSupergroupControls();
       this.installGroupInspector();
       this.installContextMenu();
       this.installButtonIcons();
@@ -39,6 +43,38 @@
       search.placeholder = "Search nodes (3+ characters)…";
       search.setAttribute("aria-label", "Search Manual layout nodes");
       document.getElementById("manual-groups").prepend(search);
+    }
+    installSupergroupControls() {
+      if (document.getElementById("manual-supergroups")) return;
+      const section = document.createElement("section"),
+        heading = document.createElement("h3"),
+        fields = document.createElement("div"),
+        name = document.createElement("input"),
+        color = document.createElement("input"),
+        create = document.createElement("button"),
+        list = document.createElement("div"),
+        help = document.createElement("p");
+      section.id = "manual-supergroups";
+      heading.textContent = "Supergroups";
+      fields.className = "manual-supergroup-fields";
+      name.id = "manual-supergroup-name";
+      name.maxLength = 80;
+      name.placeholder = "Supergroup name";
+      name.setAttribute("aria-label", "Supergroup name");
+      color.id = "manual-supergroup-color";
+      color.type = "color";
+      color.value = "#8b5cf6";
+      color.setAttribute("aria-label", "Supergroup color");
+      create.id = "manual-supergroup-create";
+      create.textContent = "Create from selected groups";
+      create.disabled = true;
+      list.id = "manual-supergroup-list";
+      help.className = "legend-help";
+      help.textContent =
+        "Ctrl/Cmd-click group names or headers to select multiple groups.";
+      fields.append(name, color);
+      section.append(heading, fields, create, list, help);
+      document.getElementById("manual-group-list").after(section);
     }
     installGroupInspector() {
       const panel = document.createElement("section");
@@ -121,6 +157,7 @@
         ["manual-reveal", "eye", "Reveal temporarily", false],
         ["manual-relax-group", "refresh", "Relax selected group", false],
         ["manual-group-create", "add", "Create", false],
+        ["manual-supergroup-create", "add", "Create supergroup", false],
         ["manual-update-group", "save", "Apply group changes", false],
         ["manual-fit-group", "fit", "Fit group to members", false],
         ["manual-merge-groups", "merge", "Merge selected groups", false],
@@ -197,6 +234,8 @@
         this.openGroupEditor();
       document.getElementById("manual-group-create").onclick = () =>
         this.createGroup();
+      document.getElementById("manual-supergroup-create").onclick = () =>
+        this.createSupergroup();
       document.getElementById("manual-group-cancel").onclick = () =>
         (document.getElementById("manual-group-editor").hidden = true);
       document.getElementById("manual-assign").onclick = () =>
@@ -256,6 +295,8 @@
         if (group) this.selectGroup(group.id);
         else {
           this.selectedGroupId = null;
+          this.selectedGroupIds.clear();
+          this.selectedSupergroupId = null;
           this.cy.nodes().unselect();
           this.paint();
         }
@@ -528,6 +569,7 @@
     }
     paint(updateGraph = true) {
       if (!this.model) return;
+      this.reconcileGroupSelection();
       if (updateGraph) this.applyBoard(this.model.board);
       this.renderRegions(this.model.board);
       this.renderGroups();
@@ -546,12 +588,46 @@
     }
     renderRegions(board) {
       this.groupLayer.replaceChildren();
+      Object.values(board.supergroups || {}).forEach((supergroup) => {
+        const bounds = S.supergroupBounds(board, supergroup),
+          root = svgElement("g"),
+          body = svgElement("rect"),
+          header = svgElement("rect"),
+          label = svgElement("text");
+        root.dataset.supergroupId = supergroup.id;
+        root.classList.add("manual-supergroup");
+        if (supergroup.id === this.selectedSupergroupId)
+          root.classList.add("selected");
+        body.classList.add("manual-supergroup-body");
+        body.setAttribute("x", bounds.x);
+        body.setAttribute("y", bounds.y);
+        body.setAttribute("width", bounds.width);
+        body.setAttribute("height", bounds.height);
+        body.style.fill = supergroup.color;
+        header.classList.add("manual-supergroup-header");
+        header.setAttribute("x", bounds.x);
+        header.setAttribute("y", bounds.y);
+        header.setAttribute("width", bounds.width);
+        header.setAttribute("height", bounds.header);
+        header.style.fill = supergroup.color;
+        label.setAttribute("x", bounds.x + 9);
+        label.setAttribute("y", bounds.y + 20);
+        label.textContent = `${supergroup.name} · ${supergroup.groupIds.length} groups`;
+        header.addEventListener("pointerdown", (event) =>
+          this.supergroupPointerDown(event, supergroup.id),
+        );
+        header.addEventListener("click", () =>
+          this.selectSupergroup(supergroup.id),
+        );
+        root.append(body, header, label);
+        this.groupLayer.append(root);
+      });
       Object.values(board.groups).forEach((group) => {
         const root = svgElement("g");
         root.dataset.groupId = group.id;
         root.classList.add("manual-region");
         if (group.collapsed) root.classList.add("collapsed");
-        if (group.id === this.selectedGroupId) root.classList.add("selected");
+        if (this.selectedGroupIds.has(group.id)) root.classList.add("selected");
         if (group.id === this.assignmentTargetId)
           root.classList.add("assignment-target");
         const shape = svgElement(group.shape === "circle" ? "circle" : "rect"),
@@ -609,7 +685,9 @@
         handle.addEventListener("pointerdown", (event) =>
           this.regionPointerDown(event, group.id, true),
         );
-        header.addEventListener("click", () => this.selectGroup(group.id));
+        header.addEventListener("click", (event) =>
+          this.selectGroup(group.id, event.ctrlKey || event.metaKey),
+        );
         root.append(shape, header, label, handle);
         const actions = [
           {
@@ -695,11 +773,14 @@
       const before = structuredClone(this.model.board),
         origin = this.worldPoint(event),
         group = structuredClone(before.groups[groupId]);
+      let moved = false;
       const move = (current) => {
         const point = this.worldPoint(current),
           dx = point.x - origin.x,
           dy = point.y - origin.y,
           target = this.model.board.groups[groupId];
+        if (!moved && Math.hypot(dx, dy) < 1) return;
+        moved = true;
         if (resize) {
           if (target.shape === "circle")
             target.radius = Math.max(45, group.radius + Math.max(dx, dy));
@@ -728,6 +809,7 @@
         window.removeEventListener("pointermove", move);
         window.removeEventListener("pointerup", up);
         window.removeEventListener("pointercancel", up);
+        if (!moved) return;
         const after = structuredClone(this.model.board);
         this.model.board = before;
         try {
@@ -739,6 +821,39 @@
                 .filter(([, p]) => p.groupId === groupId)
                 .forEach(([id, p]) => (board.placements[id] = p));
             });
+        } catch (error) {
+          this.notice(error.message);
+          this.paint();
+        }
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up, { once: true });
+      window.addEventListener("pointercancel", up, { once: true });
+    }
+    supergroupPointerDown(event, supergroupId) {
+      if (!this.model) return;
+      event.preventDefault();
+      this.layout.stop();
+      const before = structuredClone(this.model.board),
+        origin = this.worldPoint(event);
+      let dx = 0,
+        dy = 0;
+      const move = (current) => {
+        const point = this.worldPoint(current);
+        dx = point.x - origin.x;
+        dy = point.y - origin.y;
+        this.model.board = structuredClone(before);
+        S.translateSupergroup(this.model.board, supergroupId, dx, dy);
+        this.paint();
+      };
+      const up = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("pointercancel", up);
+        this.model.board = before;
+        if (Math.hypot(dx, dy) < 1) return this.paint();
+        try {
+          this.model.moveSupergroup(supergroupId, dx, dy);
         } catch (error) {
           this.notice(error.message);
           this.paint();
@@ -974,6 +1089,9 @@
     }
     nodeTap(event) {
       if (!this.active) return;
+      this.selectedGroupId = null;
+      this.selectedGroupIds.clear();
+      this.selectedSupergroupId = null;
       const id = event.target.id(),
         selected = new Set(this.pointerSelection),
         additive =
@@ -1049,15 +1167,76 @@
         (board) => (board.mutedEntityIds = []),
       );
     }
-    selectGroup(groupId) {
-      this.selectedGroupId = groupId;
+    selectGroup(groupId, additive = false) {
+      if (!this.model?.board.groups[groupId]) return;
+      if (!additive) this.selectedGroupIds.clear();
+      if (additive && this.selectedGroupIds.has(groupId))
+        this.selectedGroupIds.delete(groupId);
+      else this.selectedGroupIds.add(groupId);
+      this.selectedGroupId = this.selectedGroupIds.has(groupId)
+        ? groupId
+        : [...this.selectedGroupIds].at(-1) || null;
+      this.selectedSupergroupId = null;
+      const selectedGroups = this.selectedGroupIds;
       const members = Object.entries(this.model.board.placements)
-        .filter(([, p]) => p.groupId === groupId)
+        .filter(([, p]) => selectedGroups.has(p.groupId))
         .map(([id]) => this.cy.$id(id));
       this.cy.nodes().unselect();
       members.forEach((node) => node.select());
       this.renderRegions(this.model.board);
+      this.renderGroups();
       this.renderInspector();
+    }
+    selectSupergroup(supergroupId) {
+      const supergroup = this.model?.board.supergroups?.[supergroupId];
+      if (!supergroup) return;
+      this.selectedSupergroupId = supergroupId;
+      this.selectedGroupIds = new Set(supergroup.groupIds);
+      this.selectedGroupId = supergroup.groupIds[0] || null;
+      const members = Object.entries(this.model.board.placements)
+        .filter(([, placement]) =>
+          this.selectedGroupIds.has(placement.groupId),
+        )
+        .map(([entityId]) => this.cy.$id(entityId));
+      this.cy.nodes().unselect();
+      members.forEach((node) => node.select());
+      this.paint(false);
+    }
+    reconcileGroupSelection() {
+      const groups = this.model.board.groups;
+      this.selectedGroupIds = new Set(
+        [...this.selectedGroupIds].filter((groupId) => groups[groupId]),
+      );
+      if (
+        this.selectedSupergroupId &&
+        !this.model.board.supergroups?.[this.selectedSupergroupId]
+      )
+        this.selectedSupergroupId = null;
+      if (!this.selectedGroupId || !groups[this.selectedGroupId])
+        this.selectedGroupId = [...this.selectedGroupIds].at(-1) || null;
+    }
+    createSupergroup() {
+      const groupIds = [...this.selectedGroupIds],
+        name = document.getElementById("manual-supergroup-name").value,
+        color = document.getElementById("manual-supergroup-color").value;
+      try {
+        this.layout.stop();
+        const supergroupId = this.model.addSupergroup(name, color, groupIds);
+        document.getElementById("manual-supergroup-name").value = "";
+        this.selectSupergroup(supergroupId);
+      } catch (error) {
+        this.notice(error.message);
+      }
+    }
+    dissolveSupergroup(supergroupId) {
+      try {
+        this.layout.stop();
+        this.model.deleteSupergroup(supergroupId);
+        if (this.selectedSupergroupId === supergroupId)
+          this.selectedSupergroupId = null;
+      } catch (error) {
+        this.notice(error.message);
+      }
     }
     renderGroups() {
       const list = document.getElementById("manual-group-list");
@@ -1066,11 +1245,53 @@
         .sort((a, b) => a.name.localeCompare(b.name))
         .forEach((group) => {
           const button = document.createElement("button");
+          button.dataset.groupId = group.id;
+          button.setAttribute(
+            "aria-pressed",
+            String(this.selectedGroupIds.has(group.id)),
+          );
           button.textContent = `${group.name} (${Object.values(this.model.board.placements).filter((p) => p.groupId === group.id).length})`;
           button.style.borderLeftColor = group.color;
-          button.onclick = () => this.selectGroup(group.id);
+          button.onclick = (event) =>
+            this.selectGroup(group.id, event.ctrlKey || event.metaKey);
           list.append(button);
         });
+      const supergroupList = document.getElementById(
+        "manual-supergroup-list",
+      );
+      supergroupList.replaceChildren();
+      Object.values(this.model.board.supergroups || {})
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach((supergroup) => {
+          const row = document.createElement("div"),
+            select = document.createElement("button"),
+            dissolve = document.createElement("button");
+          row.className = "manual-supergroup-row";
+          select.dataset.supergroupId = supergroup.id;
+          select.textContent = `${supergroup.name} (${supergroup.groupIds.length})`;
+          select.style.borderLeftColor = supergroup.color;
+          select.setAttribute(
+            "aria-pressed",
+            String(this.selectedSupergroupId === supergroup.id),
+          );
+          select.onclick = () => this.selectSupergroup(supergroup.id);
+          dissolve.dataset.supergroupId = supergroup.id;
+          dissolve.textContent = "Dissolve";
+          dissolve.title = `Dissolve ${supergroup.name}`;
+          dissolve.onclick = () => this.dissolveSupergroup(supergroup.id);
+          row.append(select, dissolve);
+          supergroupList.append(row);
+        });
+      const occupied = new Set(
+          Object.values(this.model.board.supergroups || {}).flatMap(
+            (supergroup) => supergroup.groupIds,
+          ),
+        ),
+        eligible = [...this.selectedGroupIds].filter(
+          (groupId) => !occupied.has(groupId),
+        );
+      document.getElementById("manual-supergroup-create").disabled =
+        eligible.length < 2 || eligible.length !== this.selectedGroupIds.size;
       const muted = document.getElementById("manual-muted-list");
       muted.replaceChildren();
       this.model.board.mutedEntityIds.forEach((id) => {
@@ -1218,6 +1439,7 @@
       try {
         this.layout.stop();
         this.model.deleteGroup(groupId);
+        this.selectedGroupIds.delete(groupId);
         this.selectedGroupId = null;
       } catch (error) {
         this.notice(error.message);
@@ -1263,7 +1485,12 @@
     }
     fitBoard(board) {
       requestAnimationFrame(() => {
-        const boxes = Object.values(board.groups).map(G.envelope),
+        const boxes = [
+            ...Object.values(board.groups).map(G.envelope),
+            ...Object.values(board.supergroups || {}).map((supergroup) =>
+              S.supergroupBounds(board, supergroup),
+            ),
+          ],
           left = Math.min(...boxes.map((b) => b.left)),
           right = Math.max(...boxes.map((b) => b.right)),
           top = Math.min(...boxes.map((b) => b.top)),

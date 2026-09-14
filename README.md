@@ -184,11 +184,20 @@ Explore and Manual keep independent node positions, selections, viewports, and p
 - Drag whole regions by the body or header.
 - Resize and repack a region.
 - Rename, recolor, reshape, merge, delete, fit, or automatically arrange groups.
+- Ctrl/Cmd-click group names or headers to select several groups, then wrap them in a named, colored supergroup. Drag its header to move all child groups together, or dissolve the wrapper without deleting them.
 - Move multiple nodes with destination preview and automatic target-region growth.
 - Right-click a node for quick moves or removal to Unassigned.
 - Pin nodes or relax one selected group.
 
 The local layout visibly updates nodes inside region bounds. It can run globally, pause, resume, or apply to one group.
+
+#### Create a supergroup
+
+1. Ctrl/Cmd-click group names in the left **Groups** sidebar or group headers on the canvas to select at least two groups.
+2. In the **Supergroups** section of the left sidebar, enter a name and optionally choose a color.
+3. Click **Create supergroup**.
+
+A group can belong to only one supergroup. Drag the supergroup header to move all its child groups together, or use **Dissolve** to remove the wrapper without deleting or merging the child groups.
 
 #### Control dependency visibility
 
@@ -201,7 +210,7 @@ These controls do not rewrite canonical edges, automatic communities, GraphML, r
 
 #### Save and restore work
 
-All persistent edits participate in session undo and redo. Boards autosave in the browser and can be downloaded or imported as versioned `manual-layout.json` files. Collapsed-region and cross-region-edge settings are included.
+All persistent edits participate in session undo and redo. Boards autosave in the browser and can be downloaded or imported as versioned `manual-layout.json` files. Supergroups, collapsed-region settings, and cross-region-edge settings are included.
 
 Imported layouts must match both the graph topology and captured display projection. The viewer reports whether browser persistence succeeded; download the layout when durable or portable storage is required.
 

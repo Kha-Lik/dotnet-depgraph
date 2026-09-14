@@ -182,6 +182,28 @@
     entityIds.forEach((id) => {
       if (!placed.has(id)) errors.push(`${id} has no placement.`);
     });
+    const memberships = new Set();
+    Object.entries(board.supergroups || {}).forEach(
+      ([supergroupId, supergroup]) => {
+        const groupIds = supergroup?.groupIds;
+        if (
+          supergroup?.id !== supergroupId ||
+          typeof supergroup?.name !== "string" ||
+          !/^#[0-9a-f]{6}$/i.test(supergroup?.color || "") ||
+          !Array.isArray(groupIds) ||
+          groupIds.length < 2 ||
+          new Set(groupIds).size !== groupIds.length ||
+          groupIds.some((groupId) => !board.groups?.[groupId])
+        )
+          errors.push(`Invalid supergroup ${supergroupId}.`);
+        else
+          groupIds.forEach((groupId) => {
+            if (memberships.has(groupId))
+              errors.push(`Group ${groupId} belongs to multiple supergroups.`);
+            memberships.add(groupId);
+          });
+      },
+    );
     return errors;
   }
   window.DepGraphManualGeometry = {

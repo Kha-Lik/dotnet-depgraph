@@ -435,12 +435,52 @@ a {
   border-left: 1px solid var(--line);
 }
 #manual-group-list button,
-#manual-muted-list button {
+#manual-muted-list button,
+#manual-supergroup-list button {
   display: block;
   width: 100%;
   margin: 5px 0;
   text-align: left;
   border-left-width: 5px;
+}
+#manual-supergroups {
+  margin: 14px 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+#manual-supergroups h3 {
+  margin-top: 0;
+}
+.manual-supergroup-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+  gap: 6px;
+}
+#manual-supergroup-name,
+#manual-supergroup-create {
+  width: 100%;
+  margin-top: 6px;
+}
+#manual-supergroup-color {
+  width: 38px;
+  height: 32px;
+  margin-top: 6px;
+  padding: 2px;
+}
+.manual-supergroup-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px;
+}
+.manual-supergroup-row button:last-child {
+  width: auto;
+  border-left-width: 1px;
+}
+#manual-group-list button[aria-pressed="true"],
+#manual-supergroup-list button[aria-pressed="true"] {
+  background: #1f6feb;
+  color: #fff;
 }
 .manual-actions {
   display: grid;
@@ -463,6 +503,33 @@ a {
 }
 #manual-save-status.warning {
   color: #f2cc60;
+}
+.manual-supergroup-body {
+  fill-opacity: 0.08;
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 3px;
+  stroke-dasharray: 8 5;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.manual-supergroup-header {
+  fill-opacity: 0.75;
+  stroke: rgba(255, 255, 255, 0.65);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+  cursor: move;
+  pointer-events: all;
+}
+.manual-supergroup text {
+  fill: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.manual-supergroup.selected .manual-supergroup-body,
+.manual-supergroup.selected .manual-supergroup-header {
+  stroke: #fff;
+  stroke-width: 4px;
 }
 .manual-region-body {
   stroke: rgba(255, 255, 255, 0.52);

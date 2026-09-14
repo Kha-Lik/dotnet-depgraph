@@ -53,6 +53,7 @@
     const normalized = boardFromDocument(candidate),
       expectedIds = Object.keys(expected.entities).sort(),
       actualIds = Object.keys(normalized.entities).sort();
+    normalized.supergroups ||= {};
     if (JSON.stringify(expectedIds) !== JSON.stringify(actualIds))
       throw new Error("Layout entity IDs do not match this board.");
     for (const entityId of actualIds) {
@@ -79,6 +80,17 @@
         throw new Error(`Invalid group ${groupId}.`);
       group.collapsed = !!group.collapsed;
       group.outerEdgeMode = group.outerEdgeMode || "visible";
+    }
+    for (const [supergroupId, supergroup] of Object.entries(
+      normalized.supergroups,
+    )) {
+      if (
+        supergroup.id !== supergroupId ||
+        typeof supergroup.name !== "string" ||
+        !window.DepGraphManualState.color(supergroup.color) ||
+        !Array.isArray(supergroup.groupIds)
+      )
+        throw new Error(`Invalid supergroup ${supergroupId}.`);
     }
     const muted = new Set(normalized.mutedEntityIds);
     if (

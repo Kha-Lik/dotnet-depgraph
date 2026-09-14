@@ -22,6 +22,49 @@
         placement.y += dy;
       });
   }
+  function supergroupBounds(board, supergroup) {
+    const envelopes = supergroup.groupIds
+        .map((groupId) => board.groups[groupId])
+        .filter(Boolean)
+        .map(G.envelope),
+      padding = 24,
+      header = 30,
+      x = Math.min(...envelopes.map((value) => value.left)) - padding,
+      y = Math.min(...envelopes.map((value) => value.top)) - padding - header,
+      width =
+        Math.max(...envelopes.map((value) => value.right)) -
+        Math.min(...envelopes.map((value) => value.left)) +
+        padding * 2,
+      height =
+        Math.max(...envelopes.map((value) => value.bottom)) -
+        Math.min(...envelopes.map((value) => value.top)) +
+        padding * 2 +
+        header;
+    return {
+      x,
+      y,
+      width,
+      height,
+      left: x,
+      right: x + width,
+      top: y,
+      bottom: y + height,
+      header,
+    };
+  }
+  function translateSupergroup(board, supergroupId, dx, dy) {
+    board.supergroups[supergroupId].groupIds.forEach((groupId) =>
+      translateGroup(board, groupId, dx, dy),
+    );
+  }
+  function cleanSupergroups(board) {
+    Object.entries(board.supergroups || {}).forEach(([supergroupId, value]) => {
+      value.groupIds = [
+        ...new Set(value.groupIds.filter((groupId) => board.groups[groupId])),
+      ];
+      if (value.groupIds.length < 2) delete board.supergroups[supergroupId];
+    });
+  }
   function repackForShape(board, groupId, shape) {
     const group = board.groups[groupId],
       env = G.envelope(group),
@@ -161,6 +204,7 @@
   }
   class ManualState {
     constructor(board, onChange) {
+      board.supergroups ||= {};
       this.board = board;
       this.undoStack = [];
       this.redoStack = [];
@@ -521,6 +565,43 @@
         }
       });
     }
+    addSupergroup(name, groupColor, groupIds) {
+      const unique = [...new Set(groupIds)],
+        occupied = new Set(
+          Object.values(this.board.supergroups || {}).flatMap(
+            (supergroup) => supergroup.groupIds,
+          ),
+        );
+      if (unique.length < 2)
+        throw new Error("Select at least two groups for a supergroup.");
+      if (unique.some((groupId) => !this.board.groups[groupId]))
+        throw new Error("Every selected group must still exist.");
+      if (unique.some((groupId) => occupied.has(groupId)))
+        throw new Error("A group can belong to only one supergroup.");
+      const supergroupId = id("supergroup");
+      this.transact("Create supergroup", (board) => {
+        board.supergroups ||= {};
+        board.supergroups[supergroupId] = {
+          id: supergroupId,
+          name: name.trim() || "Supergroup",
+          color: color(groupColor) ? groupColor : "#8b5cf6",
+          groupIds: unique,
+        };
+      });
+      return supergroupId;
+    }
+    deleteSupergroup(supergroupId) {
+      this.transact("Dissolve supergroup", (board) => {
+        if (!board.supergroups?.[supergroupId])
+          throw new Error("Choose an existing supergroup.");
+        delete board.supergroups[supergroupId];
+      });
+    }
+    moveSupergroup(supergroupId, dx, dy) {
+      this.transact("Move supergroup", (board) =>
+        translateSupergroup(board, supergroupId, dx, dy),
+      );
+    }
     deleteGroup(groupId) {
       const members = Object.entries(this.board.placements)
         .filter(([, p]) => p.groupId === groupId)
@@ -572,6 +653,7 @@
           }
         }
         delete board.groups[groupId];
+        cleanSupergroups(board);
       });
     }
     mergeGroups(groupIds) {
@@ -603,6 +685,7 @@
         unique
           .filter((value) => value !== targetId)
           .forEach((value) => delete board.groups[value]);
+        cleanSupergroups(board);
       });
     }
   }
@@ -724,6 +807,7 @@
       sourceGranularity: spec.sourceGranularity,
       entities,
       groups,
+      supergroups: {},
       placements,
       mutedEntityIds: [],
       viewport: spec.viewport,
@@ -731,5 +815,11 @@
       savedAt: new Date().toISOString(),
     };
   }
-  window.DepGraphManualState = { ManualState, createBoard, color };
+  window.DepGraphManualState = {
+    ManualState,
+    createBoard,
+    color,
+    supergroupBounds,
+    translateSupergroup,
+  };
 })();
