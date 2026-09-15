@@ -1056,6 +1056,45 @@ public sealed class ManualViewInteractionTests
     }
 
     [Fact]
+    public async Task CollapseAndExpandAllOperateOnTopLevelGroups()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var ids = await page.EvaluateAsync<string[]>("__depgraphDebug.cy.nodes().slice(0, 2).map(node => node.id())");
+        await CreateGroupAsync(page, "Inside One", ids[0]);
+        await CreateGroupAsync(page, "Inside Two", ids[1]);
+        var groupIds = await page.EvaluateAsync<string[]>("([ids]) => ids.map(id => __depgraphDebug.manualView.model.board.placements[id].groupId)", new object[] { ids });
+        var supergroupId = await page.EvaluateAsync<string>("([ids]) => __depgraphDebug.manualView.model.addSupergroup('Product Area', '#6f42c1', ids)", new object[] { groupIds });
+        await SelectIdsAsync(page, ids[0]);
+
+        Assert.Equal("Collapse all", await page.Locator("#manual-collapse-all").GetAttributeAsync("aria-label"));
+        Assert.Equal("Expand all", await page.Locator("#manual-expand-all").GetAttributeAsync("aria-label"));
+        Assert.NotEqual(
+            await page.Locator("#manual-collapse-all .button-icon path").GetAttributeAsync("d"),
+            await page.Locator("#manual-expand-all .button-icon path").GetAttributeAsync("d"));
+        await page.Locator("#manual-collapse-all").ClickAsync();
+
+        Assert.True(await page.EvaluateAsync<bool>("__depgraphDebug.manualView.model.board.groups['group:unassigned'].collapsed"));
+        Assert.True(await page.EvaluateAsync<bool>("([id]) => __depgraphDebug.manualView.model.board.supergroups[id].collapsed", new object[] { supergroupId }));
+        Assert.True(await page.EvaluateAsync<bool>("([ids]) => ids.every(id => !__depgraphDebug.manualView.model.board.groups[id].collapsed)", new object[] { groupIds }));
+        Assert.Equal(0, await page.EvaluateAsync<int>("__depgraphDebug.cy.nodes(':selected').length"));
+        Assert.True(await page.EvaluateAsync<bool>("__depgraphDebug.cy.nodes().every(node => node.hasClass('manual-collapsed-member'))"));
+
+        await page.Locator("#manual-expand-all").ClickAsync();
+
+        Assert.False(await page.EvaluateAsync<bool>("__depgraphDebug.manualView.model.board.groups['group:unassigned'].collapsed"));
+        Assert.False(await page.EvaluateAsync<bool>("([id]) => __depgraphDebug.manualView.model.board.supergroups[id].collapsed", new object[] { supergroupId }));
+        Assert.True(await page.EvaluateAsync<bool>("([ids]) => ids.every(id => !__depgraphDebug.manualView.model.board.groups[id].collapsed)", new object[] { groupIds }));
+        Assert.Equal(0, await page.EvaluateAsync<int>("__depgraphDebug.cy.nodes('.manual-collapsed-member').length"));
+
+        await page.Locator("#manual-undo").ClickAsync();
+        Assert.True(await page.EvaluateAsync<bool>("__depgraphDebug.manualView.model.board.groups['group:unassigned'].collapsed"));
+        Assert.True(await page.EvaluateAsync<bool>("([id]) => __depgraphDebug.manualView.model.board.supergroups[id].collapsed", new object[] { supergroupId }));
+        Assert.Empty(await BoardErrorsAsync(page));
+    }
+
+    [Fact]
     public async Task LayoutsWithoutSupergroupsRemainLoadable()
     {
         await using var session = await BrowserSession.CreateAsync();

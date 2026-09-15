@@ -607,6 +607,21 @@
         supergroup.collapsed = !supergroup.collapsed;
       });
     }
+    setAllTopLevelCollapsed(collapsed) {
+      this.transact(collapsed ? "Collapse all" : "Expand all", (board) => {
+        const wrappedGroupIds = new Set(
+          Object.values(board.supergroups || {}).flatMap(
+            (supergroup) => supergroup.groupIds,
+          ),
+        );
+        Object.values(board.groups)
+          .filter((group) => !wrappedGroupIds.has(group.id))
+          .forEach((group) => (group.collapsed = collapsed));
+        Object.values(board.supergroups || {}).forEach(
+          (supergroup) => (supergroup.collapsed = collapsed),
+        );
+      });
+    }
     toggleSupergroupOuterEdges(supergroupId, mode) {
       if (!["hidden", "highlighted"].includes(mode))
         throw new Error("Unknown outer-edge mode.");

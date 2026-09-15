@@ -36,6 +36,7 @@
       this.installGroupInspector();
       this.installResetToUnassigned();
       this.installExportControls();
+      this.installBulkCollapseControls();
       this.installContextMenu();
       this.installGroupContextMenu();
       this.installContextGroupDialog();
@@ -142,6 +143,19 @@
       png.type = "button";
       png.textContent = "PNG";
       anchor.before(svg, png);
+    }
+    installBulkCollapseControls() {
+      if (document.getElementById("manual-collapse-all")) return;
+      const collapse = document.createElement("button"),
+        expand = document.createElement("button"),
+        anchor = document.getElementById("manual-export-svg");
+      collapse.id = "manual-collapse-all";
+      collapse.type = "button";
+      collapse.textContent = "Collapse all";
+      expand.id = "manual-expand-all";
+      expand.type = "button";
+      expand.textContent = "Expand all";
+      anchor.before(collapse, expand);
     }
     installContextMenu() {
       const menu = document.createElement("div");
@@ -298,6 +312,8 @@
         ["manual-redo", "redo", "Redo", true],
         ["manual-run", "play", "Run layout", false],
         ["manual-arrange", "arrange", "Arrange groups", true],
+        ["manual-collapse-all", "collapseAll", "Collapse all", true],
+        ["manual-expand-all", "expandAll", "Expand all", true],
         ["manual-export-svg", "vector", "Export board as SVG", true],
         ["manual-export-png", "image", "Export board as PNG", true],
         ["manual-save", "save", "Save layout", true],
@@ -388,6 +404,10 @@
       };
       document.getElementById("manual-arrange").onclick = () =>
         this.arrangeGroups();
+      document.getElementById("manual-collapse-all").onclick = () =>
+        this.setAllTopLevelCollapsed(true);
+      document.getElementById("manual-expand-all").onclick = () =>
+        this.setAllTopLevelCollapsed(false);
       document.getElementById("manual-export-svg").onclick = () =>
         this.exportBoardSvg();
       document.getElementById("manual-export-png").onclick = () =>
@@ -1924,6 +1944,16 @@
       this.model.transact(pinned ? "Pin nodes" : "Unpin nodes", (board) =>
         ids.forEach((id) => (board.placements[id].pinned = pinned)),
       );
+    }
+    setAllTopLevelCollapsed(collapsed) {
+      if (!this.model) return;
+      try {
+        this.layout.stop();
+        if (collapsed) this.cy.nodes(":selected").unselect();
+        this.model.setAllTopLevelCollapsed(collapsed);
+      } catch (error) {
+        this.notice(error.message);
+      }
     }
     buildBoardSvg() {
       const board = this.model?.board;

@@ -211,6 +211,7 @@ Both actions replace the current manual board after confirmation. Download the e
 - Select a node to emphasize its dependency edges.
 - Hide every edge incident to selected nodes and reveal those connections temporarily.
 - Collapse a group or supergroup while keeping its header and external connections available.
+- Use the Manual toolbar shortcuts to collapse or expand every top-level region at once. Standalone groups are affected directly; wrapped groups are represented by their supergroup, preserving each child group's own collapse state.
 - Hide or highlight dependencies that cross a group or supergroup boundary.
 
 These controls do not rewrite canonical edges, automatic communities, GraphML, reachability, or dependency metrics.
