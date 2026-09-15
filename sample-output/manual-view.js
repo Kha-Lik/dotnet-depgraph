@@ -35,6 +35,7 @@
       this.installSupergroupControls();
       this.installGroupInspector();
       this.installResetToUnassigned();
+      this.installExportControls();
       this.installContextMenu();
       this.installGroupContextMenu();
       this.installContextGroupDialog();
@@ -128,6 +129,19 @@
       button.id = "manual-reset-unassigned";
       button.textContent = "Reset to Unassigned…";
       document.getElementById("manual-start-over").after(button);
+    }
+    installExportControls() {
+      if (document.getElementById("manual-export-svg")) return;
+      const svg = document.createElement("button"),
+        png = document.createElement("button"),
+        anchor = document.getElementById("manual-save");
+      svg.id = "manual-export-svg";
+      svg.type = "button";
+      svg.textContent = "SVG";
+      png.id = "manual-export-png";
+      png.type = "button";
+      png.textContent = "PNG";
+      anchor.before(svg, png);
     }
     installContextMenu() {
       const menu = document.createElement("div");
@@ -284,6 +298,8 @@
         ["manual-redo", "redo", "Redo", true],
         ["manual-run", "play", "Run layout", false],
         ["manual-arrange", "arrange", "Arrange groups", true],
+        ["manual-export-svg", "vector", "Export board as SVG", true],
+        ["manual-export-png", "image", "Export board as PNG", true],
         ["manual-save", "save", "Save layout", true],
         ["manual-load", "upload", "Load layout", true],
         ["manual-restore-all", "eye", "Restore all connections", false],
@@ -372,6 +388,10 @@
       };
       document.getElementById("manual-arrange").onclick = () =>
         this.arrangeGroups();
+      document.getElementById("manual-export-svg").onclick = () =>
+        this.exportBoardSvg();
+      document.getElementById("manual-export-png").onclick = () =>
+        this.exportBoardPng();
       document.getElementById("manual-save").onclick = () =>
         this.model && this.storage.download(this.model.board);
       document.getElementById("manual-load").onclick = () =>
@@ -1904,6 +1924,255 @@
       this.model.transact(pinned ? "Pin nodes" : "Unpin nodes", (board) =>
         ids.forEach((id) => (board.placements[id].pinned = pinned)),
       );
+    }
+    buildBoardSvg() {
+      const board = this.model?.board;
+      if (!board) throw new Error("Create a manual board before exporting it.");
+      const margin = 40,
+        boxes = [
+          ...Object.values(board.groups).map(G.envelope),
+          ...Object.values(board.supergroups || {}).map((supergroup) =>
+            S.supergroupBounds(board, supergroup),
+          ),
+        ],
+        left = Math.min(...boxes.map((box) => box.left)) - margin,
+        top = Math.min(...boxes.map((box) => box.top)) - margin,
+        right = Math.max(...boxes.map((box) => box.right)) + margin,
+        bottom = Math.max(...boxes.map((box) => box.bottom)) + margin,
+        width = Math.max(1, right - left),
+        height = Math.max(1, bottom - top),
+        root = svgElement("svg"),
+        style = svgElement("style"),
+        background = svgElement("rect"),
+        edges = svgElement("g"),
+        nodes = svgElement("g"),
+        regions = this.groupLayer.cloneNode(true),
+        definitions = svgElement("defs"),
+        markers = new Map();
+      root.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      root.setAttribute("viewBox", `${left} ${top} ${width} ${height}`);
+      root.setAttribute("width", Math.ceil(width));
+      root.setAttribute("height", Math.ceil(height));
+      root.setAttribute("role", "img");
+      root.setAttribute("aria-label", "Manual dependency board");
+      style.textContent = `
+        .manual-supergroup-body{fill-opacity:.08;stroke:rgba(255,255,255,.55);stroke-width:3;stroke-dasharray:8 5}
+        .manual-supergroup-header{fill-opacity:.75;stroke:rgba(255,255,255,.65);stroke-width:2}
+        .manual-supergroup text{fill:#fff;font:700 14px system-ui,sans-serif}
+        .manual-supergroup.selected .manual-supergroup-body,.manual-supergroup.selected .manual-supergroup-header{stroke:#fff;stroke-width:4}
+        .manual-supergroup.collapsed .manual-supergroup-body{display:none}
+        .manual-region-body{stroke:rgba(255,255,255,.52);stroke-width:2;fill-opacity:.14}
+        .manual-region-header{fill:rgba(22,27,34,.9);stroke:rgba(255,255,255,.55);stroke-width:1}
+        .manual-region text{fill:#e6edf3;font:650 13px system-ui,sans-serif}
+        .manual-region.selected .manual-region-body,.manual-region.selected .manual-region-header{stroke:#f0f6fc;stroke-width:4}
+        .manual-region.collapsed .manual-region-body{display:none}
+      `;
+      background.setAttribute("x", left);
+      background.setAttribute("y", top);
+      background.setAttribute("width", width);
+      background.setAttribute("height", height);
+      background.setAttribute("fill", "#0d1117");
+      edges.setAttribute("fill", "none");
+      edges.setAttribute("stroke-linecap", "round");
+      edges.setAttribute("stroke-linejoin", "round");
+      const markerFor = (color) => {
+        if (markers.has(color)) return markers.get(color);
+        const id = `arrow-${markers.size}`,
+          marker = svgElement("marker"),
+          path = svgElement("path");
+        marker.id = id;
+        marker.setAttribute("viewBox", "0 0 10 10");
+        marker.setAttribute("refX", "9");
+        marker.setAttribute("refY", "5");
+        marker.setAttribute("markerWidth", "7");
+        marker.setAttribute("markerHeight", "7");
+        marker.setAttribute("orient", "auto-start-reverse");
+        path.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+        path.setAttribute("fill", color);
+        marker.append(path);
+        definitions.append(marker);
+        markers.set(color, id);
+        return id;
+      };
+      this.cy.edges().forEach((edge) => {
+        if (
+          edge.style("display") === "none" ||
+          Number(edge.style("opacity")) <= 0
+        )
+          return;
+        const source = edge.source().position(),
+          target = edge.target().position(),
+          path = svgElement("path"),
+          color = edge.style("line-color") || "#8c98a5",
+          lineStyle = edge.style("line-style");
+        path.setAttribute(
+          "d",
+          `M ${source.x} ${source.y} L ${target.x} ${target.y}`,
+        );
+        path.setAttribute("stroke", color);
+        path.setAttribute("stroke-width", parseFloat(edge.style("width")) || 1);
+        path.setAttribute("opacity", edge.style("opacity") || 1);
+        if (lineStyle === "dashed") path.setAttribute("stroke-dasharray", "8 5");
+        else if (lineStyle === "dotted")
+          path.setAttribute("stroke-dasharray", "2 5");
+        if (edge.style("target-arrow-shape") !== "none")
+          path.setAttribute("marker-end", `url(#${markerFor(color)})`);
+        edges.append(path);
+      });
+      this.cy.nodes().forEach((node) => {
+        if (
+          node.style("display") === "none" ||
+          Number(node.style("opacity")) <= 0
+        )
+          return;
+        const position = node.position(),
+          width = parseFloat(node.style("width")) || node.data("size") || 24,
+          height = parseFloat(node.style("height")) || width,
+          shape = node.style("shape"),
+          group = svgElement("g"),
+          body =
+            shape === "ellipse"
+              ? svgElement("ellipse")
+              : ["diamond", "hexagon"].includes(shape)
+                ? svgElement("polygon")
+                : svgElement("rect"),
+          fill = node.style("background-color") || node.data("color"),
+          border = node.style("border-color") || "#8c98a5";
+        if (body.tagName === "ellipse") {
+          body.setAttribute("cx", position.x);
+          body.setAttribute("cy", position.y);
+          body.setAttribute("rx", width / 2);
+          body.setAttribute("ry", height / 2);
+        } else if (body.tagName === "polygon") {
+          const points =
+            shape === "diamond"
+              ? [
+                  [position.x, position.y - height / 2],
+                  [position.x + width / 2, position.y],
+                  [position.x, position.y + height / 2],
+                  [position.x - width / 2, position.y],
+                ]
+              : [
+                  [position.x - width / 4, position.y - height / 2],
+                  [position.x + width / 4, position.y - height / 2],
+                  [position.x + width / 2, position.y],
+                  [position.x + width / 4, position.y + height / 2],
+                  [position.x - width / 4, position.y + height / 2],
+                  [position.x - width / 2, position.y],
+                ];
+          body.setAttribute(
+            "points",
+            points.map((point) => point.join(",")).join(" "),
+          );
+        } else {
+          body.setAttribute("x", position.x - width / 2);
+          body.setAttribute("y", position.y - height / 2);
+          body.setAttribute("width", width);
+          body.setAttribute("height", height);
+          body.setAttribute("rx", Math.min(8, width / 4));
+        }
+        body.setAttribute("fill", fill);
+        body.setAttribute("stroke", border);
+        body.setAttribute(
+          "stroke-width",
+          parseFloat(node.style("border-width")) || 0,
+        );
+        if (node.style("border-style") === "dashed")
+          body.setAttribute("stroke-dasharray", "6 4");
+        group.setAttribute("opacity", node.style("opacity") || 1);
+        group.append(body);
+        const labelValue = node.style("label");
+        if (labelValue) {
+          const label = svgElement("text");
+          label.setAttribute("x", position.x);
+          label.setAttribute("y", position.y + height / 2 + 13);
+          label.setAttribute("fill", node.style("color") || "#e6edf3");
+          label.setAttribute("font-family", "system-ui, sans-serif");
+          label.setAttribute("font-size", parseFloat(node.style("font-size")) || 10);
+          label.setAttribute("text-anchor", "middle");
+          label.setAttribute("paint-order", "stroke");
+          label.setAttribute("stroke", "#0d1117");
+          label.setAttribute("stroke-width", "3");
+          label.setAttribute("stroke-linejoin", "round");
+          label.textContent = labelValue;
+          group.append(label);
+        }
+        nodes.append(group);
+      });
+      regions.removeAttribute("transform");
+      regions
+        .querySelectorAll(".manual-region-action,.manual-resize-handle,title")
+        .forEach((element) => element.remove());
+      root.append(definitions, style, background, edges, nodes, regions);
+      return { root, width, height };
+    }
+    boardSvgText() {
+      const { root } = this.buildBoardSvg();
+      return `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(root)}`;
+    }
+    downloadBlob(name, blob) {
+      const link = document.createElement("a"),
+        url = URL.createObjectURL(blob);
+      link.download = name;
+      link.href = url;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    exportBoardSvg() {
+      try {
+        this.downloadBlob(
+          "manual-dependency-board.svg",
+          new Blob([this.boardSvgText()], {
+            type: "image/svg+xml;charset=utf-8",
+          }),
+        );
+        this.setSaveStatus("SVG exported");
+      } catch (error) {
+        this.notice(error.message);
+      }
+    }
+    async exportBoardPng() {
+      try {
+        const { root, width, height } = this.buildBoardSvg(),
+          text = `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(root)}`,
+          source = URL.createObjectURL(
+            new Blob([text], { type: "image/svg+xml;charset=utf-8" }),
+          ),
+          image = new Image();
+        try {
+          await new Promise((resolve, reject) => {
+            image.onload = resolve;
+            image.onerror = () =>
+              reject(new Error("The board image could not be rendered."));
+            image.src = source;
+          });
+        } finally {
+          URL.revokeObjectURL(source);
+        }
+        const scale = Math.min(
+            2,
+            16384 / width,
+            16384 / height,
+            Math.sqrt((32 * 1024 * 1024) / (width * height)),
+          ),
+          canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.ceil(width * scale));
+        canvas.height = Math.max(1, Math.ceil(height * scale));
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("Canvas rendering is unavailable.");
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise((resolve, reject) =>
+          canvas.toBlob(
+            (value) =>
+              value ? resolve(value) : reject(new Error("PNG encoding failed.")),
+            "image/png",
+          ),
+        );
+        this.downloadBlob("manual-dependency-board.png", blob);
+        this.setSaveStatus("PNG exported");
+      } catch (error) {
+        this.notice(error.message);
+      }
     }
     arrangeGroups() {
       if (!this.model) return;

@@ -28,6 +28,8 @@
     undo: "M4 7h9a7 7 0 0 1 7 7v3M8 3 4 7l4 4",
     unpin: "M4 4l16 16M8 4h8l-2 6 3 3H9M12 15v6",
     upload: "M12 21V9M7 14l5-5 5 5M4 4h16",
+    vector:
+      "M3 4h7v7H3zM16.5 4a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zM7 20l4-7 4 7z",
   };
   function svg(name) {
     const element = document.createElementNS(

@@ -219,6 +219,8 @@ These controls do not rewrite canonical edges, automatic communities, GraphML, r
 
 All persistent edits participate in session undo and redo. Boards autosave in the browser and can be downloaded or imported as versioned `manual-layout.json` files. Supergroups, collapsed-region settings, and cross-region-edge settings are included.
 
+Use the Manual toolbar's **SVG** or **PNG** action to export the complete board, including group and supergroup regions, visible nodes, dependency edges, labels, and current visibility or highlighting choices. SVG remains resolution-independent; PNG is rendered from the same composition at up to 2× scale.
+
 Imported layouts must match both the graph topology and captured display projection. The viewer reports whether browser persistence succeeded; download the layout when durable or portable storage is required.
 
 ## Filtering the graph
@@ -412,7 +414,6 @@ Known limitations:
 - Path explanation returns one deterministic path rather than enumerating cyclic alternatives.
 - GraphML always exports the raw graph.
 - Version-expanded graph mode is not available.
-- Manual-layout PNG composition and SVG export are not implemented.
 
 ## Development
 

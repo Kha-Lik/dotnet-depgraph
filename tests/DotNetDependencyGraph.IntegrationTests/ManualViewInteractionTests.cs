@@ -1026,6 +1026,36 @@ public sealed class ManualViewInteractionTests
     }
 
     [Fact]
+    public async Task ManualBoardExportsCompleteSvgAndPngImages()
+    {
+        await using var session = await BrowserSession.CreateAsync();
+        var page = session.Page;
+        await EnterManualAsync(page, startUnassigned: true);
+        var nodeId = await page.EvaluateAsync<string>("__depgraphDebug.cy.nodes()[0].id()");
+        await CreateGroupAsync(page, "Export Feature", nodeId);
+        Assert.NotEqual(
+            await page.Locator("#manual-export-svg .button-icon path").GetAttributeAsync("d"),
+            await page.Locator("#manual-export-png .button-icon path").GetAttributeAsync("d"));
+
+        var svgDownload = await page.RunAndWaitForDownloadAsync(() => page.Locator("#manual-export-svg").ClickAsync());
+        Assert.Equal("manual-dependency-board.svg", svgDownload.SuggestedFilename);
+        var svg = await File.ReadAllTextAsync(await svgDownload.PathAsync(), TestContext.Current.CancellationToken);
+        Assert.StartsWith("<?xml", svg);
+        Assert.Contains("<svg", svg);
+        Assert.Contains("Manual dependency board", svg);
+        Assert.Contains("Export Feature", svg);
+        Assert.Contains("<path", svg);
+        Assert.DoesNotContain("manual-region-action", svg);
+
+        var pngDownload = await page.RunAndWaitForDownloadAsync(() => page.Locator("#manual-export-png").ClickAsync());
+        Assert.Equal("manual-dependency-board.png", pngDownload.SuggestedFilename);
+        var png = await File.ReadAllBytesAsync(await pngDownload.PathAsync(), TestContext.Current.CancellationToken);
+        Assert.True(png.Length > 1000);
+        Assert.Equal(new byte[] { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a }, png[..8]);
+        Assert.Equal("PNG exported", await page.Locator("#manual-save-status").TextContentAsync());
+    }
+
+    [Fact]
     public async Task LayoutsWithoutSupergroupsRemainLoadable()
     {
         await using var session = await BrowserSession.CreateAsync();
